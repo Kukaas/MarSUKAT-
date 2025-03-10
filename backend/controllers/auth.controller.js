@@ -19,6 +19,16 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Validate email domain for Student and Coordinator roles
+    if (
+      (role === "student" || role === "coordinator") &&
+      !email.endsWith("@marsu.edu.ph")
+    ) {
+      return res.status(422).json({
+        message: "Students and Coordinators must use a valid @marsu.edu.ph email address",
+      });
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
