@@ -59,7 +59,7 @@ export default function Home() {
             of services
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
                   <span className="text-2xl">👕</span>
@@ -75,7 +75,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
                   <span className="text-2xl">🎓</span>
@@ -90,7 +90,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm sm:col-span-2 lg:col-span-1">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white sm:col-span-2 lg:col-span-1">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
                   <span className="text-2xl">⚙️</span>
@@ -112,7 +112,7 @@ export default function Home() {
       <section className="py-16 lg:py-20 px-4 sm:px-6">
         <div className="container mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white">
               <CardHeader>
                 <CardTitle className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   1000+
@@ -124,7 +124,7 @@ export default function Home() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white">
               <CardHeader>
                 <CardTitle className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   500+
@@ -136,7 +136,7 @@ export default function Home() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white">
               <CardHeader>
                 <CardTitle className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   50+
@@ -148,7 +148,7 @@ export default function Home() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white/50 backdrop-blur-sm">
+            <Card className="group hover:shadow-xl transition-all hover:-translate-y-1 border-gray-100/50 bg-white">
               <CardHeader>
                 <CardTitle className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   98%
