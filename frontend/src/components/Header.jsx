@@ -145,7 +145,7 @@ const Header = () => {
                 className="bg-gray-900 hover:bg-gray-800 shadow-sm"
                 asChild
               >
-                <Link to="/register">Register</Link>
+                <Link to="/signup">Register</Link>
               </Button>
             </div>
           </div>
@@ -296,7 +296,7 @@ const Header = () => {
                           className="w-full justify-center bg-gray-900 hover:bg-gray-800"
                           asChild
                         >
-                          <Link to="/register">Register</Link>
+                          <Link to="/signup">Register</Link>
                         </Button>
                       </div>
                     </div>

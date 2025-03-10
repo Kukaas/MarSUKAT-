@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/public/Home";
 import Dashboard from "./pages/private/Dashboard";
 import PrivateRoute from "./components/PrivateRoute";
+import SignUp from "./pages/public/SignUp";
+import PublicLayout from "./pages/public/PublicLayout";
 
 export default function App() {
   return (
@@ -10,8 +12,9 @@ export default function App() {
       <Routes>
         {/*Public Routes*/}
         <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<SignUp />} />
         {/* <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+         />
         <Route path="/verify/:userId/:uniqueString" element={<VerifyEmail />} />
         <Route path="/verification-success" element={<VerificationSuccess />} />
         <Route path="/verification-error" element={<VerificationError />} /> */}
