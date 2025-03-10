@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
-
+import superAdminRoutes from "./routes/superAdmin.routes.js";
 dotenv.config();
 
 const app = express();
@@ -33,4 +33,4 @@ app.listen(port, () => {
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
-  
+app.use("/api/v1/superadmin", superAdminRoutes);

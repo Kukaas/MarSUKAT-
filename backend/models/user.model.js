@@ -60,6 +60,17 @@ const userSchema = new mongoose.Schema(
 
 const User = mongoose.model("User", userSchema);
 
+// After the User model definition and before Student Schema
+// SuperAdmin Schema
+const superAdminSchema = new mongoose.Schema({
+  accessLevel: {
+    type: String,
+    default: 'full'
+  }
+});
+
+const SuperAdmin = User.discriminator("SuperAdmin", superAdminSchema);
+
 // Student Schema
 const studentSchema = new mongoose.Schema({
   studentNumber: {
@@ -111,4 +122,4 @@ const coordinatorSchema = new mongoose.Schema({
 const Coordinator = User.discriminator("Coordinator", coordinatorSchema);
 
 export default User;
-export { Student, CommercialJob, Coordinator };
+export { Student, CommercialJob, Coordinator, SuperAdmin };
