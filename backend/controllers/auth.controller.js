@@ -161,20 +161,16 @@ export const verifyEmail = async (req, res) => {
     const verificationRecord = await UserVerification.findOne({ userId });
 
     if (!verificationRecord) {
-      return res.status(404).json({
-        message:
-          "Verification record not found or has expired. Please sign up again.",
-      });
+      return res.redirect(`${frontendUrl}/verification-error?type=not_found`);
     }
 
     // Check if verification record has expired
     if (verificationRecord.expireAt < Date.now()) {
-      // Remove the expired verification record
+      // Remove the expired verification record and unverified user
       await UserVerification.deleteOne({ userId });
-      await User.deleteOne({ _id: userId }); // Optional: delete unverified user
-      return res.status(410).json({
-        message: "Verification link has expired. Please sign up again.",
-      });
+      await User.deleteOne({ _id: userId });
+
+      return res.redirect(`${frontendUrl}/verification-error?type=expired`);
     }
 
     // Compare the unique string
@@ -184,30 +180,29 @@ export const verifyEmail = async (req, res) => {
     );
 
     if (!isValid) {
-      return res.status(400).json({
-        message:
-          "Invalid verification link. Please check your link and try again.",
-      });
+      return res.redirect(`${frontendUrl}/verification-error?type=invalid`);
     }
 
-    // After successful verification
-    if (isValid) {
-      // Update user verification status
-      await User.updateOne({ _id: userId }, { verified: true });
+    // Update user verification status
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { verified: true },
+      { new: true }
+    );
 
-      // Delete verification record
-      await UserVerification.deleteOne({ userId });
-
-      // Redirect to frontend success page
-      return res.redirect(`${frontendUrl}/verification-success`);
+    if (!updatedUser) {
+      return res.redirect(`${frontendUrl}/verification-error?type=not_found`);
     }
 
-    // If verification fails, redirect to error page
-    return res.redirect(`${frontendUrl}/verification-error`);
+    // Delete verification record after successful verification
+    await UserVerification.deleteOne({ userId });
+
+    // Redirect to success page
+    return res.redirect(`${frontendUrl}/verification-success`);
   } catch (error) {
     console.error("Verification error:", error);
     const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    return res.redirect(`${frontendUrl}/verification-error`);
+    return res.redirect(`${frontendUrl}/verification-error?type=invalid`);
   }
 };
 

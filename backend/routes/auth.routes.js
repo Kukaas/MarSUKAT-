@@ -11,10 +11,14 @@ const router = express.Router();
 
 // Signup route
 router.post("/signup", signup);
-// Add verification route
+
+// Verification routes - handle both GET and POST for better UX
 router.get("/verify/:userId/:uniqueString", verifyEmail);
+router.post("/verify/:userId/:uniqueString", verifyEmail); // Handle form submissions if needed
+
 // Login route
 router.post("/login", login);
+
 // Logout route (requires authentication)
 router.post("/logout", authenticateUser, logout);
 
