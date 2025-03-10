@@ -13,10 +13,43 @@ export const signup = async (req, res) => {
   try {
     const { email, password, role, ...otherDetails } = req.body;
 
+    // Validate required fields
+    const requiredFields = ["email", "password", "role", "name"];
+    const missingFields = requiredFields.filter((field) => !req.body[field]);
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        message: `Missing required fields: ${missingFields.join(", ")}`,
+      });
+    }
+
+    // Validate role-specific required fields
+    const roleSpecificFields = {
+      student: ["studentNumber", "studentGender", "department", "level"],
+      commercial: ["address", "gender"],
+      coordinator: ["department", "gender"],
+    };
+
+    const requiredRoleFields = roleSpecificFields[role];
+    if (requiredRoleFields) {
+      const missingRoleFields = requiredRoleFields.filter(
+        (field) => !otherDetails[field]
+      );
+      if (missingRoleFields.length > 0) {
+        return res.status(400).json({
+          message: `Missing required fields for ${role}: ${missingRoleFields.join(
+            ", "
+          )}`,
+        });
+      }
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({
+        message: "An account with this email already exists",
+      });
     }
 
     // Validate email domain for Student and Coordinator roles
@@ -25,7 +58,15 @@ export const signup = async (req, res) => {
       !email.endsWith("@marsu.edu.ph")
     ) {
       return res.status(422).json({
-        message: "Students and Coordinators must use a valid @marsu.edu.ph email address",
+        message:
+          "Students and Coordinators must use a valid @marsu.edu.ph email address",
+      });
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
       });
     }
 
@@ -42,18 +83,28 @@ export const signup = async (req, res) => {
       verified: false,
     };
 
-    switch (role) {
-      case "student":
-        newUser = new Student(baseUserData);
-        break;
-      case "commercial":
-        newUser = new CommercialJob(baseUserData);
-        break;
-      case "coordinator":
-        newUser = new Coordinator(baseUserData);
-        break;
-      default:
-        return res.status(400).json({ message: "Invalid role specified" });
+    try {
+      switch (role) {
+        case "student":
+          newUser = new Student(baseUserData);
+          break;
+        case "commercial":
+          newUser = new CommercialJob(baseUserData);
+          break;
+        case "coordinator":
+          newUser = new Coordinator(baseUserData);
+          break;
+        default:
+          return res.status(400).json({
+            message:
+              "Invalid role specified. Must be one of: student, commercial, coordinator",
+          });
+      }
+    } catch (modelError) {
+      return res.status(400).json({
+        message: "Invalid data format",
+        errors: Object.values(modelError.errors).map((err) => err.message),
+      });
     }
 
     // Save the user
@@ -73,19 +124,31 @@ export const signup = async (req, res) => {
 
     await newVerification.save();
 
-    // Send verification email
-    await sendVerificationEmail(savedUser, uniqueString);
+    try {
+      // Send verification email
+      await sendVerificationEmail(savedUser, uniqueString);
 
-    res.status(201).json({
-      message:
-        "User created successfully. Please check your email to verify your account.",
-      userId: savedUser._id,
-    });
+      res.status(201).json({
+        message:
+          "Account created successfully. Please check your email to verify your account.",
+        userId: savedUser._id,
+      });
+    } catch (emailError) {
+      // If email fails, delete the user and verification record
+      await UserVerification.deleteOne({ userId: savedUser._id });
+      await User.deleteOne({ _id: savedUser._id });
+
+      return res.status(500).json({
+        message:
+          "Failed to send verification email. Please try signing up again.",
+      });
+    }
   } catch (error) {
     console.error("Signup error:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating user", error: error.message });
+    res.status(500).json({ 
+      message: "An error occurred during signup. Please try again later.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 

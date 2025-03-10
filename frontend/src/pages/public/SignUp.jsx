@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   UserCircle2,
   ArrowLeft,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import PublicLayout from "./PublicLayout";
 import LeftDescription from "@/components/auth/LeftDescription";
@@ -25,15 +26,13 @@ import FormInput from "@/components/custom-components/FormInput";
 import FormSelect from "@/components/custom-components/FormSelect";
 import PasswordInput from "@/components/custom-components/PasswordInput";
 import SectionHeader from "@/components/custom-components/SectionHeader";
+import { authAPI } from "@/lib/api";
 
 const formSchema = z.object({
   role: z.string().min(1, "Please select a role"),
-  name: z.string().min(2, "Name must be at least 2 characters").optional(),
-  email: z.string().email("Invalid email address").optional(),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .optional(),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   studentNumber: z.string().optional(),
   studentGender: z.string().optional(),
   department: z.string().optional(),
@@ -44,6 +43,9 @@ const formSchema = z.object({
 
 const SignUp = () => {
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -73,15 +75,54 @@ const SignUp = () => {
         return;
       }
 
-      console.log("Form submitted:", data);
-      // TODO: Implement signup logic
+      setIsLoading(true);
+
+      // Transform role value to match backend expectations
+      const transformedRole = data.role.toLowerCase();
+      
+      // Prepare the data based on role
+      const signupData = {
+        role: transformedRole,
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      };
+
+      // Add role-specific fields
+      switch (transformedRole) {
+        case "student":
+          signupData.studentNumber = data.studentNumber;
+          signupData.studentGender = data.studentGender;
+          signupData.department = data.department;
+          signupData.level = data.level;
+          break;
+        case "commercial":
+          signupData.address = data.address;
+          signupData.gender = data.gender;
+          break;
+        case "coordinator":
+          signupData.department = data.department;
+          signupData.gender = data.gender;
+          break;
+      }
+
+      const response = await authAPI.signup(signupData);
+      
       toast.success("Account created successfully!", {
         description: "Please check your email to verify your account.",
       });
+
+      // Reset form and navigate to login
+      form.reset();
+      navigate("/login");
+      
     } catch (error) {
-      toast.error("Error creating account", {
-        description: error.message,
+      const errorMessage = error.message || "An error occurred during signup";
+      toast.error("Signup failed", {
+        description: errorMessage,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -90,7 +131,43 @@ const SignUp = () => {
       form.setError("role", { message: "Please select a role" });
       return;
     }
-    setStep(step + 1);
+
+    // Validate current step fields before proceeding
+    const currentStepFields = getStepFields(step);
+    const isValid = currentStepFields.every(field => {
+      const value = form.getValues(field);
+      if (!value) {
+        form.setError(field, { message: `${field} is required` });
+        return false;
+      }
+      return true;
+    });
+
+    if (isValid) {
+      setStep(step + 1);
+    }
+  };
+
+  const getStepFields = (currentStep) => {
+    switch (currentStep) {
+      case 1:
+        return ["role"];
+      case 2:
+        return ["name", "email"];
+      case 3:
+        return ["password"];
+      case 4:
+        if (role === "Student") {
+          return ["studentNumber", "studentGender", "department", "level"];
+        } else if (role === "CommercialJob") {
+          return ["address", "gender"];
+        } else if (role === "Coordinator") {
+          return ["department", "gender"];
+        }
+        return [];
+      default:
+        return [];
+    }
   };
 
   const handleBack = () => {
@@ -316,6 +393,7 @@ const SignUp = () => {
                               variant="outline"
                               className="h-11 px-6"
                               onClick={handleBack}
+                              disabled={isLoading}
                             >
                               <ArrowLeft className="w-4 h-4 mr-2" />
                               Back
@@ -331,7 +409,11 @@ const SignUp = () => {
                             className={`h-11 bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 ${
                               step === 1 ? "w-full" : "px-6 ml-auto"
                             }`}
+                            disabled={isLoading}
                           >
+                            {isLoading && (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            )}
                             {step === getMaxSteps() ? (
                               "Create Account"
                             ) : (
