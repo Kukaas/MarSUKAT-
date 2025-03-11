@@ -12,6 +12,21 @@ export const getAllRawMaterialTypes = async (req, res) => {
   }
 };
 
+// @desc    Get raw material types by category
+// @route   GET /api/raw-material-types/category/:category
+// @access  Private
+export const getRawMaterialTypesByCategory = async (req, res) => {
+  try {
+    console.log("Fetching types for category:", req.params.category);
+    const types = await RawMaterialType.find({ category: req.params.category });
+    console.log("Found types:", types);
+    res.status(200).json(types);
+  } catch (error) {
+    console.error("Error in getRawMaterialTypesByCategory:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get raw material type by ID
 // @route   GET /api/raw-material-types/:id
 // @access  Private

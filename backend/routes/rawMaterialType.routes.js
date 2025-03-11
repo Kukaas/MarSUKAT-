@@ -5,6 +5,7 @@ import {
   getRawMaterialTypeById,
   updateRawMaterialType,
   deleteRawMaterialType,
+  getRawMaterialTypesByCategory,
 } from "../controllers/rawMaterialType.controller.js";
 import { isSuperAdmin } from "../middleware/superAdmin.middleware.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
@@ -13,6 +14,7 @@ const router = express.Router();
 
 // Public routes
 router.get("/", getAllRawMaterialTypes);
+router.get("/category/:category", getRawMaterialTypesByCategory);
 router.get("/:id", getRawMaterialTypeById);
 
 // Super Admin only routes

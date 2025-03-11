@@ -359,6 +359,18 @@ export const systemMaintenanceAPI = {
     }
   },
 
+  getRawMaterialTypesByCategory: async (category) => {
+    try {
+      const response = await api.get(
+        `/raw-material-types/category/${encodeURIComponent(category)}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching types by category:", error);
+      throw error;
+    }
+  },
+
   getRawMaterialTypeById: async (id) => {
     try {
       const response = await api.get(`/raw-material-types/${id}`);

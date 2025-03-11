@@ -37,6 +37,7 @@ export function ProductTypeForm({
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
   const [rawMaterialTypes, setRawMaterialTypes] = useState([]);
+  const [filteredTypes, setFilteredTypes] = useState({});
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -60,21 +61,14 @@ export function ProductTypeForm({
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [
-          levelsData,
-          sizesData,
-          pricesData,
-          categoriesData,
-          unitsData,
-          typesData,
-        ] = await Promise.all([
-          systemMaintenanceAPI.getAllLevels(),
-          systemMaintenanceAPI.getAllSizes(),
-          systemMaintenanceAPI.getAllPrices(),
-          systemMaintenanceAPI.getAllCategories(),
-          systemMaintenanceAPI.getAllUnits(),
-          systemMaintenanceAPI.getAllRawMaterialTypes(),
-        ]);
+        const [levelsData, sizesData, pricesData, typesData, unitsData] =
+          await Promise.all([
+            systemMaintenanceAPI.getAllLevels(),
+            systemMaintenanceAPI.getAllSizes(),
+            systemMaintenanceAPI.getAllPrices(),
+            systemMaintenanceAPI.getAllRawMaterialTypes(),
+            systemMaintenanceAPI.getAllUnits(),
+          ]);
 
         setLevels(levelsData.map((l) => ({ value: l.level, label: l.level })));
         setSizes(sizesData.map((s) => ({ value: s.size, label: s.size })));
@@ -84,16 +78,20 @@ export function ProductTypeForm({
             label: `₱${p.price}`,
           }))
         );
+
+        // Store raw material types
+        setRawMaterialTypes(typesData);
+
+        // Get unique categories from raw material types
+        const uniqueCategories = [...new Set(typesData.map((t) => t.category))];
+
         setCategories(
-          categoriesData.map((c) => ({
-            value: c.category,
-            label: c.category,
+          uniqueCategories.map((c) => ({
+            value: c,
+            label: c,
           }))
         );
         setUnits(unitsData.map((u) => ({ value: u.unit, label: u.unit })));
-        setRawMaterialTypes(
-          typesData.map((t) => ({ value: t.name, label: t.name }))
-        );
       } catch (error) {
         console.error("Error fetching options:", error);
       }
@@ -115,6 +113,36 @@ export function ProductTypeForm({
       });
     }
   }, [formData, form]);
+
+  // Watch for category changes
+  useEffect(() => {
+    fields.forEach((field, index) => {
+      const category = form.watch(`rawMaterialsUsed.${index}.category`);
+      if (category) {
+        handleCategoryChange(index, category);
+      }
+    });
+  }, [fields, form.watch]);
+
+  // Handle category change
+  const handleCategoryChange = (index, category) => {
+    // Filter types for the selected category
+    const typesForCategory = rawMaterialTypes
+      .filter((type) => type.category === category)
+      .map((type) => ({
+        value: type.name,
+        label: type.name,
+      }));
+
+    // Update filtered types for this index
+    setFilteredTypes((prev) => {
+      const newState = {
+        ...prev,
+        [index]: typesForCategory,
+      };
+      return newState;
+    });
+  };
 
   const handleSubmit = async (data) => {
     try {
@@ -224,15 +252,27 @@ export function ProductTypeForm({
                   options={categories}
                   required
                   disabled={isSubmitting}
+                  onValueChange={(value) => {
+                    console.log("Category selected:", value);
+                    // Clear the type field
+                    form.setValue(`rawMaterialsUsed.${index}.type`, "");
+                    // Set the new category
+                    form.setValue(`rawMaterialsUsed.${index}.category`, value);
+                    // Update filtered types
+                    handleCategoryChange(index, value);
+                  }}
                 />
                 <FormSelect
                   form={form}
                   name={`rawMaterialsUsed.${index}.type`}
                   label="Type"
                   placeholder="Select type"
-                  options={rawMaterialTypes}
+                  options={filteredTypes[index] || []}
                   required
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    !form.watch(`rawMaterialsUsed.${index}.category`)
+                  }
                 />
                 <FormInput
                   form={form}
