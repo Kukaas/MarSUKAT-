@@ -106,6 +106,53 @@ export const systemMaintenanceAPI = {
     }
   },
 
+  // Unit Management API functions
+  getAllUnits: async () => {
+    try {
+      const response = await api.get("/units");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getUnitById: async (id) => {
+    try {
+      const response = await api.get(`/units/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createUnit: async (unitData) => {
+    try {
+      const response = await api.post("/units", unitData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateUnit: async (id, unitData) => {
+    try {
+      const { unit } = unitData;
+      const response = await api.put(`/units/${id}`, { unit });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteUnit: async (id) => {
+    try {
+      const response = await api.delete(`/units/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Department Level Operations
   getAllDepartmentLevels: async () => {
     try {

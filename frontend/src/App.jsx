@@ -16,6 +16,7 @@ import Level from "./pages/private/superadmin/pages/Level";
 import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
 import Department from "./pages/private/superadmin/pages/Department";
 import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentLevelOptions";
+import Units from "./pages/private/superadmin/pages/Units";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -201,6 +202,15 @@ export default function App() {
           </PrivateRoute>
         }
       />
+      <Route
+        path="/superadmin/maintenance/units"
+        element={
+          <PrivateRoute>
+            <Units />
+          </PrivateRoute>
+        }
+      />
+
       {/* Catch all route - Skip redirect for public routes */}
       <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
     </Routes>

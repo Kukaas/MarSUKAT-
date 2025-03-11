@@ -9,6 +9,7 @@ import levelRoutes from "./routes/level.routes.js";
 import departmentRoutes from "./routes/department.routes.js";
 import departmentLevelRoutes from "./routes/departmentLevel.routes.js";
 import otpRoutes from "./routes/otp.routes.js";
+import unitRoutes from "./routes/unit.routes.js";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use("/api/v1/levels", levelRoutes);
 app.use("/api/v1/departments", departmentRoutes);
 app.use("/api/v1/department-levels", departmentLevelRoutes);
 app.use("/api/v1/otp", otpRoutes);
+app.use("/api/v1/units", unitRoutes);
 
 // Connect to MongoDB
 mongoose
