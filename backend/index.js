@@ -13,6 +13,7 @@ import unitRoutes from "./routes/unit.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import sizeRoutes from "./routes/size.routes.js";
 import priceRoutes from "./routes/price.routes.js";
+import rawMaterialTypeRoutes from "./routes/rawMaterialType.routes.js";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/api/v1/units", unitRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/sizes", sizeRoutes);
 app.use("/api/v1/prices", priceRoutes);
+app.use("/api/v1/raw-material-types", rawMaterialTypeRoutes);
 
 // Connect to MongoDB
 mongoose

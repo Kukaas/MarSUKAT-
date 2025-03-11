@@ -348,6 +348,56 @@ export const systemMaintenanceAPI = {
       throw error;
     }
   },
+
+  // Raw Material Type Management API functions
+  getAllRawMaterialTypes: async () => {
+    try {
+      const response = await api.get("/raw-material-types");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getRawMaterialTypeById: async (id) => {
+    try {
+      const response = await api.get(`/raw-material-types/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createRawMaterialType: async (typeData) => {
+    try {
+      const response = await api.post("/raw-material-types", typeData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateRawMaterialType: async (id, typeData) => {
+    try {
+      const { name, description } = typeData;
+      const response = await api.put(`/raw-material-types/${id}`, {
+        name,
+        description,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteRawMaterialType: async (id) => {
+    try {
+      const response = await api.delete(`/raw-material-types/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default systemMaintenanceAPI;
