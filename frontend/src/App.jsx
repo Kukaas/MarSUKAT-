@@ -17,6 +17,7 @@ import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
 import Department from "./pages/private/superadmin/pages/Department";
 import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentLevelOptions";
 import Units from "./pages/private/superadmin/pages/Units";
+import Categories from "./pages/private/superadmin/pages/Categories";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -207,6 +208,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Units />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/superadmin/maintenance/categories"
+        element={
+          <PrivateRoute>
+            <Categories />
           </PrivateRoute>
         }
       />
