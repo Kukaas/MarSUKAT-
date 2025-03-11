@@ -112,7 +112,14 @@ const Header = () => {
         {publicMenuItems.map((item) => (
           <NavigationMenuItem key={item.title}>
             <NavigationMenuLink asChild>
-              <Link to={item.path()} className={navigationMenuTriggerStyle()}>
+              <Link
+                to={item.path()}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground",
+                  location.pathname === item.path() &&
+                    "bg-accent text-accent-foreground"
+                )}
+              >
                 <div className="flex items-center gap-2">
                   {item.icon}
                   {item.title}
@@ -363,16 +370,22 @@ const Header = () => {
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
-                <Link to="/login" className={navigationMenuTriggerStyle()}>
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 px-4 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
                   Login
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
-                <Link to="/signup">
-                  <Button>Register</Button>
-                </Link>
+                <Button
+                  className="shadow-lg hover:shadow-xl transition-all hover:scale-105 p-3"
+                  asChild
+                >
+                  <Link to="/signup">Register</Link>
+                </Button>
               </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
@@ -401,17 +414,26 @@ const Header = () => {
                     <Link
                       key={item.title}
                       to={item.path()}
-                      className="flex items-center p-2 rounded-lg hover:bg-accent transition-colors"
+                      className={cn(
+                        "flex items-center p-2 rounded-lg transition-colors",
+                        location.pathname === item.path()
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent/50"
+                      )}
                     >
                       {item.icon}
                       <span className="ml-2 text-sm">{item.title}</span>
+                      <ChevronRight className="h-4 w-4 ml-auto" />
                     </Link>
                   ))}
                   <div className="border-t border-border pt-4 space-y-2">
                     <Button variant="outline" className="w-full" asChild>
                       <Link to="/login">Login</Link>
                     </Button>
-                    <Button className="w-full" asChild>
+                    <Button
+                      className="w-full h-11 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                      asChild
+                    >
                       <Link to="/signup">Register</Link>
                     </Button>
                   </div>
