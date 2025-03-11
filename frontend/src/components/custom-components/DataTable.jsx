@@ -47,7 +47,13 @@ import {
   LayoutGrid,
   MoreHorizontal,
 } from "lucide-react";
-import { format } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachMonthOfInterval,
+  subMonths,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { GridView } from "./GridView";
@@ -78,6 +84,7 @@ const DataTable = ({
   columns = [],
   onCreateNew,
   statusOptions = [],
+  showStatusFilter = true,
   createButtonText = "Create New",
   className,
   isLoading = false,
@@ -89,11 +96,18 @@ const DataTable = ({
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filteredData, setFilteredData] = useState(data);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dateRange, setDateRange] = useState({
-    from: undefined,
-    to: undefined,
-  });
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [viewMode, setViewMode] = useState("table");
+
+  // Generate months for dropdown
+  const months = React.useMemo(() => {
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    return eachMonthOfInterval({
+      start: startOfYear,
+      end: today,
+    }).reverse();
+  }, []);
 
   // Set default view mode based on screen size
   useEffect(() => {
@@ -116,7 +130,7 @@ const DataTable = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Filter data based on search query, status, and date range
+  // Filter data based on search query, status, and selected month
   useEffect(() => {
     let result = [...data];
 
@@ -132,16 +146,19 @@ const DataTable = ({
       result = result.filter((item) => item.status === statusFilter);
     }
 
-    if (dateRange.from && dateRange.to) {
+    if (selectedMonth && selectedMonth !== "all") {
+      const start = startOfMonth(new Date(selectedMonth));
+      const end = endOfMonth(new Date(selectedMonth));
       result = result.filter((item) => {
-        const itemDate = new Date(item.date);
-        return itemDate >= dateRange.from && itemDate <= dateRange.to;
+        if (!item.createdAt) return false;
+        const itemDate = new Date(item.createdAt);
+        return itemDate >= start && itemDate <= end;
       });
     }
 
     setFilteredData(result);
     setCurrentPage(1);
-  }, [data, searchQuery, statusFilter, dateRange]);
+  }, [data, searchQuery, statusFilter, selectedMonth]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -152,7 +169,7 @@ const DataTable = ({
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
-    setDateRange({ from: undefined, to: undefined });
+    setSelectedMonth("all");
   };
 
   // Add actions column if actions are provided
@@ -282,68 +299,66 @@ const DataTable = ({
               </ToggleGroup>
             </div>
 
+            {showStatusFilter && statusOptions.length > 0 && (
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="w-[180px] shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Filter by status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span>All Status</span>
+                    </div>
+                  </SelectItem>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
+              value={selectedMonth}
+              onValueChange={setSelectedMonth}
               disabled={isLoading}
             >
               <SelectTrigger className="w-[180px] shrink-0">
                 <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Filter by status" />
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Filter by creation date" />
                 </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
                     <ChevronsUpDown className="h-4 w-4" />
-                    <span>All Status</span>
+                    <span>All Time</span>
                   </div>
                 </SelectItem>
-                {statusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
+                {months.map((month) => (
+                  <SelectItem
+                    key={month.toISOString()}
+                    value={month.toISOString()}
+                  >
+                    {format(month, "MMMM yyyy")}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-[240px] justify-start text-left font-normal shrink-0",
-                    !dateRange.from && "text-muted-foreground"
-                  )}
-                  disabled={isLoading}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "LLL dd, y")} -{" "}
-                        {format(dateRange.to, "LLL dd, y")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "LLL dd, y")
-                    )
-                  ) : (
-                    <span>Pick a date range</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  numberOfMonths={2}
-                  disabled={isLoading}
-                />
-              </PopoverContent>
-            </Popover>
-            {(searchQuery || statusFilter !== "all" || dateRange.from) && (
+
+            {(searchQuery ||
+              statusFilter !== "all" ||
+              selectedMonth !== "all") && (
               <Button
                 variant="ghost"
                 className="h-9 px-2 lg:px-3 shrink-0"
