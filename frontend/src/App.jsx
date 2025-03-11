@@ -27,6 +27,7 @@ import RequestOtp from "./pages/public/RequestOtp";
 import VerifyOtp from "./pages/public/VerifyOtp";
 import About from "./pages/public/About";
 import Contact from "./pages/public/Contact";
+import Faq from "./pages/public/Faq";
 
 export default function App() {
   const { user } = useAuth();
@@ -124,6 +125,15 @@ export default function App() {
           </PublicRoute>
         }
       />
+      <Route
+        path="/faq"
+        element={
+          <PublicRoute>
+            <Faq />
+          </PublicRoute>
+        }
+      />
+
       {/* Private Routes - Require Authentication */}
       <Route
         path="/student/dashboard/:id"
