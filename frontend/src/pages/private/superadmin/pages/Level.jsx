@@ -153,29 +153,27 @@ export default function Level() {
     try {
       setIsDeleting(true);
       await systemMaintenanceAPI.deleteLevel(deleteDialog.levelToDelete._id);
+      await fetchLevels();
       toast.success("Level deleted successfully");
-      fetchLevels();
+      setDeleteDialog({ isOpen: false, levelToDelete: null });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete level");
     } finally {
       setIsDeleting(false);
-      setDeleteDialog({ isOpen: false, levelToDelete: null });
     }
   };
 
   const handleDeleteCancel = () => {
-    setDeleteDialog({ isOpen: false, levelToDelete: null });
+    if (!isDeleting) {
+      setDeleteDialog({ isOpen: false, levelToDelete: null });
+    }
   };
 
   const handleSubmit = async (data) => {
     try {
       setIsSubmitting(true);
       if (isEditing) {
-        const { level, description } = data;
-        await systemMaintenanceAPI.updateLevel(selectedId, {
-          level,
-          description,
-        });
+        await systemMaintenanceAPI.updateLevel(selectedId, data);
         toast.success("Level updated successfully");
         setIsEditDialogOpen(false);
       } else {
@@ -239,7 +237,10 @@ export default function Level() {
           columns={columns}
           isLoading={isLoading}
           actions={actions}
-          onCreateNew={() => setIsCreateDialogOpen(true)}
+          onCreateNew={() => {
+            setFormData({ level: "", description: "" });
+            setIsCreateDialogOpen(true);
+          }}
           createButtonText={
             <div className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
@@ -287,10 +288,7 @@ export default function Level() {
         </Dialog>
 
         {/* Create Dialog */}
-        <AlertDialog
-          open={isCreateDialogOpen}
-          onOpenChange={() => !isSubmitting && handleDialogClose("create")}
-        >
+        <AlertDialog open={isCreateDialogOpen}>
           <AlertDialogContent className="sm:max-w-[600px]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-semibold">
@@ -310,17 +308,15 @@ export default function Level() {
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
-                variant="outline"
-                onClick={() => handleDialogClose("create")}
+                type="button"
+                onClick={() => !isSubmitting && handleDialogClose("create")}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto"
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="levelForm"
-                className="w-full sm:w-auto"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -337,10 +333,7 @@ export default function Level() {
         </AlertDialog>
 
         {/* Edit Dialog */}
-        <AlertDialog
-          open={isEditDialogOpen}
-          onOpenChange={() => !isSubmitting && handleDialogClose("edit")}
-        >
+        <AlertDialog open={isEditDialogOpen}>
           <AlertDialogContent className="sm:max-w-[600px]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-semibold">
@@ -361,17 +354,15 @@ export default function Level() {
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
-                variant="outline"
-                onClick={() => handleDialogClose("edit")}
+                type="button"
+                onClick={() => !isSubmitting && handleDialogClose("edit")}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto"
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="levelForm"
-                className="w-full sm:w-auto"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (

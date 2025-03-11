@@ -6,7 +6,7 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const formSchema = z.object({
-  level: z.string().min(1, "Level is required"),
+  level: z.string().min(1, "Level name is required"),
   description: z.string().min(1, "Description is required"),
 });
 
@@ -19,32 +19,35 @@ export function LevelForm({
 }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: formData || {
-      level: "",
-      description: "",
+    defaultValues: {
+      level: formData?.level || "",
+      description: formData?.description || "",
     },
+    mode: "onTouched",
   });
 
-  // Update form when formData changes (for edit mode)
   useEffect(() => {
     if (formData) {
-      form.reset(formData);
+      form.reset({
+        level: formData.level || "",
+        description: formData.description || "",
+      });
     }
   }, [formData, form]);
 
-  // Handle form changes
-  const handleFormChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleSubmit = async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error("Form submission error:", error);
+    }
   };
 
   return (
     <Form {...form}>
       <form
         id="levelForm"
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-4"
       >
         {isEdit && formData?.levelId && (
@@ -63,7 +66,6 @@ export function LevelForm({
           placeholder="Enter level (e.g., College, Senior High School)"
           required
           disabled={isSubmitting}
-          onChange={(e) => handleFormChange("level", e.target.value)}
         />
         <FormInput
           form={form}
@@ -72,7 +74,6 @@ export function LevelForm({
           placeholder="Enter level description"
           required
           disabled={isSubmitting}
-          onChange={(e) => handleFormChange("description", e.target.value)}
         />
       </form>
     </Form>
