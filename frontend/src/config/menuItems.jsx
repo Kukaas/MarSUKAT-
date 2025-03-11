@@ -123,6 +123,18 @@ export const menuItems = {
           description: "Manage categories",
         },
         {
+          title: "Sizes",
+          icon: <Ruler />,
+          path: () => "/superadmin/maintenance/sizes",
+          description: "Manage sizes",
+        },
+        {
+          title: "Prices",
+          icon: <DollarSign />,
+          path: () => "/superadmin/maintenance/prices",
+          description: "Manage prices",
+        },
+        {
           title: "Product Types",
           icon: <Package />,
           path: () => "/superadmin/maintenance/product-types",
@@ -139,18 +151,6 @@ export const menuItems = {
           icon: <Box />,
           path: () => "/superadmin/maintenance/raw-material-categories",
           description: "Manage raw material categories",
-        },
-        {
-          title: "Prices",
-          icon: <DollarSign />,
-          path: () => "/superadmin/maintenance/prices",
-          description: "Manage prices",
-        },
-        {
-          title: "Sizes",
-          icon: <Ruler />,
-          path: () => "/superadmin/maintenance/sizes",
-          description: "Manage sizes",
         },
       ],
     },
