@@ -135,16 +135,16 @@ export const menuItems = {
           description: "Manage prices",
         },
         {
-          title: "Product Types",
-          icon: <Package />,
-          path: () => "/superadmin/maintenance/product-types",
-          description: "Manage product types",
-        },
-        {
           title: "Raw Material Type",
           icon: <Boxes />,
           path: () => "/superadmin/maintenance/raw-material-types",
           description: "Manage raw material types",
+        },
+        {
+          title: "Product Types",
+          icon: <Package />,
+          path: () => "/superadmin/maintenance/product-types",
+          description: "Manage product types",
         },
         {
           title: "Raw Material Category",
