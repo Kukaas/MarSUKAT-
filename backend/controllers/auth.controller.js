@@ -49,7 +49,13 @@ export const signup = async (req, res) => {
 
     if (missingFields.length > 0) {
       return res.status(400).json({
-        message: `Missing required fields: ${missingFields.join(", ")}`,
+        message: `Please provide the following required information: ${missingFields
+          .map((field) => field.charAt(0).toUpperCase() + field.slice(1))
+          .join(", ")}`,
+        errors: missingFields.map(
+          (field) =>
+            `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
+        ),
       });
     }
 
@@ -57,7 +63,7 @@ export const signup = async (req, res) => {
     const roleSpecificFields = {
       student: ["studentNumber", "studentGender", "department", "level"],
       commercial: ["address", "gender"],
-      coordinator: ["department", "gender"],
+      coordinator: ["department", "gender", "level"],
     };
 
     const requiredRoleFields = roleSpecificFields[role];
@@ -67,9 +73,13 @@ export const signup = async (req, res) => {
       );
       if (missingRoleFields.length > 0) {
         return res.status(400).json({
-          message: `Missing required fields for ${role}: ${missingRoleFields.join(
-            ", "
-          )}`,
+          message: `Please provide the following required ${role} information: ${missingRoleFields
+            .map((field) => field.charAt(0).toUpperCase() + field.slice(1))
+            .join(", ")}`,
+          errors: missingRoleFields.map(
+            (field) =>
+              `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
+          ),
         });
       }
     }
@@ -78,7 +88,9 @@ export const signup = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
-        message: "An account with this email already exists",
+        message:
+          "This email address is already registered. Please use a different email or try logging in.",
+        errors: ["Email is already in use"],
       });
     }
 
@@ -89,14 +101,17 @@ export const signup = async (req, res) => {
     ) {
       return res.status(422).json({
         message:
-          "Students and Coordinators must use a valid @marsu.edu.ph email address",
+          "Students and Coordinators must use their official @marsu.edu.ph email address",
+        errors: ["Invalid email domain"],
       });
     }
 
     // Validate password strength
     if (password.length < 6) {
       return res.status(400).json({
-        message: "Password must be at least 6 characters long",
+        message:
+          "Password must be at least 6 characters long for security purposes",
+        errors: ["Password is too short"],
       });
     }
 
@@ -176,7 +191,8 @@ export const signup = async (req, res) => {
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ 
-      message: "An error occurred during signup. Please try again later.",
+      message: "We encountered an issue while creating your account. Please try again later.",
+      errors: [error.message],
       error: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }

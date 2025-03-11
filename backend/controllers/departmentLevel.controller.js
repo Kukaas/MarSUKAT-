@@ -19,8 +19,10 @@ export const createDepartmentLevel = async (req, res) => {
     }
 
     const departmentLevel = await DepartmentLevel.create({
-      department: departmentId,
-      level: levelId,
+      department: department.department,
+      departmentId: departmentId,
+      level: level.level,
+      levelId: levelId,
     });
 
     res.status(201).json({
@@ -45,8 +47,8 @@ export const createDepartmentLevel = async (req, res) => {
 export const getAllDepartmentLevels = async (req, res) => {
   try {
     const departmentLevels = await DepartmentLevel.find()
-      .populate("department", "department departmentId")
-      .populate("level", "level levelId");
+      .populate("departmentId", "department departmentId")
+      .populate("levelId", "level levelId");
 
     res.status(200).json({
       success: true,
@@ -64,8 +66,8 @@ export const getAllDepartmentLevels = async (req, res) => {
 export const getActiveDepartmentLevels = async (req, res) => {
   try {
     const departmentLevels = await DepartmentLevel.find({ isActive: true })
-      .populate("department", "department departmentId")
-      .populate("level", "level levelId");
+      .populate("departmentId", "department departmentId")
+      .populate("levelId", "level levelId");
 
     res.status(200).json({
       success: true,
@@ -155,8 +157,8 @@ export const updateDepartmentLevel = async (req, res) => {
     // Check if the combination already exists for a different record
     const existingCombination = await DepartmentLevel.findOne({
       _id: { $ne: id },
-      department: departmentId,
-      level: levelId,
+      department: department.department,
+      level: level.level,
     });
 
     if (existingCombination) {
@@ -169,11 +171,13 @@ export const updateDepartmentLevel = async (req, res) => {
     const departmentLevel = await DepartmentLevel.findByIdAndUpdate(
       id,
       {
-        department: departmentId,
-        level: levelId,
+        department: department.department,
+        departmentId: departmentId,
+        level: level.level,
+        levelId: levelId,
       },
       { new: true }
-    ).populate("department level");
+    ).populate("departmentId levelId");
 
     if (!departmentLevel) {
       return res.status(404).json({

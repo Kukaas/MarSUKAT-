@@ -7,11 +7,19 @@ const departmentLevelSchema = new mongoose.Schema(
       unique: true,
     },
     department: {
+      type: String,
+      required: true,
+    },
+    departmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
       required: true,
     },
     level: {
+      type: String,
+      required: true,
+    },
+    levelId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Level",
       required: true,

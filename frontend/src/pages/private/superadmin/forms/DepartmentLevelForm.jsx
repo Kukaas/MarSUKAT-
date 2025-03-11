@@ -23,6 +23,7 @@ const sortOptionsAlphabetically = (data, labelKey) => {
     .map((item) => ({
       value: item._id,
       label: item[labelKey],
+      name: item[labelKey], // Add the name for reference
     }))
     .sort((a, b) =>
       a.label.localeCompare(b.label, "en", { sensitivity: "base" })
@@ -40,8 +41,8 @@ export function DepartmentLevelForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      departmentId: defaultValues?.department?._id || "",
-      levelId: defaultValues?.level?._id || "",
+      departmentId: defaultValues?.departmentId?._id || "",
+      levelId: defaultValues?.levelId?._id || "",
     },
     mode: "onTouched",
   });
@@ -49,8 +50,8 @@ export function DepartmentLevelForm({
   useEffect(() => {
     if (defaultValues) {
       form.reset({
-        departmentId: defaultValues.department._id,
-        levelId: defaultValues.level._id,
+        departmentId: defaultValues.departmentId._id,
+        levelId: defaultValues.levelId._id,
       });
     }
   }, [defaultValues, form]);
@@ -85,7 +86,20 @@ export function DepartmentLevelForm({
 
   const handleSubmit = async (data) => {
     try {
-      await onSubmit(data);
+      // Find the selected department and level objects
+      const selectedDepartment = departments.find(
+        (d) => d.value === data.departmentId
+      );
+      const selectedLevel = levels.find((l) => l.value === data.levelId);
+
+      // Add the names to the submitted data
+      const enrichedData = {
+        ...data,
+        departmentName: selectedDepartment.name,
+        levelName: selectedLevel.name,
+      };
+
+      await onSubmit(enrichedData);
     } catch (error) {
       console.error("Form submission error:", error);
     }

@@ -85,20 +85,20 @@ export default function DepartmentLevelOptions() {
     {
       key: "department",
       header: "Department",
-      render: (_, row) => (
+      render: (value) => (
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-gray-500" />
-          <span className="font-medium">{row.department.department}</span>
+          <span className="font-medium">{value}</span>
         </div>
       ),
     },
     {
       key: "level",
       header: "Level",
-      render: (_, row) => (
+      render: (value) => (
         <div className="flex items-center gap-2">
           <GraduationCap className="h-4 w-4 text-gray-500" />
-          <span className="font-medium">{row.level.level}</span>
+          <span className="font-medium">{value}</span>
         </div>
       ),
     },
@@ -165,10 +165,7 @@ export default function DepartmentLevelOptions() {
       if (isEditDialogOpen) {
         await systemMaintenanceAPI.updateDepartmentLevel(
           selectedDepartmentLevel._id,
-          {
-            departmentId: data.departmentId,
-            levelId: data.levelId,
-          }
+          data
         );
         toast.success("Department level combination updated successfully");
         setIsEditDialogOpen(false);
@@ -385,7 +382,7 @@ export default function DepartmentLevelOptions() {
           title="Delete Department Level Combination"
           description={
             deleteDialog.itemToDelete
-              ? `Are you sure you want to delete the combination of "${deleteDialog.itemToDelete.department.department}" department and "${deleteDialog.itemToDelete.level.level}" level? This action cannot be undone.`
+              ? `Are you sure you want to delete the combination of "${deleteDialog.itemToDelete.department}" department and "${deleteDialog.itemToDelete.level}" level? This action cannot be undone.`
               : "Are you sure you want to delete this combination? This action cannot be undone."
           }
           isDeleting={isDeleting}

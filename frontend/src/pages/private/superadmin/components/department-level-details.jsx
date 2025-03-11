@@ -57,12 +57,12 @@ export function DepartmentLevelDetails({ departmentLevel }) {
           <DetailItem
             icon={Building2}
             label="Department"
-            value={departmentLevel?.department?.department || "-"}
+            value={departmentLevel?.department || "-"}
           />
           <DetailItem
             icon={GraduationCap}
             label="Level"
-            value={departmentLevel?.level?.level || "-"}
+            value={departmentLevel?.level || "-"}
           />
           <DetailItem
             icon={Calendar}

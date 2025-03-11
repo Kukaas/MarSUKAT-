@@ -19,6 +19,18 @@ api.interceptors.request.use(
   }
 );
 
+// System Maintenance API calls
+export const systemMaintenanceAPI = {
+  getActiveDepartmentLevels: async () => {
+    try {
+      const response = await api.get("/department-levels/active");
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
 // Auth API calls
 export const authAPI = {
   signup: async (userData) => {

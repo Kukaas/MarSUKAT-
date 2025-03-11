@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +26,7 @@ import FormInput from "@/components/custom-components/FormInput";
 import FormSelect from "@/components/custom-components/FormSelect";
 import PasswordInput from "@/components/custom-components/PasswordInput";
 import SectionHeader from "@/components/custom-components/SectionHeader";
-import { authAPI } from "@/lib/api";
+import { authAPI, systemMaintenanceAPI } from "@/lib/api";
 
 const formSchema = z.object({
   role: z.string().min(1, "Please select a role"),
@@ -44,8 +44,11 @@ const formSchema = z.object({
 const SignUp = () => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [departmentLevels, setDepartmentLevels] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [levelOptions, setLevelOptions] = useState([]);
   const navigate = useNavigate();
-  
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,6 +66,61 @@ const SignUp = () => {
   });
 
   const role = form.watch("role");
+  const selectedLevel = form.watch("level");
+
+  // Fetch active department levels
+  useEffect(() => {
+    const fetchDepartmentLevels = async () => {
+      try {
+        const data = await systemMaintenanceAPI.getActiveDepartmentLevels();
+        setDepartmentLevels(data);
+
+        // Extract unique levels for students and coordinators
+        if (role === "student" || role === "coordinator") {
+          const uniqueLevels = [
+            ...new Set(data.filter((dl) => dl.isActive).map((dl) => dl.level)),
+          ]
+            .map((level) => ({
+              value: level,
+              label: level,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+          setLevelOptions(uniqueLevels);
+        }
+      } catch (error) {
+        toast.error("Failed to fetch department levels");
+      }
+    };
+
+    if (role === "student" || role === "coordinator") {
+      fetchDepartmentLevels();
+    }
+  }, [role]);
+
+  // Update department options when level is selected (for students)
+  useEffect(() => {
+    if (role === "student" || role === "coordinator") {
+      if (selectedLevel && departmentLevels.length > 0) {
+        const availableDepartments = departmentLevels
+          .filter((dl) => dl.level === selectedLevel && dl.isActive)
+          .map((dl) => ({
+            value: dl.department,
+            label: dl.department,
+          }));
+
+        // Remove duplicates
+        const uniqueDepartments = [
+          ...new Map(
+            availableDepartments.map((item) => [item.value, item])
+          ).values(),
+        ];
+
+        setDepartmentOptions(uniqueDepartments);
+      } else {
+        setDepartmentOptions([]);
+      }
+    }
+  }, [selectedLevel, departmentLevels, role]);
 
   const getMaxSteps = () => {
     return 4;
@@ -79,7 +137,7 @@ const SignUp = () => {
 
       // Transform role value to match backend expectations
       const transformedRole = data.role.toLowerCase();
-      
+
       // Prepare the data based on role
       const signupData = {
         role: transformedRole,
@@ -103,11 +161,12 @@ const SignUp = () => {
         case "coordinator":
           signupData.department = data.department;
           signupData.gender = data.gender;
+          signupData.level = data.level;
           break;
       }
 
       const response = await authAPI.signup(signupData);
-      
+
       toast.success("Account created successfully!", {
         description: "Please check your email to verify your account.",
       });
@@ -115,12 +174,30 @@ const SignUp = () => {
       // Reset form and navigate to login
       form.reset();
       navigate("/login");
-      
     } catch (error) {
-      const errorMessage = error.message || "An error occurred during signup";
-      toast.error("Signup failed", {
-        description: errorMessage,
-      });
+      // Handle specific error cases
+      if (error.response?.data?.message) {
+        // Show the specific error message from the backend
+        toast.error("Signup failed", {
+          description: error.response.data.message,
+        });
+
+        // Handle validation errors for specific fields
+        if (error.response.data.errors) {
+          error.response.data.errors.forEach((errorMsg) => {
+            // Extract field name from error message if possible
+            const field = errorMsg.toLowerCase().split(" ")[0];
+            if (form.getValues(field)) {
+              form.setError(field, { message: errorMsg });
+            }
+          });
+        }
+      } else {
+        // Show a generic error message
+        toast.error("Signup failed", {
+          description: "An unexpected error occurred. Please try again later.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +211,7 @@ const SignUp = () => {
 
     // Validate current step fields before proceeding
     const currentStepFields = getStepFields(step);
-    const isValid = currentStepFields.every(field => {
+    const isValid = currentStepFields.every((field) => {
       const value = form.getValues(field);
       if (!value) {
         form.setError(field, { message: `${field} is required` });
@@ -184,13 +261,6 @@ const SignUp = () => {
     { value: "male", label: "Male" },
     { value: "female", label: "Female" },
     { value: "other", label: "Other" },
-  ];
-
-  const levelOptions = [
-    { value: "1st", label: "1st Year" },
-    { value: "2nd", label: "2nd Year" },
-    { value: "3rd", label: "3rd Year" },
-    { value: "4th", label: "4th Year" },
   ];
 
   const renderStepContent = () => {
@@ -260,14 +330,14 @@ const SignUp = () => {
       case "student":
         return (
           <>
-            <FormInput
-              form={form}
-              name="studentNumber"
-              label="Student Number"
-              placeholder="Enter student number"
-              icon={GraduationCap}
-            />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormInput
+                form={form}
+                name="studentNumber"
+                label="Student Number"
+                placeholder="Enter student number"
+                icon={GraduationCap}
+              />
               <FormSelect
                 form={form}
                 name="studentGender"
@@ -276,21 +346,23 @@ const SignUp = () => {
                 options={genderOptions}
                 icon={UserCircle2}
               />
-              <FormSelect
-                form={form}
-                name="level"
-                label="Level"
-                placeholder="Select level"
-                options={levelOptions}
-                icon={Users}
-              />
             </div>
-            <FormInput
+            <FormSelect
+              form={form}
+              name="level"
+              label="Level"
+              placeholder="Select level"
+              options={levelOptions}
+              icon={Users}
+            />
+            <FormSelect
               form={form}
               name="department"
               label="Department"
-              placeholder="Enter department"
+              placeholder="Select department"
+              options={departmentOptions}
               icon={Building2}
+              disabled={!form.watch("level")}
             />
           </>
         );
@@ -311,19 +383,29 @@ const SignUp = () => {
               placeholder="Select gender"
               options={genderOptions}
               icon={UserCircle2}
-              className="w-1/2"
+              className="w-full sm:w-1/2"
             />
           </>
         );
       case "coordinator":
         return (
           <>
-            <FormInput
+            <FormSelect
+              form={form}
+              name="level"
+              label="Level"
+              placeholder="Select level"
+              options={levelOptions}
+              icon={Users}
+            />
+            <FormSelect
               form={form}
               name="department"
               label="Department"
-              placeholder="Enter department"
+              placeholder="Select department"
+              options={departmentOptions}
               icon={Building2}
+              disabled={!form.watch("level")}
             />
             <FormSelect
               form={form}
@@ -332,7 +414,7 @@ const SignUp = () => {
               placeholder="Select gender"
               options={genderOptions}
               icon={UserCircle2}
-              className="w-1/2"
+              className="w-full sm:w-1/2"
             />
           </>
         );
