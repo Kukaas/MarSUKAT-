@@ -4,22 +4,29 @@ import {
   verifyEmail,
   login,
   logout,
+  getMe,
+  refreshToken,
 } from "../controllers/auth.controller.js";
-import { authenticateUser } from "../middleware/auth.middleware.js";
+import {
+  authenticateUser,
+  verifyRefreshToken,
+} from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Signup route
+// Public routes
 router.post("/signup", signup);
-
-// Verification routes - handle both GET and POST for better UX
-router.get("/verify/:userId/:uniqueString", verifyEmail);
-router.post("/verify/:userId/:uniqueString", verifyEmail); // Handle form submissions if needed
-
-// Login route
 router.post("/login", login);
 
-// Logout route (requires authentication)
+// Verification routes
+router.get("/verify/:userId/:uniqueString", verifyEmail);
+router.post("/verify/:userId/:uniqueString", verifyEmail);
+
+// Protected routes (require authentication)
+router.get("/me", authenticateUser, getMe);
 router.post("/logout", authenticateUser, logout);
+
+// Token refresh route (requires refresh token)
+router.post("/refresh-token", verifyRefreshToken, refreshToken);
 
 export default router;

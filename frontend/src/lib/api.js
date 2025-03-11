@@ -8,6 +8,17 @@ const api = axios.create({
   },
 });
 
+// Add request interceptor for CSRF protection if needed
+api.interceptors.request.use(
+  async (config) => {
+    // You can add CSRF token here if your backend requires it
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Auth API calls
 export const authAPI = {
   signup: async (userData) => {
@@ -15,7 +26,7 @@ export const authAPI = {
       const response = await api.post("/auth/signup", userData);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: "Network error occurred" };
+      throw error;
     }
   },
 
@@ -24,7 +35,7 @@ export const authAPI = {
       const response = await api.post("/auth/login", credentials);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: "Network error occurred" };
+      throw error;
     }
   },
 
@@ -33,7 +44,7 @@ export const authAPI = {
       const response = await api.post("/auth/logout");
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: "Network error occurred" };
+      throw error;
     }
   },
 
@@ -42,7 +53,27 @@ export const authAPI = {
       const response = await api.get(`/auth/verify/${userId}/${uniqueString}`);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: "Network error occurred" };
+      throw error;
+    }
+  },
+
+  // Add refresh token endpoint
+  refreshToken: async () => {
+    try {
+      const response = await api.post("/auth/refresh-token");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get current user data
+  getMe: async () => {
+    try {
+      const response = await api.get("/auth/me");
+      return response.data;
+    } catch (error) {
+      throw error;
     }
   },
 };

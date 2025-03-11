@@ -9,6 +9,36 @@ import { sendVerificationEmail } from "../utils/emailService.js";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 
+// Rate limiting helper
+const loginAttempts = new Map();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
+
+const isAccountLocked = (email) => {
+  const attempts = loginAttempts.get(email);
+  if (!attempts) return false;
+  
+  if (attempts.count >= MAX_LOGIN_ATTEMPTS && Date.now() - attempts.firstAttempt < LOCKOUT_TIME) {
+    return true;
+  }
+  
+  if (Date.now() - attempts.firstAttempt >= LOCKOUT_TIME) {
+    loginAttempts.delete(email);
+    return false;
+  }
+  
+  return false;
+};
+
+const recordLoginAttempt = (email) => {
+  const attempts = loginAttempts.get(email);
+  if (!attempts) {
+    loginAttempts.set(email, { count: 1, firstAttempt: Date.now() });
+  } else {
+    attempts.count += 1;
+  }
+};
+
 export const signup = async (req, res) => {
   try {
     const { email, password, role, ...otherDetails } = req.body;
@@ -210,67 +240,182 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check for account lockout
+    if (isAccountLocked(email)) {
+      return res.status(429).json({
+        message: "Account temporarily locked. Please try again later.",
+        lockoutRemaining: Math.ceil((LOCKOUT_TIME - (Date.now() - loginAttempts.get(email).firstAttempt)) / 1000 / 60)
+      });
+    }
+
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     // Check if user is verified
     if (!user.verified) {
-      return res
-        .status(401)
-        .json({ message: "Please verify your email first" });
+      return res.status(401).json({ message: "Please verify your email first" });
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid password" });
+      recordLoginAttempt(email);
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
+    // Reset login attempts on successful login
+    loginAttempts.delete(email);
+
+    // Generate refresh token
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Create access token
+    const accessToken = jwt.sign(
+      { 
+        id: user._id, 
+        role: user.role,
+        tokenVersion: user.tokenVersion || 0
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" } // Token expires in 5 hours
+      { expiresIn: "1h" }
     );
 
     // Set cookie options
     const cookieOptions = {
-      expires: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours
-      httpOnly: true, // Cookie cannot be accessed by client-side JS
-      secure: process.env.NODE_ENV === "production", // Only send cookie over HTTPS in production
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      path: "/",
+      domain: process.env.COOKIE_DOMAIN || undefined,
     };
 
-    // Send token in cookie
-    res.cookie("auth_token", token, cookieOptions);
+    // Set refresh token cookie
+    res.cookie("refresh_token", refreshToken, {
+      ...cookieOptions,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    });
+
+    // Set access token cookie
+    res.cookie("access_token", accessToken, {
+      ...cookieOptions,
+      expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+    });
 
     // Send user data (excluding sensitive information)
-    const { password: _, ...userData } = user.toObject();
+    const { password: _, tokenVersion: __, ...userData } = user.toObject();
     res.status(200).json({
       message: "Login successful",
       user: userData,
     });
   } catch (error) {
     console.error("Login error:", error);
-    res
-      .status(500)
-      .json({ message: "Error during login", error: error.message });
+    res.status(500).json({ 
+      message: "An error occurred during login",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("auth_token", {
+    // Clear both access and refresh tokens
+    res.clearCookie("access_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      path: "/",
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
+
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      domain: process.env.COOKIE_DOMAIN || undefined,
+    });
+
+    // Increment token version to invalidate all existing tokens
+    if (req.user) {
+      await User.findByIdAndUpdate(req.user.id, { $inc: { tokenVersion: 1 } });
+    }
+
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
     res.status(500).json({ message: "Error during logout" });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    // User is already verified by authenticateUser middleware
+    const user = await User.findById(req.user.id).select("-password -tokenVersion");
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Get user error:", error);
+    res.status(500).json({ 
+      message: "Error fetching user data",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+};
+
+// New refresh token endpoint
+export const refreshToken = async (req, res) => {
+  try {
+    // User is already verified by verifyRefreshToken middleware
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Create new access token
+    const accessToken = jwt.sign(
+      { 
+        id: user._id, 
+        role: user.role,
+        tokenVersion: user.tokenVersion
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Set new access token cookie
+    res.cookie("access_token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      domain: process.env.COOKIE_DOMAIN || undefined,
+      expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+    });
+
+    res.status(200).json({ 
+      message: "Token refreshed successfully",
+      user: {
+        id: user._id,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    res.status(401).json({ 
+      message: "Failed to refresh token",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };

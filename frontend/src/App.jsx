@@ -1,47 +1,78 @@
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+// Route Guards
+import PrivateRoute from "./components/PrivateRoute";
+import PublicRoute from "./components/PublicRoute";
 
 // Private Pages
 import Dashboard from "./pages/private/Dashboard";
-import PrivateRoute from "./components/PrivateRoute";
 
 // Public Pages
 import Home from "./pages/public/Home";
+import Login from "./pages/public/Login";
 import SignUp from "./pages/public/SignUp";
 import VerificationSuccess from "./pages/public/VerificationSuccess";
 import VerificationError from "./pages/public/VerificationError";
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/signup" element={<SignUp />} />
-        {/* <Route path="/login" element={<Login />} /> */}
+    <Routes>
+      {/* Public Routes - Accessible only when not logged in */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignUp />
+          </PublicRoute>
+        }
+      />
 
-        {/* Verification Routes */}
-        <Route path="/verification-success" element={<VerificationSuccess />} />
-        <Route path="/verification-error" element={<VerificationError />} />
-        {/* Legacy verification route - will be redirected by backend */}
-        <Route
-          path="/api/v1/auth/verify/:userId/:uniqueString"
-          element={<VerificationSuccess />}
-        />
+      {/* Verification Routes - Always accessible */}
+      <Route path="/verification-success" element={<VerificationSuccess />} />
+      <Route path="/verification-error" element={<VerificationError />} />
+      <Route
+        path="/api/v1/auth/verify/:userId/:uniqueString"
+        element={<VerificationSuccess />}
+      />
 
-        {/* Private Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        {/* <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/logout" element={<Logout />} /> */}
-      </Routes>
-    </Router>
+      {/* Private Routes - Require authentication */}
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        }
+      />
+
+      {/* Landing Page - Redirect to dashboard if authenticated, otherwise show home */}
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <Home />
+          </PublicRoute>
+        }
+      />
+
+      {/* Catch all route - Redirect to dashboard if authenticated, otherwise to login */}
+      <Route
+        path="*"
+        element={
+          <PrivateRoute>
+            <Navigate to="/dashboard" replace />
+          </PrivateRoute>
+        }
+      />
+    </Routes>
   );
 }
