@@ -15,7 +15,7 @@ import PrivacyContent from "./PrivacyContent";
 
 const Footer = () => {
   return (
-    <footer className="fixed bottom-0 left-0 right-0 w-full py-4 bg-background border-t z-50">
+    <footer className="w-full py-4 bg-background border-t">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
           <div className="flex items-center space-x-2">
