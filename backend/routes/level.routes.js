@@ -7,7 +7,7 @@ import {
   deleteLevel,
 } from "../controllers/level.controller.js";
 import { isSuperAdmin } from "../middleware/superAdmin.middleware.js";
-import { auth } from "../middleware/auth.middleware.js";
+import { authenticateUser } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -16,8 +16,8 @@ router.get("/", getAllLevels);
 router.get("/:id", getLevelById);
 
 // Super Admin only routes
-router.post("/", auth, isSuperAdmin, createLevel);
-router.put("/:id", auth, isSuperAdmin, updateLevel);
-router.delete("/:id", auth, isSuperAdmin, deleteLevel);
+router.post("/", authenticateUser, isSuperAdmin, createLevel);
+router.put("/:id", authenticateUser, isSuperAdmin, updateLevel);
+router.delete("/:id", authenticateUser, isSuperAdmin, deleteLevel);
 
 export default router;
