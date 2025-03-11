@@ -1,12 +1,15 @@
 import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 // Route Guards
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
 
 // Private Pages
-import Dashboard from "./pages/private/Dashboard";
+import Dashboard from "./pages/private/student/pages/Dashboard";
+import Orders from "./pages/private/student/pages/Orders";
+import Schedule from "./pages/private/student/pages/Schedule";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -16,6 +19,23 @@ import VerificationSuccess from "./pages/public/VerificationSuccess";
 import VerificationError from "./pages/public/VerificationError";
 
 export default function App() {
+  const { user } = useAuth();
+
+  const getDefaultRoute = () => {
+    if (!user) return "/login";
+    const userId = user._id;
+    switch (user.role) {
+      case "Student":
+        return `/student/dashboard/${userId}`;
+      case "Admin":
+        return "/admin/dashboard";
+      case "Staff":
+        return "/staff/dashboard";
+      default:
+        return "/login";
+    }
+  };
+
   return (
     <Routes>
       {/* Public Routes - Accessible only when not logged in */}
@@ -44,17 +64,33 @@ export default function App() {
         element={<VerificationSuccess />}
       />
 
-      {/* Private Routes - Require authentication */}
+      {/* Student Routes */}
       <Route
-        path="/dashboard"
+        path="/student/dashboard/:id"
         element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
         }
       />
+      <Route
+        path="/student/orders/:id"
+        element={
+          <PrivateRoute>
+            <Orders />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/student/schedules/:id"
+        element={
+          <PrivateRoute>
+            <Schedule />
+          </PrivateRoute>
+        }
+      />
 
-      {/* Landing Page - Redirect to dashboard if authenticated, otherwise show home */}
+      {/* Landing Page - Redirect to role-specific dashboard if authenticated */}
       <Route
         path="/"
         element={
@@ -64,15 +100,8 @@ export default function App() {
         }
       />
 
-      {/* Catch all route - Redirect to dashboard if authenticated, otherwise to login */}
-      <Route
-        path="*"
-        element={
-          <PrivateRoute>
-            <Navigate to="/dashboard" replace />
-          </PrivateRoute>
-        }
-      />
+      {/* Catch all route - Redirect to role-specific dashboard if authenticated */}
+      <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
     </Routes>
   );
 }
