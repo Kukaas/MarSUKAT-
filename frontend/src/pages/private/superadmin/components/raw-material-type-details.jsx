@@ -1,5 +1,5 @@
 import { formatDate, cn } from "@/lib/utils";
-import { Box, Calendar, FileText } from "lucide-react";
+import { Box, Calendar, FileText, Tag } from "lucide-react";
 
 const DetailItem = ({ icon: Icon, label, value, className }) => (
   <div className={cn("flex items-center gap-2", className)}>
@@ -33,6 +33,11 @@ export function RawMaterialTypeDetails({ type }) {
             icon={FileText}
             label="Description"
             value={type?.description || "-"}
+          />
+          <DetailItem
+            icon={Tag}
+            label="Category"
+            value={type?.category || "-"}
           />
           <DetailItem
             icon={Calendar}

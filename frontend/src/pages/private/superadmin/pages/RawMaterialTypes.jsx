@@ -2,7 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Eye, Edit2, Trash2, Box } from "lucide-react";
+import { FileText, Plus, Eye, Edit2, Trash2, Box, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
@@ -78,6 +78,16 @@ export default function RawMaterialTypes() {
         <div className="flex items-center gap-2">
           <Box className="h-4 w-4 text-gray-500" />
           <span className="font-medium text-primary">{value}</span>
+        </div>
+      ),
+    },
+    {
+      key: "category",
+      header: "Category",
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Tag className="h-4 w-4 text-gray-500" />
+          <span className="font-medium">{value}</span>
         </div>
       ),
     },
