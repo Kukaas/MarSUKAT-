@@ -19,7 +19,8 @@ const PUBLIC_ROUTES = [
   "/verification-success",
   "/verification-error",
   "/forgot-password",
-  "/verify-otp/:userId", // Dynamic route pattern
+  "/verify-otp/:userId",
+  "/about",
 ];
 
 export function AuthProvider({ children }) {

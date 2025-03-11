@@ -25,6 +25,7 @@ import VerificationSuccess from "./pages/public/VerificationSuccess";
 import VerificationError from "./pages/public/VerificationError";
 import RequestOtp from "./pages/public/RequestOtp";
 import VerifyOtp from "./pages/public/VerifyOtp";
+import About from "./pages/public/About";
 
 export default function App() {
   const { user } = useAuth();
@@ -103,6 +104,14 @@ export default function App() {
         element={
           <PublicRoute>
             <VerifyOtp />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <PublicRoute>
+            <About />
           </PublicRoute>
         }
       />
