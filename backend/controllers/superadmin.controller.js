@@ -22,6 +22,7 @@ export const createSuperAdmin = async (req, res) => {
       password: hashedPassword,
       isAdmin: true,
       verified: true, // Super admin is verified by default
+      role: "SuperAdmin",
     });
 
     const savedSuperAdmin = await superAdmin.save();

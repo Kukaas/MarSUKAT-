@@ -21,7 +21,7 @@ const accessKeySchema = z.object({
 
 const superAdminSchema = z
   .object({
-    username: z.string().min(1, "Username is required"),
+    name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
@@ -33,6 +33,7 @@ const superAdminSchema = z
 
 const CreateSuperAdmin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const accessKeyForm = useForm({
@@ -45,7 +46,7 @@ const CreateSuperAdmin = () => {
   const superAdminForm = useForm({
     resolver: zodResolver(superAdminSchema),
     defaultValues: {
-      username: "",
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -63,16 +64,19 @@ const CreateSuperAdmin = () => {
 
   const handleCreateSuperAdmin = async (data) => {
     try {
+      setIsLoading(true);
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...adminData } = data;
       await authAPI.createSuperAdmin(adminData);
       toast.success("Super admin created successfully!");
-      navigate("/superadmin/dashboard");
+      form.reset();
+      navigate("/login");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to create super admin"
-      );
-      console.error(error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to create super admin";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -120,9 +124,9 @@ const CreateSuperAdmin = () => {
             >
               <FormInput
                 form={superAdminForm}
-                name="username"
-                label="Username"
-                placeholder="Enter username"
+                name="name"
+                label="Name"
+                placeholder="Enter name"
                 icon={User}
               />
               <FormInput
@@ -145,8 +149,8 @@ const CreateSuperAdmin = () => {
                 label="Confirm Password"
                 placeholder="Confirm password"
               />
-              <Button type="submit" className="w-full">
-                Create Super Admin
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Super Admin"}
               </Button>
             </form>
           </Form>

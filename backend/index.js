@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
-import superAdminRoutes from "./routes/superAdmin.routes.js";
+import superAdminRoutes from "./routes/superadmin.routes.js";
 dotenv.config();
 
 const app = express();

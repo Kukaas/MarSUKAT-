@@ -79,7 +79,7 @@ export const authAPI = {
 
   createSuperAdmin: async (adminData) => {
     try {
-      const response = await api.post("/auth/create-super-admin", adminData);
+      const response = await api.post("/superadmin/create", adminData);
       return response.data;
     } catch (error) {
       throw error;
