@@ -301,6 +301,53 @@ export const systemMaintenanceAPI = {
       throw error;
     }
   },
+
+  // Price Management API functions
+  getAllPrices: async () => {
+    try {
+      const response = await api.get("/prices");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getPriceById: async (id) => {
+    try {
+      const response = await api.get(`/prices/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createPrice: async (priceData) => {
+    try {
+      const response = await api.post("/prices", priceData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updatePrice: async (id, priceData) => {
+    try {
+      const { price } = priceData;
+      const response = await api.put(`/prices/${id}`, { price });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deletePrice: async (id) => {
+    try {
+      const response = await api.delete(`/prices/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default systemMaintenanceAPI;

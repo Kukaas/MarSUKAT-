@@ -12,6 +12,7 @@ import otpRoutes from "./routes/otp.routes.js";
 import unitRoutes from "./routes/unit.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import sizeRoutes from "./routes/size.routes.js";
+import priceRoutes from "./routes/price.routes.js";
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use("/api/v1/otp", otpRoutes);
 app.use("/api/v1/units", unitRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/sizes", sizeRoutes);
+app.use("/api/v1/prices", priceRoutes);
 
 // Connect to MongoDB
 mongoose

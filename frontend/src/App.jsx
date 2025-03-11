@@ -19,6 +19,7 @@ import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentL
 import Units from "./pages/private/superadmin/pages/Units";
 import Categories from "./pages/private/superadmin/pages/Categories";
 import Sizes from "./pages/private/superadmin/pages/Sizes";
+import Prices from "./pages/private/superadmin/pages/Prices";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -225,6 +226,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Sizes />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/superadmin/maintenance/prices"
+        element={
+          <PrivateRoute>
+            <Prices />
           </PrivateRoute>
         }
       />
