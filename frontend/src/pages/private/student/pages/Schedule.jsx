@@ -1,3 +1,9 @@
+import PrivateLayout from "../../PrivateLayout";
+
 export default function Schedule() {
-  return <div>Schedule</div>;
+  return (
+    <PrivateLayout>
+      <div>Schedule</div>
+    </PrivateLayout>
+  );
 }

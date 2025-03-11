@@ -1,3 +1,9 @@
+import PrivateLayout from "../../PrivateLayout";
+
 export default function Orders() {
-  return <div>Orders</div>;
+  return (
+    <PrivateLayout>
+      <div>Orders</div>
+    </PrivateLayout>
+  );
 }
