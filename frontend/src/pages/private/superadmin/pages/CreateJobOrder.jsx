@@ -5,6 +5,7 @@ import { JobOrderDetailsDialog } from "../components/job-order-details";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import SectionHeader from "@/components/custom-components/SectionHeader";
 import {
   FileText,
   User,
@@ -263,9 +264,7 @@ export default function CreateJobOrder() {
   return (
     <PrivateLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Job Orders</h1>
-        </div>
+        <SectionHeader title="Job Orders" />
 
         <DataTable
           data={jobOrders}
