@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const productTypesSchema = new mongoose.Schema(
+const productTypeSchema = new mongoose.Schema(
   {
     productTypeId: {
       type: String,
@@ -19,9 +19,16 @@ const productTypesSchema = new mongoose.Schema(
       required: true,
     },
     price: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Price",
+      type: Number,
       required: true,
+      validate: {
+        validator: function (v) {
+          return /^\d+\.\d{2}$/.test(parseFloat(v).toFixed(2));
+        },
+        message: (props) =>
+          `${props.value} is not a valid price. Price must have exactly 2 decimal places.`,
+      },
+      set: (v) => parseFloat(v),
     },
     rawMaterialsUsed: [
       {
@@ -36,7 +43,15 @@ const productTypesSchema = new mongoose.Schema(
         quantity: {
           type: Number,
           required: true,
-          min: [0, "Quantity cannot be negative"],
+          min: [0.01, "Quantity must be greater than 0"],
+          validate: {
+            validator: function (v) {
+              return /^\d+\.\d{2}$/.test(parseFloat(v).toFixed(2));
+            },
+            message: (props) =>
+              `${props.value} is not a valid quantity. Quantity must have exactly 2 decimal places.`,
+          },
+          set: (v) => parseFloat(v),
         },
         unit: {
           type: String,
@@ -49,7 +64,7 @@ const productTypesSchema = new mongoose.Schema(
 );
 
 // Pre-save middleware to generate productTypeId and validate references
-productTypesSchema.pre("save", async function (next) {
+productTypeSchema.pre("save", async function (next) {
   try {
     // Generate productTypeId if not exists
     if (!this.productTypeId) {
@@ -105,6 +120,6 @@ productTypesSchema.pre("save", async function (next) {
   }
 });
 
-const ProductType = mongoose.model("ProductType", productTypesSchema);
+const ProductType = mongoose.model("ProductType", productTypeSchema);
 
 export default ProductType;

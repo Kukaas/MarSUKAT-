@@ -56,7 +56,9 @@ export function ProductTypeDetails({ productType }) {
             icon={Scale}
             label="Price"
             value={
-              productType?.price?.price ? `₱${productType.price.price}` : "-"
+              typeof productType?.price === "number"
+                ? `₱${productType.price.toFixed(2)}`
+                : "-"
             }
           />
           <DetailItem

@@ -121,7 +121,9 @@ export default function ProductTypes() {
       render: (value) => (
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-gray-500" />
-          <span className="font-medium">₱{value.price}</span>
+          <span className="font-medium">
+            ₱{typeof value === "number" ? value.toFixed(2) : "0.00"}
+          </span>
         </div>
       ),
     },
@@ -148,16 +150,24 @@ export default function ProductTypes() {
   };
 
   const handleEdit = (row) => {
+    if (!row._id) {
+      toast.error("Invalid product type ID");
+      return;
+    }
     setFormData({
+      _id: row._id,
+      productTypeId: row.productTypeId,
       level: row.level,
       productType: row.productType,
       size: row.size,
-      price: row.price?._id,
-      productTypeId: row.productTypeId,
+      price: typeof row.price === "number" ? row.price.toFixed(2) : "",
       rawMaterialsUsed: row.rawMaterialsUsed.map((material) => ({
         category: material.category,
         type: material.type,
-        quantity: material.quantity,
+        quantity:
+          typeof material.quantity === "number"
+            ? material.quantity.toFixed(2)
+            : "",
         unit: material.unit,
       })),
     });
@@ -200,8 +210,12 @@ export default function ProductTypes() {
   const handleSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      if (isEditing) {
-        await systemMaintenanceAPI.updateProductType(selectedId, data);
+      if (isEditing && selectedId) {
+        await systemMaintenanceAPI.updateProductType(selectedId, {
+          ...data,
+          _id: selectedId,
+          productTypeId: data.productTypeId,
+        });
         toast.success("Product type updated successfully");
         setIsEditDialogOpen(false);
       } else {

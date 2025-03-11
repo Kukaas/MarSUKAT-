@@ -13,12 +13,22 @@ const formSchema = z.object({
   level: z.string().min(1, "Level is required"),
   productType: z.string().min(1, "Product type is required"),
   size: z.string().min(1, "Size is required"),
-  price: z.string().min(1, "Price is required"),
+  price: z.coerce
+    .number()
+    .min(0.01, "Price must be greater than 0")
+    .refine((val) => /^\d+\.\d{2}$/.test(val.toFixed(2)), {
+      message: "Price must have exactly 2 decimal places",
+    }),
   rawMaterialsUsed: z.array(
     z.object({
       category: z.string().min(1, "Category is required"),
       type: z.string().min(1, "Type is required"),
-      quantity: z.coerce.number().min(0.01, "Quantity must be greater than 0"),
+      quantity: z.coerce
+        .number()
+        .min(0.01, "Quantity must be greater than 0")
+        .refine((val) => /^\d+\.\d{2}$/.test(val.toFixed(2)), {
+          message: "Quantity must have exactly 2 decimal places",
+        }),
       unit: z.string().min(1, "Unit is required"),
     })
   ),
@@ -33,11 +43,11 @@ export function ProductTypeForm({
 }) {
   const [levels, setLevels] = useState([]);
   const [sizes, setSizes] = useState([]);
-  const [prices, setPrices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
   const [rawMaterialTypes, setRawMaterialTypes] = useState([]);
   const [filteredTypes, setFilteredTypes] = useState({});
+  const [prices, setPrices] = useState([]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -66,34 +76,58 @@ export function ProductTypeForm({
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [levelsData, sizesData, pricesData, typesData, unitsData] =
+        const [levelsData, sizesData, typesData, unitsData, pricesData] =
           await Promise.all([
             systemMaintenanceAPI.getAllLevels(),
             systemMaintenanceAPI.getAllSizes(),
-            systemMaintenanceAPI.getAllPrices(),
             systemMaintenanceAPI.getAllRawMaterialTypes(),
             systemMaintenanceAPI.getAllUnits(),
+            systemMaintenanceAPI.getAllPrices(),
           ]);
 
-        setLevels(levelsData.map((l) => ({ value: l.level, label: l.level })));
-        setSizes(sizesData.map((s) => ({ value: s.size, label: s.size })));
+        // Sort levels alphabetically
+        setLevels(
+          levelsData
+            .map((l) => ({ value: l.level, label: l.level }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+        );
+
+        // Sort sizes alphabetically
+        setSizes(
+          sizesData
+            .map((s) => ({ value: s.size, label: s.size }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+        );
+
+        // Sort prices numerically
         setPrices(
-          pricesData.map((p) => ({
-            value: p._id,
-            label: `₱${p.price}`,
-          }))
+          pricesData
+            .map((p) => ({
+              value: p.price.toFixed(2),
+              label: `₱${p.price.toFixed(2)}`,
+            }))
+            .sort((a, b) => parseFloat(a.value) - parseFloat(b.value))
         );
 
         // Store raw material types
         setRawMaterialTypes(typesData);
 
-        // Get unique categories from raw material types
+        // Get unique categories from raw material types and sort alphabetically
         const uniqueCategories = [...new Set(typesData.map((t) => t.category))];
         setCategories(
-          uniqueCategories.map((c) => ({
-            value: c,
-            label: c,
-          }))
+          uniqueCategories
+            .map((c) => ({
+              value: c,
+              label: c,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+        );
+
+        // Sort units alphabetically
+        setUnits(
+          unitsData
+            .map((u) => ({ value: u.unit, label: u.unit }))
+            .sort((a, b) => a.label.localeCompare(b.label))
         );
 
         // If we're in edit mode, set up the filtered types for each material
@@ -106,7 +140,8 @@ export function ProductTypeForm({
                   value: type.name,
                   label: type.name,
                   unit: type.unit,
-                }));
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label));
               setFilteredTypes((prev) => ({
                 ...prev,
                 [index]: typesForCategory,
@@ -114,8 +149,6 @@ export function ProductTypeForm({
             }
           });
         }
-
-        setUnits(unitsData.map((u) => ({ value: u.unit, label: u.unit })));
       } catch (error) {
         console.error("Error fetching options:", error);
       }
@@ -156,14 +189,15 @@ export function ProductTypeForm({
   // Handle category change
   const handleCategoryChange = (index, category) => {
     console.log("Handling category change:", { index, category });
-    // Filter types for the selected category
+    // Filter types for the selected category and sort alphabetically
     const typesForCategory = rawMaterialTypes
       .filter((type) => type.category === category)
       .map((type) => ({
         value: type.name,
         label: type.name,
         unit: type.unit,
-      }));
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
 
     console.log("Types for category:", typesForCategory);
 
@@ -191,8 +225,16 @@ export function ProductTypeForm({
 
   const handleSubmit = async (data) => {
     try {
-      // No need to manually convert quantity as Zod handles it now
-      await onSubmit(data);
+      // Format price and quantities with 2 decimal places
+      const formattedData = {
+        ...data,
+        price: parseFloat(data.price).toFixed(2),
+        rawMaterialsUsed: data.rawMaterialsUsed.map((material) => ({
+          ...material,
+          quantity: parseFloat(material.quantity).toFixed(2),
+        })),
+      };
+      await onSubmit(formattedData);
     } catch (error) {
       console.error("Form submission error:", error);
     }

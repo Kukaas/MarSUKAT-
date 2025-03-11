@@ -11,7 +11,7 @@ import RawMaterialType from "../models/rawMaterialType.model.js";
 // @access  Private
 export const getAllProductTypes = async (req, res) => {
   try {
-    const productTypes = await ProductType.find().populate("price");
+    const productTypes = await ProductType.find();
     res.status(200).json(productTypes);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -23,9 +23,7 @@ export const getAllProductTypes = async (req, res) => {
 // @access  Private
 export const getProductTypeById = async (req, res) => {
   try {
-    const productType = await ProductType.findById(req.params.id).populate(
-      "price"
-    );
+    const productType = await ProductType.findById(req.params.id);
     if (!productType) {
       return res.status(404).json({ message: "Product type not found" });
     }
@@ -40,12 +38,6 @@ export const getProductTypeById = async (req, res) => {
 // @access  Private/SuperAdmin
 export const createProductType = async (req, res) => {
   try {
-    // Verify if price exists
-    const price = await Price.findById(req.body.price);
-    if (!price) {
-      return res.status(400).json({ message: "Invalid price ID" });
-    }
-
     // Verify if level exists
     const levelExists = await Level.findOne({ level: req.body.level });
     if (!levelExists) {
@@ -100,8 +92,11 @@ export const createProductType = async (req, res) => {
       level: req.body.level,
       productType: req.body.productType,
       size: req.body.size,
-      price: req.body.price,
-      rawMaterialsUsed: req.body.rawMaterialsUsed,
+      price: parseFloat(req.body.price),
+      rawMaterialsUsed: req.body.rawMaterialsUsed.map((material) => ({
+        ...material,
+        quantity: parseFloat(material.quantity),
+      })),
     });
 
     const savedProductType = await newProductType.save();
@@ -117,85 +112,28 @@ export const createProductType = async (req, res) => {
 // @access  Private/SuperAdmin
 export const updateProductType = async (req, res) => {
   try {
-    const productType = await ProductType.findById(req.params.id);
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "Product type ID is required" });
+    }
+
+    const productType = await ProductType.findById(id);
     if (!productType) {
       return res.status(404).json({ message: "Product type not found" });
     }
 
-    if (req.body.price) {
-      // Verify if new price exists
-      const price = await Price.findById(req.body.price);
-      if (!price) {
-        return res.status(400).json({ message: "Invalid price ID" });
-      }
-    }
-
-    if (req.body.level) {
-      // Verify if level exists
-      const levelExists = await Level.findOne({ level: req.body.level });
-      if (!levelExists) {
-        return res.status(400).json({ message: "Invalid level specified" });
-      }
-    }
-
-    if (req.body.size) {
-      // Verify if size exists
-      const sizeExists = await Size.findOne({ size: req.body.size });
-      if (!sizeExists) {
-        return res.status(400).json({ message: "Invalid size specified" });
-      }
-    }
-
-    if (req.body.rawMaterialsUsed) {
-      for (const material of req.body.rawMaterialsUsed) {
-        // Verify category
-        const categoryExists = await Category.findOne({
-          category: material.category,
-        });
-        if (!categoryExists) {
-          return res
-            .status(400)
-            .json({ message: `Invalid category: ${material.category}` });
-        }
-
-        // Verify type
-        const typeExists = await RawMaterialType.findOne({
-          name: material.type,
-        });
-        if (!typeExists) {
-          return res
-            .status(400)
-            .json({ message: `Invalid raw material type: ${material.type}` });
-        }
-
-        // Verify unit
-        const unitExists = await Unit.findOne({ unit: material.unit });
-        if (!unitExists) {
-          return res
-            .status(400)
-            .json({ message: `Invalid unit: ${material.unit}` });
-        }
-
-        // Verify quantity is positive
-        if (material.quantity <= 0) {
-          return res.status(400).json({ message: "Quantity must be positive" });
-        }
-      }
-    }
-
-    // Update fields
-    Object.keys(req.body).forEach((key) => {
-      productType[key] = req.body[key];
-    });
-
+    // Update the product type fields
+    Object.assign(productType, updates);
     const updatedProductType = await productType.save();
-    await updatedProductType.populate("price");
+
     res.status(200).json(updatedProductType);
   } catch (error) {
-    if (error.name === "CastError") {
-      return res.status(400).json({ message: "Invalid ID format" });
-    }
-    res.status(400).json({ message: error.message });
+    console.error("Error updating product type:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to update product type", error: error.message });
   }
 };
 
@@ -212,9 +150,6 @@ export const deleteProductType = async (req, res) => {
     await productType.deleteOne();
     res.status(200).json({ message: "Product type deleted successfully" });
   } catch (error) {
-    if (error.name === "CastError") {
-      return res.status(400).json({ message: "Invalid ID format" });
-    }
     res.status(500).json({ message: error.message });
   }
 };
