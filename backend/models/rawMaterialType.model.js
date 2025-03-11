@@ -18,6 +18,10 @@ const rawMaterialTypeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    unit: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

@@ -2,7 +2,16 @@ import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Eye, Edit2, Trash2, Box, Tag } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  Eye,
+  Edit2,
+  Trash2,
+  Box,
+  Tag,
+  Ruler,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
@@ -102,6 +111,16 @@ export default function RawMaterialTypes() {
       ),
     },
     {
+      key: "unit",
+      header: "Unit",
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Ruler className="h-4 w-4 text-gray-500" />
+          <span className="font-medium">{value}</span>
+        </div>
+      ),
+    },
+    {
       key: "description",
       header: "Description",
       render: (value) => value || "-",
@@ -132,6 +151,8 @@ export default function RawMaterialTypes() {
     setFormData({
       name: row.name,
       description: row.description,
+      category: row.category,
+      unit: row.unit,
       typeId: row.typeId,
     });
     setSelectedId(row._id);

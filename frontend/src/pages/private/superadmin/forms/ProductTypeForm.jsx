@@ -132,6 +132,7 @@ export function ProductTypeForm({
       .map((type) => ({
         value: type.name,
         label: type.name,
+        unit: type.unit,
       }));
 
     // Update filtered types for this index
@@ -142,6 +143,16 @@ export function ProductTypeForm({
       };
       return newState;
     });
+  };
+
+  // Handle type change to set the corresponding unit
+  const handleTypeChange = (index, typeName) => {
+    const selectedType = rawMaterialTypes.find(
+      (type) => type.name === typeName
+    );
+    if (selectedType) {
+      form.setValue(`rawMaterialsUsed.${index}.unit`, selectedType.unit);
+    }
   };
 
   const handleSubmit = async (data) => {
@@ -254,8 +265,9 @@ export function ProductTypeForm({
                   disabled={isSubmitting}
                   onValueChange={(value) => {
                     console.log("Category selected:", value);
-                    // Clear the type field
+                    // Clear the type and unit fields
                     form.setValue(`rawMaterialsUsed.${index}.type`, "");
+                    form.setValue(`rawMaterialsUsed.${index}.unit`, "");
                     // Set the new category
                     form.setValue(`rawMaterialsUsed.${index}.category`, value);
                     // Update filtered types
@@ -273,6 +285,18 @@ export function ProductTypeForm({
                     isSubmitting ||
                     !form.watch(`rawMaterialsUsed.${index}.category`)
                   }
+                  onValueChange={(value) => {
+                    form.setValue(`rawMaterialsUsed.${index}.type`, value);
+                    handleTypeChange(index, value);
+                  }}
+                />
+                <FormInput
+                  form={form}
+                  name={`rawMaterialsUsed.${index}.unit`}
+                  label="Unit"
+                  placeholder="Unit will be set automatically"
+                  required
+                  disabled={true}
                 />
                 <FormInput
                   form={form}
@@ -282,15 +306,6 @@ export function ProductTypeForm({
                   step="0.01"
                   min="0.01"
                   placeholder="Enter quantity"
-                  required
-                  disabled={isSubmitting}
-                />
-                <FormSelect
-                  form={form}
-                  name={`rawMaterialsUsed.${index}.unit`}
-                  label="Unit"
-                  placeholder="Select unit"
-                  options={units}
                   required
                   disabled={isSubmitting}
                 />

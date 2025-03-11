@@ -11,6 +11,7 @@ import { Tag } from "lucide-react";
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   category: z.string().min(1, "Category is required"),
+  unit: z.string().min(1, "Unit is required"),
   description: z.string().optional(),
 });
 
@@ -22,12 +23,14 @@ export function RawMaterialTypeForm({
   isSubmitting = false,
 }) {
   const [categories, setCategories] = useState([]);
+  const [units, setUnits] = useState([]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: formData?.name || "",
       category: formData?.category || "",
+      unit: formData?.unit || "",
       description: formData?.description || "",
     },
     mode: "onTouched",
@@ -38,26 +41,38 @@ export function RawMaterialTypeForm({
       form.reset({
         name: formData.name || "",
         category: formData.category || "",
+        unit: formData.unit || "",
         description: formData.description || "",
       });
     }
   }, [formData, form]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchOptions = async () => {
       try {
-        const data = await systemMaintenanceAPI.getAllCategories();
+        const [categoriesData, unitsData] = await Promise.all([
+          systemMaintenanceAPI.getAllCategories(),
+          systemMaintenanceAPI.getAllUnits(),
+        ]);
+        
         setCategories(
-          data.map((cat) => ({
+          categoriesData.map((cat) => ({
             value: cat.category,
             label: cat.category,
           }))
         );
+
+        setUnits(
+          unitsData.map((unit) => ({
+            value: unit.unit,
+            label: unit.unit,
+          }))
+        );
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching options:", error);
       }
     };
-    fetchCategories();
+    fetchOptions();
   }, []);
 
   const handleSubmit = async (data) => {
@@ -99,6 +114,15 @@ export function RawMaterialTypeForm({
           placeholder="Select a category"
           options={categories}
           icon={Tag}
+          required
+          disabled={isSubmitting}
+        />
+        <FormSelect
+          form={form}
+          name="unit"
+          label="Unit"
+          placeholder="Select a unit"
+          options={units}
           required
           disabled={isSubmitting}
         />

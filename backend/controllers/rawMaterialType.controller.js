@@ -61,6 +61,7 @@ export const createRawMaterialType = async (req, res) => {
       name: req.body.name,
       description: req.body.description,
       category: req.body.category,
+      unit: req.body.unit,
     });
 
     const savedType = await newType.save();
@@ -94,6 +95,7 @@ export const updateRawMaterialType = async (req, res) => {
     typeToUpdate.name = req.body.name;
     typeToUpdate.description = req.body.description;
     typeToUpdate.category = req.body.category;
+    typeToUpdate.unit = req.body.unit;
 
     const updatedType = await typeToUpdate.save();
     res.status(200).json(updatedType);
