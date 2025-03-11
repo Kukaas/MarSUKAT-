@@ -27,18 +27,18 @@ export function DeleteConfirmation({
         }
       }}
     >
-      <AlertDialogContent className="sm:max-w-[425px]">
+      <AlertDialogContent className="sm:max-w-[425px] bg-background">
         <div className="grid gap-6 py-4">
           <AlertDialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-destructive/10">
                 <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
-              <AlertDialogTitle className="text-xl font-semibold">
+              <AlertDialogTitle className="text-xl font-semibold text-foreground">
                 {title}
               </AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-base leading-6">
+            <AlertDialogDescription className="text-base leading-6 text-muted-foreground">
               {description}
             </AlertDialogDescription>
           </AlertDialogHeader>

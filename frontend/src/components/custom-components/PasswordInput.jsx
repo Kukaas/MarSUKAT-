@@ -26,15 +26,15 @@ const PasswordInput = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-sm font-medium text-gray-700">
+          <FormLabel className="text-sm font-medium text-foreground">
             {label}
           </FormLabel>
           <FormControl>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 z-10" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
               <div className="relative">
                 <Input
-                  className={`pl-10 pr-10 h-11 bg-white border-gray-200 ring-offset-white focus:ring-gray-200 ${className}`}
+                  className={`pl-10 pr-10 h-11 bg-background border-input ring-offset-background focus-visible:ring-ring ${className}`}
                   type={showPassword ? "text" : "password"}
                   placeholder={placeholder}
                   {...field}
@@ -44,7 +44,7 @@ const PasswordInput = ({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-500"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (

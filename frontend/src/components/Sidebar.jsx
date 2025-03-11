@@ -62,16 +62,16 @@ export default function AppSidebar() {
           <AccordionItem value={item.title} className="border-none">
             <AccordionTrigger
               className={`group flex items-center gap-1.5 rounded-lg text-sm transition-all duration-200 ease-in-out
-                hover:bg-zinc-50 hover:no-underline p-0 
-                data-[state=open]:bg-zinc-50 data-[state=open]:text-zinc-900`}
+                hover:bg-muted/80 dark:hover:bg-muted/20 hover:no-underline p-0 
+                data-[state=open]:bg-muted/80 dark:data-[state=open]:bg-muted/20 data-[state=open]:text-foreground`}
             >
               <div className="flex items-center gap-3 px-3 py-2.5 w-full">
                 <span
                   className={`h-5 w-5 flex items-center justify-center transition-colors duration-200
                     ${
                       openAccordion === item.title
-                        ? "text-zinc-900"
-                        : "text-zinc-400 group-hover:text-zinc-600"
+                        ? "text-foreground"
+                        : "text-muted-foreground group-hover:text-foreground"
                     }`}
                 >
                   {item.icon}
@@ -80,8 +80,8 @@ export default function AppSidebar() {
                   className={`font-medium leading-none transition-colors duration-200
                     ${
                       openAccordion === item.title
-                        ? "text-zinc-900"
-                        : "text-zinc-600 group-hover:text-zinc-800"
+                        ? "text-foreground"
+                        : "text-muted-foreground group-hover:text-foreground"
                     }`}
                 >
                   {item.title}
@@ -99,16 +99,16 @@ export default function AppSidebar() {
                     className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ease-in-out ml-4
                       ${
                         isActive
-                          ? "bg-zinc-100 text-zinc-900"
-                          : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+                          ? "bg-muted/80 dark:bg-muted/20 text-foreground"
+                          : "text-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/20 hover:text-foreground"
                       }`}
                   >
                     <span
                       className={`h-5 w-5 flex items-center justify-center transition-colors duration-200
                         ${
                           isActive
-                            ? "text-zinc-900"
-                            : "text-zinc-400 group-hover:text-zinc-600"
+                            ? "text-foreground"
+                            : "text-muted-foreground group-hover:text-foreground"
                         }`}
                     >
                       {subItem.icon}
@@ -133,16 +133,16 @@ export default function AppSidebar() {
         className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ease-in-out
           ${
             isActive
-              ? "bg-zinc-100 text-zinc-900"
-              : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+              ? "bg-muted/80 dark:bg-muted/20 text-foreground"
+              : "text-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/20 hover:text-foreground"
           }`}
       >
         <span
           className={`h-5 w-5 flex items-center justify-center transition-colors duration-200
             ${
               isActive
-                ? "text-zinc-900"
-                : "text-zinc-400 group-hover:text-zinc-600"
+                ? "text-foreground"
+                : "text-muted-foreground group-hover:text-foreground"
             }`}
         >
           {item.icon}
@@ -153,7 +153,7 @@ export default function AppSidebar() {
   };
 
   return (
-    <div className="hidden md:flex h-full flex-col bg-white border-r border-zinc-100">
+    <div className="hidden md:flex h-full flex-col bg-background border-r border-border">
       <ScrollArea className="h-[calc(100vh-4rem)]">
         <div className="px-3 py-6 space-y-1.5">
           {currentMenuItems.map((item) => renderMenuItem(item))}

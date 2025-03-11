@@ -88,19 +88,19 @@ export default function VerifyOtp() {
         </div>
 
         <div className="lg:col-start-2 mt-10">
-          <div className="min-h-screen bg-white lg:bg-gray-50/50">
+          <div className="min-h-screen bg-background">
             <div className="w-full px-6 py-16 lg:px-8 xl:px-12">
               <div className="w-full max-w-md mx-auto">
                 <div className="text-center mb-12 animate-fade-in">
-                  <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
+                  <h2 className="text-4xl font-bold tracking-tight text-foreground">
                     Verify OTP
                   </h2>
-                  <p className="mt-3 text-base text-gray-600">
+                  <p className="mt-3 text-base text-muted-foreground">
                     Enter the OTP sent to your email and set a new password
                   </p>
                 </div>
 
-                <Card className="group hover:shadow-xl transition-all border-gray-100/50 bg-white">
+                <Card className="group hover:shadow-xl transition-all border-border bg-card">
                   <CardContent className="p-8">
                     <Form {...form}>
                       <form
@@ -132,7 +132,7 @@ export default function VerifyOtp() {
 
                         <Button
                           type="submit"
-                          className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                          className="w-full h-11 shadow-lg hover:shadow-xl transition-all hover:scale-105"
                           disabled={isLoading}
                         >
                           {isLoading ? (
@@ -145,11 +145,11 @@ export default function VerifyOtp() {
                           )}
                         </Button>
 
-                        <p className="text-center text-sm text-gray-500 mt-6">
+                        <p className="text-center text-sm text-muted-foreground mt-6">
                           Didn't receive the code?{" "}
                           <Link
                             to="/forgot-password"
-                            className="font-medium text-gray-900 hover:text-gray-700 transition-colors"
+                            className="font-medium text-foreground hover:text-muted-foreground transition-colors"
                           >
                             Request again
                           </Link>

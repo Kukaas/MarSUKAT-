@@ -83,7 +83,7 @@ const GridView = ({
           <CardHeader className="space-y-3 pb-3">
             {/* Header - First column (usually ID or title) */}
             <div className="flex items-center justify-between">
-              <div className="font-medium">
+              <div className="font-medium text-foreground">
                 {columns[0]?.render
                   ? columns[0].render(item[columns[0].key], item)
                   : item[columns[0].key]}
@@ -174,7 +174,7 @@ const GridView = ({
                       <div className="text-sm font-medium text-muted-foreground">
                         {column.header}
                       </div>
-                      <div>
+                      <div className="text-foreground">
                         {column.render
                           ? column.render(item[column.key], item)
                           : item[column.key]}

@@ -23,18 +23,18 @@ const FormInput = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-sm font-medium text-gray-700">
+          <FormLabel className="text-sm font-medium text-foreground">
             {label}
           </FormLabel>
           <FormControl>
             <div className="relative">
               {Icon && (
-                <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               )}
               <Input
                 className={`${
                   Icon ? "pl-10" : ""
-                } h-11 bg-white border-gray-200 ring-offset-white focus:ring-gray-200 ${className}`}
+                } h-11 bg-background border-input ring-offset-background focus-visible:ring-ring ${className}`}
                 type={type}
                 placeholder={placeholder}
                 {...field}

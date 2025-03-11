@@ -23,20 +23,22 @@ const ViewDetailsDialog = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className={cn(
-          "flex flex-col gap-0 p-0",
+          "flex flex-col gap-0 p-0 bg-background",
           maxWidth,
           "h-[85vh]",
           className
         )}
       >
         {/* Sticky Header */}
-        <DialogHeader className="flex-none sticky top-0 z-50 bg-background px-6 py-4 border-b">
+        <DialogHeader className="flex-none sticky top-0 z-50 bg-background px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-foreground">
+              {title}
+            </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
@@ -50,7 +52,7 @@ const ViewDetailsDialog = ({
         </ScrollArea>
 
         {/* Sticky Footer */}
-        <DialogFooter className="flex-none px-6 py-4 border-t">
+        <DialogFooter className="flex-none px-6 py-4 border-t border-border">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

@@ -29,13 +29,13 @@ const FormSelect = ({
       name={name}
       render={({ field }) => (
         <FormItem className={className}>
-          <FormLabel className="text-sm font-medium text-gray-700">
+          <FormLabel className="text-sm font-medium text-foreground">
             {label}
           </FormLabel>
           <FormControl>
             <div className="relative">
               {Icon && (
-                <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 z-10" />
+                <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
               )}
               <Select
                 onValueChange={field.onChange}
@@ -45,7 +45,7 @@ const FormSelect = ({
                 <SelectTrigger
                   className={`${
                     Icon ? "pl-10" : ""
-                  } h-11 bg-white border-gray-200 ring-offset-white focus:ring-gray-200 w-full`}
+                  } h-11 bg-background border-input ring-offset-background focus:ring-ring w-full`}
                 >
                   <SelectValue placeholder={placeholder} />
                 </SelectTrigger>

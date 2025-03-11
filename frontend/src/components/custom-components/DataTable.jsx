@@ -6,7 +6,6 @@ import {
   Table,
   TableHeader,
   TableBody,
-  TableFooter,
   TableHead,
   TableRow,
   TableCell,
@@ -18,12 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search,
   Calendar as CalendarIcon,
@@ -384,11 +375,11 @@ const DataTable = ({
 
       {/* Content */}
       {viewMode === "table" ? (
-        <div className="rounded-md border bg-card hidden md:block">
+        <div className="rounded-md border bg-background">
           <div className="relative w-full overflow-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
                   {columnsWithActions.map((column) => (
                     <TableHead
                       key={column.key}
@@ -420,7 +411,7 @@ const DataTable = ({
                       key={index}
                       className={cn(
                         "transition-colors hover:bg-muted/50",
-                        index % 2 === 0 ? "bg-white" : "bg-muted/20"
+                        index % 2 === 0 ? "bg-background" : "bg-muted/20"
                       )}
                     >
                       {columnsWithActions.map((column) => (
