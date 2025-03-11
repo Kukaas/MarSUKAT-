@@ -6,7 +6,7 @@ import {
   useCallback,
 } from "react";
 import api from "@/lib/api";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, matchPath } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -18,6 +18,8 @@ const PUBLIC_ROUTES = [
   "/create-super-admin",
   "/verification-success",
   "/verification-error",
+  "/forgot-password",
+  "/verify-otp/:userId", // Dynamic route pattern
 ];
 
 export function AuthProvider({ children }) {
@@ -26,6 +28,11 @@ export function AuthProvider({ children }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Helper function to check if current path matches any public route pattern
+  const isPublicRoute = (pathname) => {
+    return PUBLIC_ROUTES.some((route) => matchPath({ path: route }, pathname));
+  };
 
   // Function to handle logout
   const logout = useCallback(
@@ -64,7 +71,7 @@ export function AuthProvider({ children }) {
         // Don't attempt refresh for logout requests or public routes
         if (
           originalRequest.url.includes("/auth/logout") ||
-          PUBLIC_ROUTES.some(route => location.pathname === route)
+          isPublicRoute(location.pathname)
         ) {
           return Promise.reject(error);
         }
@@ -114,7 +121,7 @@ export function AuthProvider({ children }) {
     const initializeAuth = async () => {
       try {
         // Skip auth check for public routes
-        if (PUBLIC_ROUTES.some(route => location.pathname === route)) {
+        if (isPublicRoute(location.pathname)) {
           setLoading(false);
           return;
         }
@@ -148,7 +155,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
   };
 
-  if (loading && !PUBLIC_ROUTES.some(route => location.pathname === route)) {
+  if (loading && !isPublicRoute(location.pathname)) {
     return null; // Or a loading spinner component
   }
 

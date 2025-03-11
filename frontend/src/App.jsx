@@ -13,6 +13,9 @@ import Schedule from "./pages/private/student/pages/Schedule";
 import CreateSuperAdmin from "./pages/private/superadmin/pages/CreateSuperAdmin";
 import SuperAdminDashboard from "./pages/private/superadmin/pages/Dashboard";
 import Level from "./pages/private/superadmin/pages/Level";
+import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
+import Department from "./pages/private/superadmin/pages/Department";
+import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentLevelOptions";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -20,9 +23,8 @@ import Login from "./pages/public/Login";
 import SignUp from "./pages/public/SignUp";
 import VerificationSuccess from "./pages/public/VerificationSuccess";
 import VerificationError from "./pages/public/VerificationError";
-import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
-import Department from "./pages/private/superadmin/pages/Department";
-import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentLevelOptions";
+import RequestOtp from "./pages/public/RequestOtp";
+import VerifyOtp from "./pages/public/VerifyOtp";
 
 export default function App() {
   const { user } = useAuth();
@@ -85,6 +87,22 @@ export default function App() {
         element={
           <PublicRoute>
             <Home />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <RequestOtp />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/verify-otp/:userId"
+        element={
+          <PublicRoute>
+            <VerifyOtp />
           </PublicRoute>
         }
       />

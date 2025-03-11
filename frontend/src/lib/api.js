@@ -31,6 +31,27 @@ export const systemMaintenanceAPI = {
   },
 };
 
+// OTP API calls
+export const otpAPI = {
+  requestOTP: async (email) => {
+    try {
+      const response = await api.post("/otp/request", { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  verifyOTPAndChangePassword: async (data) => {
+    try {
+      const response = await api.post("/otp/verify", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
 // Auth API calls
 export const authAPI = {
   signup: async (userData) => {
