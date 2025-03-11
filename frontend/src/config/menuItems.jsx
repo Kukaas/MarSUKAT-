@@ -38,7 +38,7 @@ export const menuItems = {
     {
       title: "Contact",
       icon: <Phone />,
-      path: () => "/contact",
+      path: () => "/contact-us",
       description: "Get in touch",
     },
     {

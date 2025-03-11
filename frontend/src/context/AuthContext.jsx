@@ -21,6 +21,7 @@ const PUBLIC_ROUTES = [
   "/forgot-password",
   "/verify-otp/:userId",
   "/about",
+  "/contact-us",
 ];
 
 export function AuthProvider({ children }) {

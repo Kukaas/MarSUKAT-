@@ -26,6 +26,7 @@ import VerificationError from "./pages/public/VerificationError";
 import RequestOtp from "./pages/public/RequestOtp";
 import VerifyOtp from "./pages/public/VerifyOtp";
 import About from "./pages/public/About";
+import Contact from "./pages/public/Contact";
 
 export default function App() {
   const { user } = useAuth();
@@ -115,7 +116,14 @@ export default function App() {
           </PublicRoute>
         }
       />
-
+      <Route
+        path="/contact-us"
+        element={
+          <PublicRoute>
+            <Contact />
+          </PublicRoute>
+        }
+      />
       {/* Private Routes - Require Authentication */}
       <Route
         path="/student/dashboard/:id"
