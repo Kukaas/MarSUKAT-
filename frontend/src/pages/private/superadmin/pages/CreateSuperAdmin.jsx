@@ -10,6 +10,7 @@ import * as z from "zod";
 import FormInput from "@/components/custom-components/FormInput";
 import PasswordInput from "@/components/custom-components/PasswordInput";
 import { authAPI } from "@/lib/api";
+import { User, Mail } from "lucide-react";
 
 const SUPER_ADMIN_ACCESS_KEY =
   import.meta.env.VITE_SUPER_ADMIN_ACCESS_KEY || "your-secure-key-here";
@@ -122,6 +123,7 @@ const CreateSuperAdmin = () => {
                 name="username"
                 label="Username"
                 placeholder="Enter username"
+                icon={User}
               />
               <FormInput
                 form={superAdminForm}
@@ -129,6 +131,7 @@ const CreateSuperAdmin = () => {
                 label="Email"
                 type="email"
                 placeholder="Enter email"
+                icon={Mail}
               />
               <PasswordInput
                 form={superAdminForm}

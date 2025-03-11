@@ -31,7 +31,7 @@ const PasswordInput = ({
           </FormLabel>
           <FormControl>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 z-10" />
               <div className="relative">
                 <Input
                   className={`pl-10 pr-10 h-11 bg-white border-gray-200 ring-offset-white focus:ring-gray-200 ${className}`}
