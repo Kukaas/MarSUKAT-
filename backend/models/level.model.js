@@ -5,7 +5,6 @@ const levelSchema = new mongoose.Schema(
     levelId: {
       type: String,
       unique: true,
-      required: true,
     },
     level: {
       type: String,
@@ -26,7 +25,7 @@ levelSchema.pre("save", async function (next) {
   if (!this.levelId) {
     const year = new Date().getFullYear();
     const count = (await mongoose.model("Level").countDocuments()) + 1;
-    this.levelId = `${year}-${String(count).padStart(3, "0")}`;
+    this.levelId = `LVL-${year}-${String(count).padStart(3, "0")}`;
   }
   next();
 });

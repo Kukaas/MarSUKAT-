@@ -4,6 +4,15 @@ import Level from "../models/level.model.js";
 export const createLevel = async (req, res) => {
   try {
     // Super admin check is handled by middleware
+
+    // Check if a level with the same name already exists
+    const existingLevel = await Level.findOne({ level: req.body.level });
+    if (existingLevel) {
+      return res.status(400).json({
+        message: "A level with this name already exists",
+      });
+    }
+
     const newLevel = new Level({
       level: req.body.level,
       description: req.body.description,
@@ -42,22 +51,30 @@ export const getLevelById = async (req, res) => {
 // Update level (Super Admin only)
 export const updateLevel = async (req, res) => {
   try {
-    // Super admin check is handled by middleware
+    // First check if the level exists
+    const existingLevel = await Level.findById(req.params.id);
+    if (!existingLevel) {
+      return res.status(404).json({ message: "Level not found" });
+    }
+
+    // Keep the existing levelId and update other fields
     const updatedLevel = await Level.findByIdAndUpdate(
       req.params.id,
       {
-        level: req.body.level,
-        description: req.body.description,
+        $set: {
+          level: req.body.level,
+          description: req.body.description,
+          // levelId remains unchanged
+        },
       },
       { new: true }
     );
 
-    if (!updatedLevel) {
-      return res.status(404).json({ message: "Level not found" });
-    }
-
     res.status(200).json(updatedLevel);
   } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid level ID format" });
+    }
     res.status(400).json({ message: error.message });
   }
 };
@@ -74,6 +91,9 @@ export const deleteLevel = async (req, res) => {
 
     res.status(200).json({ message: "Level deleted successfully" });
   } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid level ID format" });
+    }
     res.status(500).json({ message: error.message });
   }
 };
