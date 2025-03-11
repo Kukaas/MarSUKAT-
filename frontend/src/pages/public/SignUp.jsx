@@ -157,11 +157,11 @@ const SignUp = () => {
       case 3:
         return ["password"];
       case 4:
-        if (role === "Student") {
+        if (role === "student") {
           return ["studentNumber", "studentGender", "department", "level"];
-        } else if (role === "CommercialJob") {
+        } else if (role === "commercial") {
           return ["address", "gender"];
-        } else if (role === "Coordinator") {
+        } else if (role === "coordinator") {
           return ["department", "gender"];
         }
         return [];
@@ -175,9 +175,9 @@ const SignUp = () => {
   };
 
   const roleOptions = [
-    { value: "Student", label: "Student" },
-    { value: "CommercialJob", label: "Commercial Job" },
-    { value: "Coordinator", label: "Coordinator" },
+    { value: "student", label: "Student" },
+    { value: "commercial", label: "Commercial Job" },
+    { value: "coordinator", label: "Coordinator" },
   ];
 
   const genderOptions = [
@@ -257,7 +257,7 @@ const SignUp = () => {
 
   const renderRoleSpecificFields = () => {
     switch (role) {
-      case "Student":
+      case "student":
         return (
           <>
             <FormInput
@@ -294,7 +294,7 @@ const SignUp = () => {
             />
           </>
         );
-      case "CommercialJob":
+      case "commercial":
         return (
           <>
             <FormInput
@@ -315,7 +315,7 @@ const SignUp = () => {
             />
           </>
         );
-      case "Coordinator":
+      case "coordinator":
         return (
           <>
             <FormInput
