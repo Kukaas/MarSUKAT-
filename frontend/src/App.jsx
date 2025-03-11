@@ -19,6 +19,7 @@ import Login from "./pages/public/Login";
 import SignUp from "./pages/public/SignUp";
 import VerificationSuccess from "./pages/public/VerificationSuccess";
 import VerificationError from "./pages/public/VerificationError";
+import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
 
 export default function App() {
   const { user } = useAuth();
@@ -120,7 +121,14 @@ export default function App() {
           </PrivateRoute>
         }
       />
-
+      <Route
+        path="/superadmin/create-job-order"
+        element={
+          <PrivateRoute>
+            <CreateJobOrder />
+          </PrivateRoute>
+        }
+      />
       {/* Catch all route - Skip redirect for public routes */}
       <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
     </Routes>
