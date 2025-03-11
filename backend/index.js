@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import superAdminRoutes from "./routes/superadmin.routes.js";
 import levelRoutes from "./routes/level.routes.js";
 import departmentRoutes from "./routes/department.routes.js";
+import departmentLevelRoutes from "./routes/departmentLevel.routes.js";
 dotenv.config();
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/superadmin", superAdminRoutes);
 app.use("/api/v1/levels", levelRoutes);
 app.use("/api/v1/departments", departmentRoutes);
+app.use("/api/v1/department-levels", departmentLevelRoutes);
 
 // Connect to MongoDB
 mongoose

@@ -201,24 +201,39 @@ export default function Department() {
   };
 
   // Define actions for the departments
-  const actions = [
-    {
-      label: "View Details",
-      icon: Eye,
-      onClick: handleView,
+  const actionCategories = {
+    view: {
+      label: "View Actions",
+      actions: [
+        {
+          label: "View Details",
+          icon: Eye,
+          onClick: handleView,
+        },
+      ],
     },
-    {
-      label: "Edit",
-      icon: Edit2,
-      onClick: handleEdit,
+    edit: {
+      label: "Edit Actions",
+      actions: [
+        {
+          label: "Edit",
+          icon: Edit2,
+          onClick: handleEdit,
+        },
+      ],
     },
-    {
-      label: "Delete",
-      icon: Trash2,
-      onClick: handleDeleteClick,
-      variant: "destructive",
+    delete: {
+      label: "Delete Actions",
+      actions: [
+        {
+          label: "Delete",
+          icon: Trash2,
+          onClick: handleDeleteClick,
+          variant: "destructive",
+        },
+      ],
     },
-  ];
+  };
 
   return (
     <PrivateLayout>
@@ -232,7 +247,7 @@ export default function Department() {
           data={departments}
           columns={columns}
           isLoading={isLoading}
-          actions={actions}
+          actionCategories={actionCategories}
           onCreateNew={() => {
             setFormData({ department: "", description: "" });
             setIsCreateDialogOpen(true);
@@ -258,14 +273,6 @@ export default function Department() {
                     View comprehensive information about this department
                   </DialogDescription>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setIsViewDialogOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
             </DialogHeader>
             <div className="py-2">

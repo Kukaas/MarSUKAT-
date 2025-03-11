@@ -75,6 +75,12 @@ export const menuItems = {
           description: "Manage departments",
         },
         {
+          title: "Department Levels Options",
+          icon: <Building2 />,
+          path: () => "/superadmin/maintenance/department-levels",
+          description: "Manage department levels",
+        },
+        {
           title: "Product Types",
           icon: <Package />,
           path: () => "/superadmin/maintenance/product-types",

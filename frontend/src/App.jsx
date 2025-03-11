@@ -22,6 +22,7 @@ import VerificationSuccess from "./pages/public/VerificationSuccess";
 import VerificationError from "./pages/public/VerificationError";
 import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
 import Department from "./pages/private/superadmin/pages/Department";
+import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentLevelOptions";
 
 export default function App() {
   const { user } = useAuth();
@@ -144,6 +145,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Department />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/superadmin/maintenance/department-levels"
+        element={
+          <PrivateRoute>
+            <DepartmentLevelOptions />
           </PrivateRoute>
         }
       />

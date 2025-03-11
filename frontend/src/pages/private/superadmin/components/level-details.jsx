@@ -1,53 +1,55 @@
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { GraduationCap, Calendar, FileText, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+const DetailItem = ({ icon: Icon, label, value, className }) => (
+  <div className={cn("flex items-center gap-2", className)}>
+    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+    <div className="min-w-0">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="font-medium truncate">{value}</div>
+    </div>
+  </div>
+);
 
 export function LevelDetails({ level }) {
-  const detailItems = [
-    {
-      label: "Level ID",
-      value: level?.levelId || "-",
-      icon: GraduationCap,
-      iconClassName: "text-blue-500",
-    },
-    {
-      label: "Level",
-      value: level?.level || "-",
-      icon: FileText,
-      iconClassName: "text-green-500",
-    },
-    {
-      label: "Description",
-      value: level?.description || "-",
-      icon: Info,
-      iconClassName: "text-purple-500",
-    },
-    {
-      label: "Created At",
-      value: formatDate(level?.createdAt, "long"),
-      icon: Calendar,
-      iconClassName: "text-orange-500",
-    },
-  ];
-
   return (
-    <div className="grid gap-6 p-2">
-      {detailItems.map((item, index) => (
-        <div
-          key={index}
-          className="flex items-start gap-4 p-4 rounded-lg border bg-white/50 hover:bg-white/80 transition-colors"
-        >
-          <div className={cn("p-2 rounded-full bg-white shadow-sm", "border")}>
-            {item.icon && (
-              <item.icon className={cn("h-5 w-5", item.iconClassName)} />
-            )}
-          </div>
-          <div className="flex-1 space-y-1">
-            <h4 className="text-sm font-medium text-gray-500">{item.label}</h4>
-            <p className="text-sm font-medium text-gray-900">{item.value}</p>
+    <div className="flex flex-col h-full divide-y">
+      {/* Header Information */}
+      <div className="pb-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="text-sm text-muted-foreground">Level ID</div>
+            <div className="font-semibold text-lg">{level?.levelId || "-"}</div>
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Level Details */}
+      <div className="py-6 flex-1">
+        <h3 className="font-semibold mb-4">Details</h3>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <DetailItem
+            icon={GraduationCap}
+            label="Level"
+            value={level?.level || "-"}
+          />
+          <DetailItem
+            icon={Calendar}
+            label="Created At"
+            value={formatDate(level?.createdAt, "long")}
+          />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="pt-6 flex-1">
+        <h3 className="font-semibold mb-4">Description</h3>
+        <div className="bg-muted/5 rounded-lg p-4">
+          <p className="text-sm text-muted-foreground">
+            {level?.description || "-"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

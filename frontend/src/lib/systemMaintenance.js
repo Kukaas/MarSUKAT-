@@ -105,6 +105,61 @@ export const systemMaintenanceAPI = {
       throw error;
     }
   },
+
+  // Department Level Operations
+  getAllDepartmentLevels: async () => {
+    try {
+      const response = await api.get("/department-levels");
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getActiveDepartmentLevels: async () => {
+    try {
+      const response = await api.get("/department-levels/active");
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createDepartmentLevel: async (data) => {
+    try {
+      const response = await api.post("/department-levels", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateDepartmentLevel: async (id, data) => {
+    try {
+      const response = await api.put(`/department-levels/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateDepartmentLevelStatus: async (id, data) => {
+    try {
+      const response = await api.patch(`/department-levels/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteDepartmentLevel: async (id) => {
+    try {
+      const response = await api.delete(`/department-levels/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default systemMaintenanceAPI;

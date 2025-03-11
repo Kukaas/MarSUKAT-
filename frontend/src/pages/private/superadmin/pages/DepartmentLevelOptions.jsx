@@ -8,8 +8,9 @@ import {
   Eye,
   Edit2,
   Trash2,
-  GraduationCap,
+  Building2,
   X,
+  GraduationCap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
@@ -32,94 +33,81 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LevelDetails } from "../components/level-details";
-import { LevelForm } from "../forms/LevelForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
+import { DepartmentLevelForm } from "../forms/DepartmentLevelForm";
+import { DepartmentLevelDetails } from "../components/department-level-details";
 
-export default function Level() {
+export default function DepartmentLevelOptions() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [levels, setLevels] = useState([]);
-  const [selectedLevel, setSelectedLevel] = useState(null);
+  const [departmentLevels, setDepartmentLevels] = useState([]);
+  const [selectedDepartmentLevel, setSelectedDepartmentLevel] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    level: "",
-    description: "",
-  });
-  const [selectedId, setSelectedId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
-    levelToDelete: null,
+    itemToDelete: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch levels data
-  const fetchLevels = async () => {
+  // Fetch department levels data
+  const fetchDepartmentLevels = async () => {
     try {
       setIsLoading(true);
-      const data = await systemMaintenanceAPI.getAllLevels();
-      setLevels(data);
+      const data = await systemMaintenanceAPI.getAllDepartmentLevels();
+      setDepartmentLevels(data);
     } catch (error) {
-      toast.error("Failed to fetch levels");
-      console.error("Error fetching levels:", error);
+      toast.error("Failed to fetch department levels");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLevels();
+    fetchDepartmentLevels();
   }, []);
 
   // Column definitions
   const columns = [
     {
-      key: "levelId",
-      header: "Level ID",
+      key: "departmentLevelId",
+      header: "ID",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-4 w-4 text-gray-500" />
+          <Building2 className="h-4 w-4 text-gray-500" />
           <span className="font-medium text-primary">{value}</span>
+        </div>
+      ),
+    },
+    {
+      key: "department",
+      header: "Department",
+      render: (_, row) => (
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-gray-500" />
+          <span className="font-medium">{row.department.department}</span>
         </div>
       ),
     },
     {
       key: "level",
       header: "Level",
-      render: (value) => (
+      render: (_, row) => (
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-gray-500" />
-          <span className="font-medium">{value}</span>
+          <GraduationCap className="h-4 w-4 text-gray-500" />
+          <span className="font-medium">{row.level.level}</span>
         </div>
       ),
     },
     {
-      key: "description",
-      header: "Description",
+      key: "isActive",
+      header: "Status",
       render: (value) => (
-        <div className="flex items-start gap-2">
-          <FileText className="h-4 w-4 text-gray-500 mt-1" />
-          <span className="line-clamp-2">{value}</span>
-        </div>
-      ),
-    },
-    {
-      key: "createdAt",
-      header: "Created At",
-      render: (value) => (
-        <span>
-          {new Date(value).toLocaleDateString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
+        <span className={value ? "text-green-600" : "text-red-600"}>
+          {value ? "Active" : "Inactive"}
         </span>
       ),
     },
@@ -127,84 +115,81 @@ export default function Level() {
 
   // Action handlers
   const handleView = (row) => {
-    setSelectedLevel(row);
+    setSelectedDepartmentLevel(row);
     setIsViewDialogOpen(true);
   };
 
   const handleEdit = (row) => {
-    setFormData({
-      level: row.level,
-      description: row.description,
-      levelId: row.levelId,
-    });
-    setSelectedId(row._id);
-    setIsEditing(true);
+    setSelectedDepartmentLevel(row);
     setIsEditDialogOpen(true);
+  };
+
+  const handleStatusToggle = async (row) => {
+    try {
+      await systemMaintenanceAPI.updateDepartmentLevelStatus(row._id, {
+        isActive: !row.isActive,
+      });
+      await fetchDepartmentLevels();
+      toast.success("Status updated successfully");
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
   };
 
   const handleDeleteClick = (row) => {
     setDeleteDialog({
       isOpen: true,
-      levelToDelete: row,
+      itemToDelete: row,
     });
   };
 
   const handleDeleteConfirm = async () => {
     try {
       setIsDeleting(true);
-      await systemMaintenanceAPI.deleteLevel(deleteDialog.levelToDelete._id);
-      await fetchLevels();
-      toast.success("Level deleted successfully");
-      setDeleteDialog({ isOpen: false, levelToDelete: null });
+      await systemMaintenanceAPI.deleteDepartmentLevel(
+        deleteDialog.itemToDelete._id
+      );
+      await fetchDepartmentLevels();
+      toast.success("Department level combination deleted successfully");
+      setDeleteDialog({ isOpen: false, itemToDelete: null });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete level");
+      toast.error("Failed to delete department level combination");
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    if (!isDeleting) {
-      setDeleteDialog({ isOpen: false, levelToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      if (isEditing) {
-        await systemMaintenanceAPI.updateLevel(selectedId, data);
-        toast.success("Level updated successfully");
+      if (isEditDialogOpen) {
+        await systemMaintenanceAPI.updateDepartmentLevel(
+          selectedDepartmentLevel._id,
+          {
+            departmentId: data.departmentId,
+            levelId: data.levelId,
+          }
+        );
+        toast.success("Department level combination updated successfully");
         setIsEditDialogOpen(false);
       } else {
-        await systemMaintenanceAPI.createLevel(data);
-        toast.success("Level created successfully");
+        await systemMaintenanceAPI.createDepartmentLevel(data);
+        toast.success("Department level combination created successfully");
         setIsCreateDialogOpen(false);
       }
-      setIsEditing(false);
-      setFormData({ level: "", description: "" });
-      setSelectedId(null);
-      fetchLevels();
+      fetchDepartmentLevels();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to save department level combination"
+      );
     } finally {
       setIsSubmitting(false);
+      setSelectedDepartmentLevel(null);
     }
   };
 
-  // Clean up function for dialog close
-  const handleDialogClose = (type) => {
-    if (type === "edit") {
-      setIsEditDialogOpen(false);
-      setIsEditing(false);
-      setSelectedId(null);
-    } else if (type === "create") {
-      setIsCreateDialogOpen(false);
-    }
-    setFormData({ level: "", description: "" });
-  };
-
-  // Define actions for the levels
+  // Define actions for the data table
   const actionCategories = {
     view: {
       label: "View Actions",
@@ -223,6 +208,11 @@ export default function Level() {
           label: "Edit",
           icon: Edit2,
           onClick: handleEdit,
+        },
+        {
+          label: "Toggle Status",
+          icon: Eye,
+          onClick: handleStatusToggle,
         },
       ],
     },
@@ -243,23 +233,20 @@ export default function Level() {
     <PrivateLayout>
       <div className="space-y-6">
         <SectionHeader
-          title="Level Management"
-          description="Manage academic levels in the system"
+          title="Department Level Management"
+          description="Manage department and level combinations in the system"
         />
 
         <DataTable
-          data={levels}
+          data={departmentLevels}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
-          onCreateNew={() => {
-            setFormData({ level: "", description: "" });
-            setIsCreateDialogOpen(true);
-          }}
+          onCreateNew={() => setIsCreateDialogOpen(true)}
           createButtonText={
             <div className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              <span>Create Level</span>
+              <span>Create Combination</span>
             </div>
           }
         />
@@ -271,16 +258,20 @@ export default function Level() {
               <div className="flex items-center justify-between">
                 <div>
                   <DialogTitle className="text-2xl font-semibold">
-                    Level Details
+                    Department Level Details
                   </DialogTitle>
                   <DialogDescription className="text-gray-500">
-                    View comprehensive information about this level
+                    View comprehensive information about this combination
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
             <div className="py-2">
-              {selectedLevel && <LevelDetails level={selectedLevel} />}
+              {selectedDepartmentLevel && (
+                <DepartmentLevelDetails
+                  departmentLevel={selectedDepartmentLevel}
+                />
+              )}
             </div>
             <DialogFooter className="pt-4">
               <Button
@@ -299,16 +290,14 @@ export default function Level() {
           <AlertDialogContent className="sm:max-w-[600px]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-semibold">
-                Create New Level
+                Create New Department Level Combination
               </AlertDialogTitle>
               <AlertDialogDescription className="text-gray-500">
-                Add a new level to the system
+                Add a new department and level combination to the system
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-2">
-              <LevelForm
-                formData={formData}
-                setFormData={setFormData}
+              <DepartmentLevelForm
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
               />
@@ -316,14 +305,14 @@ export default function Level() {
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
+                onClick={() => !isSubmitting && setIsCreateDialogOpen(false)}
                 disabled={isSubmitting}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
-                form="levelForm"
+                form="departmentLevelForm"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -344,32 +333,35 @@ export default function Level() {
           <AlertDialogContent className="sm:max-w-[600px]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-semibold">
-                Edit Level
+                Edit Department Level Combination
               </AlertDialogTitle>
               <AlertDialogDescription className="text-gray-500">
-                Modify the level details
+                Modify the department and level combination
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-2">
-              <LevelForm
-                formData={formData}
-                setFormData={setFormData}
-                isEdit={true}
+              <DepartmentLevelForm
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
+                defaultValues={selectedDepartmentLevel}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setIsEditDialogOpen(false);
+                    setSelectedDepartmentLevel(null);
+                  }
+                }}
                 disabled={isSubmitting}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
-                form="levelForm"
+                form="departmentLevelForm"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -388,13 +380,13 @@ export default function Level() {
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmation
           isOpen={deleteDialog.isOpen}
-          onClose={handleDeleteCancel}
+          onClose={() => setDeleteDialog({ isOpen: false, itemToDelete: null })}
           onConfirm={handleDeleteConfirm}
-          title="Delete Level"
+          title="Delete Department Level Combination"
           description={
-            deleteDialog.levelToDelete
-              ? `Are you sure you want to delete the level "${deleteDialog.levelToDelete.level}"? This action cannot be undone.`
-              : "Are you sure you want to delete this level? This action cannot be undone."
+            deleteDialog.itemToDelete
+              ? `Are you sure you want to delete the combination of "${deleteDialog.itemToDelete.department.department}" department and "${deleteDialog.itemToDelete.level.level}" level? This action cannot be undone.`
+              : "Are you sure you want to delete this combination? This action cannot be undone."
           }
           isDeleting={isDeleting}
         />

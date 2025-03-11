@@ -82,6 +82,7 @@ const DataTable = ({
   className,
   isLoading = false,
   actions = [],
+  actionCategories,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -156,7 +157,7 @@ const DataTable = ({
 
   // Add actions column if actions are provided
   const columnsWithActions = React.useMemo(() => {
-    if (!actions.length) return columns;
+    if (!actions.length && !actionCategories) return columns;
 
     return [
       ...columns,
@@ -171,46 +172,75 @@ const DataTable = ({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {actions.map((action, index) => {
-                // If the action should be hidden based on row data
-                if (action.show && !action.show(row)) {
-                  return null;
-                }
-
-                // If this is not the first visible action and the previous action was visible, show separator
-                const shouldShowSeparator =
-                  index > 0 &&
-                  (!actions[index - 1].show || actions[index - 1].show(row));
-
-                return (
-                  <React.Fragment key={action.label}>
-                    {shouldShowSeparator && <DropdownMenuSeparator />}
-                    <DropdownMenuItem
-                      onClick={() => action.onClick(row)}
-                      className={cn(
-                        action.variant === "destructive" && "text-destructive",
-                        "cursor-pointer"
-                      )}
-                    >
-                      {action.icon && (
-                        <span className="mr-2 h-4 w-4">
-                          {React.createElement(action.icon, {
-                            className: "h-4 w-4",
-                          })}
-                        </span>
-                      )}
-                      {action.label}
-                    </DropdownMenuItem>
-                  </React.Fragment>
-                );
-              })}
+            <DropdownMenuContent align="end" className="w-[200px]">
+              {actionCategories
+                ? Object.entries(actionCategories).map(
+                    (
+                      [category, { label, actions: categoryActions }],
+                      categoryIndex
+                    ) => (
+                      <React.Fragment key={category}>
+                        {categoryIndex > 0 && <DropdownMenuSeparator />}
+                        <div className="px-2 py-1.5">
+                          <span className="text-xs font-semibold text-muted-foreground">
+                            {label}
+                          </span>
+                        </div>
+                        {categoryActions
+                          .filter((action) => !action.show || action.show(row))
+                          .map((action, actionIndex) => (
+                            <DropdownMenuItem
+                              key={action.label}
+                              onClick={() => action.onClick(row)}
+                              className={cn(
+                                "cursor-pointer gap-2",
+                                action.variant === "destructive" &&
+                                  "text-destructive"
+                              )}
+                            >
+                              {action.icon && (
+                                <span className="h-4 w-4">
+                                  {React.createElement(action.icon, {
+                                    className: "h-4 w-4",
+                                  })}
+                                </span>
+                              )}
+                              {action.label}
+                            </DropdownMenuItem>
+                          ))}
+                      </React.Fragment>
+                    )
+                  )
+                : actions
+                    .filter((action) => !action.show || action.show(row))
+                    .map((action, index) => (
+                      <React.Fragment key={action.label}>
+                        {index > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuItem
+                          onClick={() => action.onClick(row)}
+                          className={cn(
+                            "cursor-pointer gap-2",
+                            action.variant === "destructive" &&
+                              "text-destructive"
+                          )}
+                        >
+                          {action.icon && (
+                            <span className="h-4 w-4">
+                              {React.createElement(action.icon, {
+                                className: "h-4 w-4",
+                              })}
+                            </span>
+                          )}
+                          {action.label}
+                        </DropdownMenuItem>
+                      </React.Fragment>
+                    ))}
             </DropdownMenuContent>
           </DropdownMenu>
         ),
       },
     ];
-  }, [columns, actions]);
+  }, [columns, actions, actionCategories]);
 
   return (
     <div className={cn("space-y-6", className)}>
