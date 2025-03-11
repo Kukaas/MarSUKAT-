@@ -21,6 +21,7 @@ import Categories from "./pages/private/superadmin/pages/Categories";
 import Sizes from "./pages/private/superadmin/pages/Sizes";
 import Prices from "./pages/private/superadmin/pages/Prices";
 import RawMaterialTypes from "./pages/private/superadmin/pages/RawMaterialTypes";
+import ProductTypes from "./pages/private/superadmin/pages/ProductTypes";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -243,6 +244,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <RawMaterialTypes />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/superadmin/maintenance/product-types"
+        element={
+          <PrivateRoute>
+            <ProductTypes />
           </PrivateRoute>
         }
       />

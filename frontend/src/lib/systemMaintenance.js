@@ -398,6 +398,52 @@ export const systemMaintenanceAPI = {
       throw error;
     }
   },
+
+  // Product Type Management API functions
+  getAllProductTypes: async () => {
+    try {
+      const response = await api.get("/product-types");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getProductTypeById: async (id) => {
+    try {
+      const response = await api.get(`/product-types/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createProductType: async (productTypeData) => {
+    try {
+      const response = await api.post("/product-types", productTypeData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateProductType: async (id, productTypeData) => {
+    try {
+      const response = await api.put(`/product-types/${id}`, productTypeData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteProductType: async (id) => {
+    try {
+      const response = await api.delete(`/product-types/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default systemMaintenanceAPI;
