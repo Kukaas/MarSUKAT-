@@ -200,6 +200,53 @@ export const systemMaintenanceAPI = {
     }
   },
 
+  // Size Management API functions
+  getAllSizes: async () => {
+    try {
+      const response = await api.get("/sizes");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getSizeById: async (id) => {
+    try {
+      const response = await api.get(`/sizes/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createSize: async (sizeData) => {
+    try {
+      const response = await api.post("/sizes", sizeData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateSize: async (id, sizeData) => {
+    try {
+      const { size } = sizeData;
+      const response = await api.put(`/sizes/${id}`, { size });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteSize: async (id) => {
+    try {
+      const response = await api.delete(`/sizes/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Department Level Operations
   getAllDepartmentLevels: async () => {
     try {
