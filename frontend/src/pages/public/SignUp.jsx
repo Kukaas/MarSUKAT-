@@ -435,7 +435,7 @@ const SignUp = () => {
           </div>
         </div>
 
-        <div className="lg:col-start-2">
+        <div className="lg:col-start-2 mt-10">
           <div className="min-h-screen bg-white lg:bg-gray-50/50">
             <div className="w-full px-6 py-16 lg:px-8 xl:px-12">
               <div className="w-full max-w-md mx-auto">
