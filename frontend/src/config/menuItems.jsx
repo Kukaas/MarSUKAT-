@@ -15,9 +15,39 @@ import {
   Box,
   DollarSign,
   Ruler,
+  Info,
+  Phone,
+  FileQuestion,
+  Home,
 } from "lucide-react";
 
 export const menuItems = {
+  PublicMenu: [
+    {
+      title: "Home",
+      icon: <Home />,
+      path: () => "/",
+      description: "Go to homepage",
+    },
+    {
+      title: "About",
+      icon: <Info />,
+      path: () => "/about",
+      description: "Learn about us",
+    },
+    {
+      title: "Contact",
+      icon: <Phone />,
+      path: () => "/contact",
+      description: "Get in touch",
+    },
+    {
+      title: "FAQ",
+      icon: <FileQuestion />,
+      path: () => "/faq",
+      description: "Frequently asked questions",
+    },
+  ],
   Student: [
     {
       title: "Dashboard",

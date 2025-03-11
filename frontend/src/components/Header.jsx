@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
 import {
   Menu,
@@ -8,6 +8,7 @@ import {
   User,
   Moon,
   Sun,
+  ChevronDown,
 } from "lucide-react";
 import { menuItems } from "../config/menuItems";
 import {
@@ -18,11 +19,14 @@ import {
   SheetTrigger,
 } from "./ui/sheet";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./ui/accordion";
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "./ui/navigation-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,11 +34,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { Switch } from "./ui/switch";
-import React from "react";
+import React, { useState } from "react";
+import { cn } from "../lib/utils";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
@@ -67,19 +73,84 @@ const MemoizedThemeToggle = React.memo(ThemeToggle);
 const Header = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const publicMenuItems = menuItems.PublicMenu || [];
+  const location = useLocation();
+  const [openAccordions, setOpenAccordions] = useState({});
 
   const handleLogout = () => {
     logout(true);
   };
 
+  const ListItem = React.forwardRef(
+    ({ className, title, children, ...props }, ref) => {
+      return (
+        <li>
+          <NavigationMenuLink asChild>
+            <a
+              ref={ref}
+              className={cn(
+                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                className
+              )}
+              {...props}
+            >
+              <div className="text-sm font-medium leading-none">{title}</div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {children}
+              </p>
+            </a>
+          </NavigationMenuLink>
+        </li>
+      );
+    }
+  );
+  ListItem.displayName = "ListItem";
+
+  const PublicNavigation = () => (
+    <NavigationMenu className="hidden md:flex">
+      <NavigationMenuList>
+        {publicMenuItems.map((item) => (
+          <NavigationMenuItem key={item.title}>
+            <NavigationMenuLink asChild>
+              <Link to={item.path()} className={navigationMenuTriggerStyle()}>
+                <div className="flex items-center gap-2">
+                  {item.icon}
+                  {item.title}
+                </div>
+              </Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        ))}
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+
   const AuthenticatedControls = () => {
     const role = user?.role || "Student";
     const userId = user?._id;
     const currentMenuItems = menuItems[role] || [];
+    const location = useLocation();
+    const [openAccordions, setOpenAccordions] = useState({});
 
-    // Generate the current path with actual user ID
     const getCurrentPath = (pathFn) => {
-      return role === "Student" ? pathFn(userId) : pathFn();
+      try {
+        return typeof pathFn === "function" ? pathFn(userId) : pathFn;
+      } catch (error) {
+        console.error("Error generating path:", error);
+        return "/";
+      }
+    };
+
+    const toggleAccordion = (title) => {
+      setOpenAccordions((prev) => ({
+        ...prev,
+        [title]: !prev[title],
+      }));
+    };
+
+    const isLinkActive = (path) => {
+      const currentPath = getCurrentPath(path);
+      return location.pathname === currentPath;
     };
 
     return (
@@ -87,10 +158,22 @@ const Header = () => {
         {/* Desktop view */}
         <div className="hidden md:flex items-center space-x-4">
           <MemoizedThemeToggle />
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
-          </Button>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80" align="end" sideOffset={8}>
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold">Notifications</h4>
+                <p className="text-sm text-muted-foreground">
+                  You have no new notifications.
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -136,121 +219,131 @@ const Header = () => {
             <Bell className="h-5 w-5" />
             <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.photo} alt={user?.name} />
-                  <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <div className="flex items-center justify-start gap-2 p-2">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="cursor-pointer"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:w-[300px] p-0">
               <div className="flex flex-col h-full">
                 <SheetHeader className="p-4 border-b border-border">
-                  <SheetTitle className="text-lg font-bold bg-gradient-to-r from-foreground via-muted-foreground to-foreground bg-clip-text text-transparent">
-                    MarSUKAT
-                  </SheetTitle>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user?.photo} alt={user?.name} />
+                      <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <SheetTitle className="text-left">
+                        {user?.name}
+                      </SheetTitle>
+                      <p className="text-xs text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
                 </SheetHeader>
                 <div className="flex-1 overflow-y-auto">
                   <div className="p-4 space-y-4">
                     {currentMenuItems.map((item) => {
                       if (item.type === "accordion") {
+                        const isOpen = openAccordions[item.title];
+                        const hasActiveChild = item.items?.some((subItem) =>
+                          isLinkActive(subItem.path)
+                        );
+
                         return (
-                          <Accordion
-                            type="single"
-                            collapsible
-                            className="w-full"
-                            key={item.title}
-                          >
-                            <AccordionItem
-                              value={item.title}
-                              className="border-none"
+                          <div key={item.title} className="space-y-2">
+                            <button
+                              onClick={() => toggleAccordion(item.title)}
+                              className={cn(
+                                "w-full text-sm px-2 py-1.5 rounded-lg transition-colors flex items-center justify-between",
+                                hasActiveChild || isOpen
+                                  ? "bg-accent text-accent-foreground"
+                                  : "hover:bg-accent/50"
+                              )}
                             >
-                              <AccordionTrigger className="flex items-center p-2 rounded-lg hover:bg-muted/50 transition-all">
-                                <div className="flex items-center gap-3 flex-1">
-                                  {item.icon}
-                                  <div>
-                                    <div className="font-medium">
-                                      {item.title}
-                                    </div>
-                                  </div>
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="pt-1 pb-4">
-                                {item.items.map((subItem) => (
-                                  <Link
-                                    key={subItem.title}
-                                    to={getCurrentPath(subItem.path)}
-                                    className="flex items-center p-2 pl-8 rounded-lg hover:bg-muted/50 transition-all group"
-                                  >
-                                    <div className="flex items-center gap-3 flex-1">
+                              <span className="flex items-center gap-2">
+                                {item.icon}
+                                {item.title}
+                              </span>
+                              <ChevronDown
+                                className={cn(
+                                  "h-4 w-4 transition-transform",
+                                  isOpen ? "transform rotate-180" : ""
+                                )}
+                              />
+                            </button>
+                            {isOpen && (
+                              <div className="space-y-1 pl-4">
+                                {item.items.map((subItem) => {
+                                  const isActive = isLinkActive(subItem.path);
+                                  return (
+                                    <Link
+                                      key={subItem.title}
+                                      to={getCurrentPath(subItem.path)}
+                                      className={cn(
+                                        "flex items-center p-2 rounded-lg transition-colors",
+                                        isActive
+                                          ? "bg-accent text-accent-foreground"
+                                          : "hover:bg-accent/50"
+                                      )}
+                                    >
                                       {subItem.icon}
-                                      <div>
-                                        <div className="font-medium">
-                                          {subItem.title}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-                                  </Link>
-                                ))}
-                              </AccordionContent>
-                            </AccordionItem>
-                          </Accordion>
+                                      <span className="ml-2 text-sm">
+                                        {subItem.title}
+                                      </span>
+                                      <ChevronRight className="h-4 w-4 ml-auto" />
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         );
                       }
 
+                      const isActive = isLinkActive(item.path);
                       return (
                         <Link
                           key={item.title}
                           to={getCurrentPath(item.path)}
-                          className="flex items-center p-2 rounded-lg hover:bg-muted/50 transition-all group"
+                          className={cn(
+                            "flex items-center p-2 rounded-lg transition-colors",
+                            isActive
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-accent/50"
+                          )}
                         >
-                          <div className="flex items-center gap-3 flex-1">
-                            {item.icon}
-                            <div>
-                              <div className="font-medium">{item.title}</div>
-                            </div>
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                          {item.icon}
+                          <span className="ml-2 text-sm">{item.title}</span>
+                          <ChevronRight className="h-4 w-4 ml-auto" />
                         </Link>
                       );
                     })}
+                  </div>
+                </div>
+                <div className="border-t border-border mt-auto">
+                  <div className="p-4 space-y-2">
+                    <Link
+                      to="/profile"
+                      className={cn(
+                        "flex items-center p-2 rounded-lg transition-colors",
+                        location.pathname === "/profile"
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent/50"
+                      )}
+                    >
+                      <User className="h-4 w-4" />
+                      <span className="ml-2 text-sm">Profile</span>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center p-2 rounded-lg hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="ml-2 text-sm">Log out</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -266,12 +359,24 @@ const Header = () => {
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-3">
         <MemoizedThemeToggle />
-        <Button variant="ghost" size="sm" className="hover:bg-muted/80" asChild>
-          <Link to="/login">Login</Link>
-        </Button>
-        <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
-          <Link to="/signup">Register</Link>
-        </Button>
+        <NavigationMenu>
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link to="/login" className={navigationMenuTriggerStyle()}>
+                  Login
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link to="/signup">
+                  <Button>Register</Button>
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
       </div>
 
       {/* Mobile Navigation */}
@@ -281,7 +386,6 @@ const Header = () => {
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-full sm:w-[300px] p-0">
@@ -293,19 +397,24 @@ const Header = () => {
               </SheetHeader>
               <div className="flex-1 overflow-y-auto">
                 <div className="p-4 space-y-4">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-center"
-                    asChild
-                  >
-                    <Link to="/login">Login</Link>
-                  </Button>
-                  <Button
-                    className="w-full justify-center bg-primary hover:bg-primary/90"
-                    asChild
-                  >
-                    <Link to="/signup">Register</Link>
-                  </Button>
+                  {publicMenuItems.map((item) => (
+                    <Link
+                      key={item.title}
+                      to={item.path()}
+                      className="flex items-center p-2 rounded-lg hover:bg-accent transition-colors"
+                    >
+                      {item.icon}
+                      <span className="ml-2 text-sm">{item.title}</span>
+                    </Link>
+                  ))}
+                  <div className="border-t border-border pt-4 space-y-2">
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link to="/login">Login</Link>
+                    </Button>
+                    <Button className="w-full" asChild>
+                      <Link to="/signup">Register</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -321,11 +430,15 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <Link
             to="/"
-            className="text-xl sm:text-2xl font-bold text-foreground hover:opacity-80 transition-opacity"
+            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
           >
             MarSUKAT
           </Link>
 
+          {/* Public Navigation - Only show when not authenticated */}
+          {!user && <PublicNavigation />}
+
+          {/* Auth Controls */}
           {user ? <AuthenticatedControls /> : <UnauthenticatedControls />}
         </div>
       </nav>
