@@ -1,15 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { menuItems } from "../config/menuItems";
-import {
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider,
-} from "./ui/sidebar";
 
 export default function AppSidebar() {
   const { user } = useAuth();
@@ -19,47 +10,35 @@ export default function AppSidebar() {
 
   const currentMenuItems = menuItems[role] || [];
 
-  // Generate the current path with actual user ID
   const getCurrentPath = (pathFn) => {
     return role === "Student" ? pathFn(userId) : pathFn();
   };
 
   return (
-    <div className="hidden md:block h-full">
-      <SidebarProvider>
-        <Sidebar className="border-r h-full">
-          <SidebarHeader className="border-b px-4">
-            <div className="flex items-center justify-between">
-              <Link
-                to="/"
-                className="flex items-center gap-2 font-semibold text-xl py-4"
+    <div className="hidden md:flex h-full flex-col bg-white border-r border-gray-100">
+      <nav className="flex-1 px-3 pt-6">
+        {currentMenuItems.map((item) => {
+          const isActive = location.pathname === getCurrentPath(item.path);
+          return (
+            <Link
+              key={item.title}
+              to={getCurrentPath(item.path)}
+              className={`flex items-center gap-3 px-4 py-2.5 mb-1 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? "bg-gray-50 text-gray-900"
+                  : "text-gray-500 hover:bg-gray-50/50 hover:text-gray-900"
+              }`}
+            >
+              <span
+                className={`${isActive ? "text-gray-900" : "text-gray-400"}`}
               >
-                <span className="bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
-                  MarSUKAT
-                </span>
-              </Link>
-            </div>
-          </SidebarHeader>
-
-          <SidebarContent>
-            <SidebarMenu>
-              {currentMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === getCurrentPath(item.path)}
-                  >
-                    <Link to={getCurrentPath(item.path)}>
-                      {item.icon}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-        </Sidebar>
-      </SidebarProvider>
+                {item.icon}
+              </span>
+              <span className="font-medium">{item.title}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
