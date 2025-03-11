@@ -24,6 +24,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -38,6 +45,7 @@ import {
   Loader2,
   LayoutList,
   LayoutGrid,
+  MoreHorizontal,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -73,6 +81,7 @@ const DataTable = ({
   createButtonText = "Create New",
   className,
   isLoading = false,
+  actions = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,6 +153,64 @@ const DataTable = ({
     setStatusFilter("all");
     setDateRange({ from: undefined, to: undefined });
   };
+
+  // Add actions column if actions are provided
+  const columnsWithActions = React.useMemo(() => {
+    if (!actions.length) return columns;
+
+    return [
+      ...columns,
+      {
+        key: "actions",
+        header: "Actions",
+        render: (_, row) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {actions.map((action, index) => {
+                // If the action should be hidden based on row data
+                if (action.show && !action.show(row)) {
+                  return null;
+                }
+
+                // If this is not the first visible action and the previous action was visible, show separator
+                const shouldShowSeparator =
+                  index > 0 &&
+                  (!actions[index - 1].show || actions[index - 1].show(row));
+
+                return (
+                  <React.Fragment key={action.label}>
+                    {shouldShowSeparator && <DropdownMenuSeparator />}
+                    <DropdownMenuItem
+                      onClick={() => action.onClick(row)}
+                      className={cn(
+                        action.variant === "destructive" && "text-destructive",
+                        "cursor-pointer"
+                      )}
+                    >
+                      {action.icon && (
+                        <span className="mr-2 h-4 w-4">
+                          {React.createElement(action.icon, {
+                            className: "h-4 w-4",
+                          })}
+                        </span>
+                      )}
+                      {action.label}
+                    </DropdownMenuItem>
+                  </React.Fragment>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ];
+  }, [columns, actions]);
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -277,7 +344,7 @@ const DataTable = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  {columns.map((column) => (
+                  {columnsWithActions.map((column) => (
                     <TableHead
                       key={column.key}
                       className="whitespace-nowrap font-semibold text-muted-foreground"
@@ -293,7 +360,7 @@ const DataTable = ({
                 ) : currentData.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={columnsWithActions.length}
                       className="h-32 text-center"
                     >
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -311,7 +378,7 @@ const DataTable = ({
                         index % 2 === 0 ? "bg-white" : "bg-muted/20"
                       )}
                     >
-                      {columns.map((column) => (
+                      {columnsWithActions.map((column) => (
                         <TableCell key={column.key} className="py-3">
                           {column.render
                             ? column.render(row[column.key], row)
@@ -329,6 +396,7 @@ const DataTable = ({
         <GridView
           data={currentData}
           columns={columns}
+          actions={actions}
           isLoading={isLoading}
           gridClassName="mt-2"
         />

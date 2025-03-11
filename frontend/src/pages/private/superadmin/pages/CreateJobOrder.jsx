@@ -1,9 +1,22 @@
 import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
+import { JobOrderDetailsDialog } from "../components/job-order-details";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { FileText, User, Building2, Calendar, Plus } from "lucide-react";
+import {
+  FileText,
+  User,
+  Building2,
+  Calendar,
+  Plus,
+  Eye,
+  Edit2,
+  Trash2,
+  Ban,
+  CheckCircle2,
+} from "lucide-react";
 import {
   JOB_ORDER_STATUSES,
   PRIORITY_STATUSES,
@@ -20,6 +33,8 @@ export default function CreateJobOrder() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [jobOrders, setJobOrders] = useState([]);
+  const [selectedJobOrder, setSelectedJobOrder] = useState(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   // Simulate API call with loading state
   useEffect(() => {
@@ -181,6 +196,70 @@ export default function CreateJobOrder() {
     }, 500);
   };
 
+  // Action handlers
+  const handleView = (row) => {
+    setSelectedJobOrder(row);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEdit = (row) => {
+    navigate(`/job-orders/${row.id}/edit`);
+  };
+
+  const handleApprove = async (row) => {
+    // Handle approve action
+    console.log("Approve:", row);
+  };
+
+  const handleReject = async (row) => {
+    // Handle reject action
+    console.log("Reject:", row);
+  };
+
+  const handleDelete = async (row) => {
+    // Handle delete action
+    console.log("Delete:", row);
+  };
+
+  // Define actions for the job orders
+  const actions = [
+    {
+      label: "View Details",
+      icon: Eye,
+      onClick: handleView,
+    },
+    {
+      label: "Edit",
+      icon: Edit2,
+      onClick: handleEdit,
+      // Only show edit for Pending status
+      show: (row) => row.status === "Pending",
+    },
+    {
+      label: "Approve",
+      icon: CheckCircle2,
+      onClick: handleApprove,
+      // Only show approve for Pending status
+      show: (row) => row.status === "Pending",
+    },
+    {
+      label: "Reject",
+      icon: Ban,
+      onClick: handleReject,
+      variant: "destructive",
+      // Only show reject for Pending status
+      show: (row) => row.status === "Pending",
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      onClick: handleDelete,
+      variant: "destructive",
+      // Only show delete for Pending status
+      show: (row) => row.status === "Pending",
+    },
+  ];
+
   return (
     <PrivateLayout>
       <div className="space-y-6">
@@ -194,12 +273,26 @@ export default function CreateJobOrder() {
           statusOptions={statusOptions}
           isLoading={isLoading}
           onCreateNew={handleCreateNew}
+          actions={actions}
           createButtonText={
             <div className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               <span>Create Job Order</span>
             </div>
           }
+        />
+
+        {/* View Details Dialog */}
+        <JobOrderDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => {
+            setIsViewDialogOpen(false);
+            setSelectedJobOrder(null);
+          }}
+          data={selectedJobOrder}
+          onEdit={handleEdit}
+          onApprove={handleApprove}
+          onReject={handleReject}
         />
       </div>
     </PrivateLayout>

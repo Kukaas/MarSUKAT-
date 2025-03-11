@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -7,7 +8,15 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const GridView = ({
@@ -17,6 +26,7 @@ const GridView = ({
   gridClassName,
   cardClassName,
   skeletonCount = 6,
+  actions = [],
 }) => {
   if (isLoading) {
     return (
@@ -72,10 +82,59 @@ const GridView = ({
         >
           <CardHeader className="space-y-3 pb-3">
             {/* Header - First column (usually ID or title) */}
-            <div className="font-medium">
-              {columns[0]?.render
-                ? columns[0].render(item[columns[0].key], item)
-                : item[columns[0].key]}
+            <div className="flex items-center justify-between">
+              <div className="font-medium">
+                {columns[0]?.render
+                  ? columns[0].render(item[columns[0].key], item)
+                  : item[columns[0].key]}
+              </div>
+              {actions.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {actions.map((action, index) => {
+                      // If the action should be hidden based on row data
+                      if (action.show && !action.show(item)) {
+                        return null;
+                      }
+
+                      // If this is not the first visible action and the previous action was visible, show separator
+                      const shouldShowSeparator =
+                        index > 0 &&
+                        (!actions[index - 1].show ||
+                          actions[index - 1].show(item));
+
+                      return (
+                        <React.Fragment key={action.label}>
+                          {shouldShowSeparator && <DropdownMenuSeparator />}
+                          <DropdownMenuItem
+                            onClick={() => action.onClick(item)}
+                            className={cn(
+                              action.variant === "destructive" &&
+                                "text-destructive",
+                              "cursor-pointer"
+                            )}
+                          >
+                            {action.icon && (
+                              <span className="mr-2 h-4 w-4">
+                                {React.createElement(action.icon, {
+                                  className: "h-4 w-4",
+                                })}
+                              </span>
+                            )}
+                            {action.label}
+                          </DropdownMenuItem>
+                        </React.Fragment>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             {/* Status and Priority side by side if they exist */}
