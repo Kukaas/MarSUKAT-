@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import superAdminRoutes from "./routes/superadmin.routes.js";
+import levelRoutes from "./routes/level.routes.js";
 dotenv.config();
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/superadmin", superAdminRoutes);
+app.use("/api/v1/levels", levelRoutes);
 
 // Connect to MongoDB
 mongoose
