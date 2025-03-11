@@ -62,7 +62,9 @@ const Header = () => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.name}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                   </p>
@@ -75,7 +77,10 @@ const Header = () => {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -101,7 +106,9 @@ const Header = () => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.name}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                   </p>
@@ -114,7 +121,10 @@ const Header = () => {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -136,24 +146,78 @@ const Header = () => {
                 </SheetHeader>
                 <div className="flex-1 overflow-y-auto">
                   <div className="p-4 space-y-4">
-                    {currentMenuItems.map((item) => (
-                      <Link
-                        key={item.title}
-                        to={getCurrentPath(item.path)}
-                        className="flex items-center p-2 rounded-lg hover:bg-gray-100/80 transition-all group"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          {item.icon}
-                          <div>
-                            <div className="font-medium">{item.title}</div>
-                            <p className="text-sm text-gray-600">
-                              {item.description}
-                            </p>
+                    {currentMenuItems.map((item) => {
+                      if (item.type === "accordion") {
+                        return (
+                          <Accordion
+                            type="single"
+                            collapsible
+                            className="w-full"
+                            key={item.title}
+                          >
+                            <AccordionItem
+                              value={item.title}
+                              className="border-none"
+                            >
+                              <AccordionTrigger className="flex items-center p-2 rounded-lg hover:bg-gray-100/80 transition-all">
+                                <div className="flex items-center gap-3 flex-1">
+                                  {item.icon}
+                                  <div>
+                                    <div className="font-medium">
+                                      {item.title}
+                                    </div>
+                                    {/* <p className="text-sm text-gray-600">
+                                      System configuration options
+                                    </p> */}
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="pt-1 pb-4">
+                                {item.items.map((subItem) => (
+                                  <Link
+                                    key={subItem.title}
+                                    to={getCurrentPath(subItem.path)}
+                                    className="flex items-center p-2 pl-8 rounded-lg hover:bg-gray-100/80 transition-all group"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1">
+                                      {subItem.icon}
+                                      <div>
+                                        <div className="font-medium">
+                                          {subItem.title}
+                                        </div>
+                                        {/* <p className="text-sm text-gray-600">
+                                          {subItem.description}
+                                        </p> */}
+                                      </div>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                                  </Link>
+                                ))}
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={item.title}
+                          to={getCurrentPath(item.path)}
+                          className="flex items-center p-2 rounded-lg hover:bg-gray-100/80 transition-all group"
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            {item.icon}
+                            <div>
+                              <div className="font-medium">{item.title}</div>
+                              {/* <p className="text-sm text-gray-600">
+                                {item.description}
+                              </p> */}
+                            </div>
                           </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
-                      </Link>
-                    ))}
+                          <ChevronRight className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

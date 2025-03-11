@@ -12,6 +12,7 @@ import Orders from "./pages/private/student/pages/Orders";
 import Schedule from "./pages/private/student/pages/Schedule";
 import CreateSuperAdmin from "./pages/private/superadmin/pages/CreateSuperAdmin";
 import SuperAdminDashboard from "./pages/private/superadmin/pages/Dashboard";
+import Level from "./pages/private/superadmin/pages/Level";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -126,6 +127,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <CreateJobOrder />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/superadmin/maintenance/levels"
+        element={
+          <PrivateRoute>
+            <Level />
           </PrivateRoute>
         }
       />
