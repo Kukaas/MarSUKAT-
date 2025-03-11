@@ -45,10 +45,15 @@ export function ProductTypeForm({
       level: formData?.level || "",
       productType: formData?.productType || "",
       size: formData?.size || "",
-      price: formData?.price?._id || "",
-      rawMaterialsUsed: formData?.rawMaterialsUsed || [
-        { category: "", type: "", quantity: "", unit: "" },
-      ],
+      price: formData?.price || "",
+      rawMaterialsUsed: formData?.rawMaterialsUsed?.length
+        ? formData.rawMaterialsUsed.map((material) => ({
+            category: material.category || "",
+            type: material.type || "",
+            quantity: material.quantity || "",
+            unit: material.unit || "",
+          }))
+        : [{ category: "", type: "", quantity: "", unit: "" }],
     },
     mode: "onTouched",
   });
@@ -84,13 +89,32 @@ export function ProductTypeForm({
 
         // Get unique categories from raw material types
         const uniqueCategories = [...new Set(typesData.map((t) => t.category))];
-
         setCategories(
           uniqueCategories.map((c) => ({
             value: c,
             label: c,
           }))
         );
+
+        // If we're in edit mode, set up the filtered types for each material
+        if (isEdit && formData?.rawMaterialsUsed) {
+          formData.rawMaterialsUsed.forEach((material, index) => {
+            if (material.category) {
+              const typesForCategory = typesData
+                .filter((type) => type.category === material.category)
+                .map((type) => ({
+                  value: type.name,
+                  label: type.name,
+                  unit: type.unit,
+                }));
+              setFilteredTypes((prev) => ({
+                ...prev,
+                [index]: typesForCategory,
+              }));
+            }
+          });
+        }
+
         setUnits(unitsData.map((u) => ({ value: u.unit, label: u.unit })));
       } catch (error) {
         console.error("Error fetching options:", error);
@@ -98,34 +122,40 @@ export function ProductTypeForm({
     };
 
     fetchOptions();
-  }, []);
+  }, [isEdit, formData]);
 
   useEffect(() => {
     if (formData) {
+      console.log("Setting form data:", formData);
       form.reset({
         level: formData.level || "",
         productType: formData.productType || "",
         size: formData.size || "",
-        price: formData.price?._id || "",
+        price: formData.price || "",
         rawMaterialsUsed: formData.rawMaterialsUsed?.length
-          ? formData.rawMaterialsUsed
+          ? formData.rawMaterialsUsed.map((material) => ({
+              category: material.category || "",
+              type: material.type || "",
+              quantity: material.quantity || "",
+              unit: material.unit || "",
+            }))
           : [{ category: "", type: "", quantity: "", unit: "" }],
       });
+
+      // Set up filtered types for each material
+      if (formData.rawMaterialsUsed) {
+        formData.rawMaterialsUsed.forEach((material, index) => {
+          if (material.category) {
+            handleCategoryChange(index, material.category);
+          }
+        });
+      }
     }
   }, [formData, form]);
 
-  // Watch for category changes
-  useEffect(() => {
-    fields.forEach((field, index) => {
-      const category = form.watch(`rawMaterialsUsed.${index}.category`);
-      if (category) {
-        handleCategoryChange(index, category);
-      }
-    });
-  }, [fields, form.watch]);
-
   // Handle category change
   const handleCategoryChange = (index, category) => {
+    console.log("Handling category change:", { index, category });
     // Filter types for the selected category
     const typesForCategory = rawMaterialTypes
       .filter((type) => type.category === category)
@@ -134,6 +164,8 @@ export function ProductTypeForm({
         label: type.name,
         unit: type.unit,
       }));
+
+    console.log("Types for category:", typesForCategory);
 
     // Update filtered types for this index
     setFilteredTypes((prev) => {
@@ -147,10 +179,12 @@ export function ProductTypeForm({
 
   // Handle type change to set the corresponding unit
   const handleTypeChange = (index, typeName) => {
+    console.log("Handling type change:", { index, typeName });
     const selectedType = rawMaterialTypes.find(
       (type) => type.name === typeName
     );
     if (selectedType) {
+      console.log("Found selected type:", selectedType);
       form.setValue(`rawMaterialsUsed.${index}.unit`, selectedType.unit);
     }
   };

@@ -152,9 +152,14 @@ export default function ProductTypes() {
       level: row.level,
       productType: row.productType,
       size: row.size,
-      price: row.price._id,
+      price: row.price?._id,
       productTypeId: row.productTypeId,
-      rawMaterialsUsed: row.rawMaterialsUsed,
+      rawMaterialsUsed: row.rawMaterialsUsed.map((material) => ({
+        category: material.category,
+        type: material.type,
+        quantity: material.quantity,
+        unit: material.unit,
+      })),
     });
     setSelectedId(row._id);
     setIsEditing(true);
