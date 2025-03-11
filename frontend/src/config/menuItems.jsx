@@ -7,6 +7,7 @@ import {
   Store,
   Scissors,
   ClipboardList,
+  UserPlus,
 } from "lucide-react";
 
 export const menuItems = {
@@ -30,36 +31,24 @@ export const menuItems = {
       description: "View your schedules",
     },
   ],
-  Admin: [
+  SuperAdmin: [
     {
       title: "Dashboard",
       icon: <LayoutDashboard />,
-      path: () => "/admin/dashboard",
+      path: (id) => `/superadmin/dashboard/${id}`,
       description: "Overview of system",
     },
     {
-      title: "Users",
-      icon: <Users />,
-      path: () => "/admin/users",
-      description: "Manage system users",
+      title: "Create Job Order",
+      icon: <UserPlus />,
+      path: () => "/superadmin/create-job-order",
+      description: "Create a new job order",
     },
     {
-      title: "Products",
-      icon: <Store />,
-      path: () => "/admin/products",
-      description: "Manage products",
-    },
-    {
-      title: "Orders",
-      icon: <ShoppingBag />,
-      path: () => "/admin/orders",
-      description: "View all orders",
-    },
-    {
-      title: "Settings",
-      icon: <Settings />,
-      path: () => "/admin/settings",
-      description: "System settings",
+      title: "Create Super Admin",
+      icon: <UserPlus />,
+      path: () => "/superadmin/create-super-admin",
+      description: "Create a new super admin",
     },
   ],
   Staff: [

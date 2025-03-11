@@ -11,6 +11,7 @@ import Dashboard from "./pages/private/student/pages/Dashboard";
 import Orders from "./pages/private/student/pages/Orders";
 import Schedule from "./pages/private/student/pages/Schedule";
 import CreateSuperAdmin from "./pages/private/superadmin/pages/CreateSuperAdmin";
+import SuperAdminDashboard from "./pages/private/superadmin/pages/Dashboard";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -34,7 +35,7 @@ export default function App() {
       case "Staff":
         return "/staff/dashboard";
       case "SuperAdmin":
-        return "/superadmin/dashboard";
+        return `/superadmin/dashboard/${userId}`;
       default:
         return "/login";
     }
@@ -106,6 +107,16 @@ export default function App() {
         element={
           <PrivateRoute>
             <Schedule />
+          </PrivateRoute>
+        }
+      />
+
+      {/* SuperAdmin Routes */}
+      <Route
+        path="/superadmin/dashboard/:id"
+        element={
+          <PrivateRoute>
+            <SuperAdminDashboard />
           </PrivateRoute>
         }
       />

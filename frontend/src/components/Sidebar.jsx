@@ -11,7 +11,16 @@ export default function AppSidebar() {
   const currentMenuItems = menuItems[role] || [];
 
   const getCurrentPath = (pathFn) => {
-    return role === "Student" ? pathFn(userId) : pathFn();
+    if (
+      role === "Student" ||
+      role === "SuperAdmin" ||
+      role === "CommercialJob" ||
+      role === "Coordinator" ||
+      role === "JobOrder"
+    ) {
+      return pathFn(userId);
+    }
+    return pathFn();
   };
 
   return (
