@@ -19,7 +19,14 @@ export function DeleteConfirmation({
   isDeleting = false,
 }) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!isDeleting && !open) {
+          onClose();
+        }
+      }}
+    >
       <AlertDialogContent className="sm:max-w-[425px]">
         <div className="grid gap-6 py-4">
           <AlertDialogHeader className="space-y-4">
@@ -38,16 +45,28 @@ export function DeleteConfirmation({
 
           <AlertDialogFooter className="flex-row gap-3 sm:gap-2">
             <AlertDialogCancel
-              onClick={onClose}
+              type="button"
               disabled={isDeleting}
               className="flex-1 sm:flex-none"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!isDeleting) {
+                  onClose();
+                }
+              }}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={onConfirm}
+              type="button"
               disabled={isDeleting}
               className="flex-1 sm:flex-none bg-destructive hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!isDeleting) {
+                  onConfirm();
+                }
+              }}
             >
               {isDeleting ? (
                 <div className="flex items-center gap-2">
