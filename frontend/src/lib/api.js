@@ -76,6 +76,15 @@ export const authAPI = {
       throw error;
     }
   },
+
+  createSuperAdmin: async (adminData) => {
+    try {
+      const response = await api.post("/auth/create-super-admin", adminData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default api;

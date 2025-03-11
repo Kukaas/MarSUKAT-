@@ -1,16 +1,34 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function PublicRoute({ children }) {
+export default function PublicRoute({ children, skipAuthCheck = false }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return null; // Or a loading spinner component
   }
 
-  // If user is authenticated, redirect to dashboard
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
+  // Skip auth check if skipAuthCheck is true
+  if (skipAuthCheck) {
+    return children;
+  }
+
+  // If user is authenticated and trying to access login/signup/home, redirect to their dashboard
+  if (user && ["/login", "/signup", "/"].includes(location.pathname)) {
+    const userId = user._id;
+    switch (user.role) {
+      case "Student":
+        return <Navigate to={`/student/dashboard/${userId}`} replace />;
+      case "Admin":
+        return <Navigate to="/admin/dashboard" replace />;
+      case "Staff":
+        return <Navigate to="/staff/dashboard" replace />;
+      case "SuperAdmin":
+        return <Navigate to="/superadmin/dashboard" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
   }
 
   return children;

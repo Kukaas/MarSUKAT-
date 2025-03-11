@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 // Route Guards
@@ -10,6 +10,7 @@ import PublicRoute from "./components/PublicRoute";
 import Dashboard from "./pages/private/student/pages/Dashboard";
 import Orders from "./pages/private/student/pages/Orders";
 import Schedule from "./pages/private/student/pages/Schedule";
+import CreateSuperAdmin from "./pages/private/superadmin/pages/CreateSuperAdmin";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -20,6 +21,7 @@ import VerificationError from "./pages/public/VerificationError";
 
 export default function App() {
   const { user } = useAuth();
+  const location = useLocation();
 
   const getDefaultRoute = () => {
     if (!user) return "/login";
@@ -31,6 +33,8 @@ export default function App() {
         return "/admin/dashboard";
       case "Staff":
         return "/staff/dashboard";
+      case "SuperAdmin":
+        return "/superadmin/dashboard";
       default:
         return "/login";
     }
@@ -38,7 +42,23 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Public Routes - Accessible only when not logged in */}
+      {/* Always Accessible Routes */}
+      <Route
+        path="/create-super-admin"
+        element={
+          <PublicRoute skipAuthCheck={true}>
+            <CreateSuperAdmin />
+          </PublicRoute>
+        }
+      />
+      <Route path="/verification-success" element={<VerificationSuccess />} />
+      <Route path="/verification-error" element={<VerificationError />} />
+      <Route
+        path="/api/v1/auth/verify/:userId/:uniqueString"
+        element={<VerificationSuccess />}
+      />
+
+      {/* Public Routes - Redirect to dashboard if authenticated */}
       <Route
         path="/login"
         element={
@@ -55,16 +75,16 @@ export default function App() {
           </PublicRoute>
         }
       />
-
-      {/* Verification Routes - Always accessible */}
-      <Route path="/verification-success" element={<VerificationSuccess />} />
-      <Route path="/verification-error" element={<VerificationError />} />
       <Route
-        path="/api/v1/auth/verify/:userId/:uniqueString"
-        element={<VerificationSuccess />}
+        path="/"
+        element={
+          <PublicRoute>
+            <Home />
+          </PublicRoute>
+        }
       />
 
-      {/* Student Routes */}
+      {/* Private Routes - Require Authentication */}
       <Route
         path="/student/dashboard/:id"
         element={
@@ -90,17 +110,7 @@ export default function App() {
         }
       />
 
-      {/* Landing Page - Redirect to role-specific dashboard if authenticated */}
-      <Route
-        path="/"
-        element={
-          <PublicRoute>
-            <Home />
-          </PublicRoute>
-        }
-      />
-
-      {/* Catch all route - Redirect to role-specific dashboard if authenticated */}
+      {/* Catch all route - Skip redirect for public routes */}
       <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
     </Routes>
   );

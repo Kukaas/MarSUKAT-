@@ -10,6 +10,16 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const AuthContext = createContext();
 
+// Routes that don't require authentication check
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/create-super-admin",
+  "/verification-success",
+  "/verification-error",
+];
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,8 +61,11 @@ export function AuthProvider({ children }) {
       async (error) => {
         const originalRequest = error.config;
 
-        // Don't attempt refresh for logout requests
-        if (originalRequest.url.includes("/auth/logout")) {
+        // Don't attempt refresh for logout requests or public routes
+        if (
+          originalRequest.url.includes("/auth/logout") ||
+          PUBLIC_ROUTES.some(route => location.pathname === route)
+        ) {
           return Promise.reject(error);
         }
 
@@ -94,12 +107,18 @@ export function AuthProvider({ children }) {
     return () => {
       api.interceptors.response.eject(interceptor);
     };
-  }, [logout]);
+  }, [logout, location]);
 
   // Check authentication status on app load
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // Skip auth check for public routes
+        if (PUBLIC_ROUTES.some(route => location.pathname === route)) {
+          setLoading(false);
+          return;
+        }
+
         const response = await api.get("/auth/me");
         setUser(response.data.user);
       } catch (error) {
@@ -115,7 +134,7 @@ export function AuthProvider({ children }) {
     };
 
     initializeAuth();
-  }, []);
+  }, [location.pathname]);
 
   const login = async (userData) => {
     setUser(userData.user);
@@ -129,7 +148,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
   };
 
-  if (loading) {
+  if (loading && !PUBLIC_ROUTES.some(route => location.pathname === route)) {
     return null; // Or a loading spinner component
   }
 
