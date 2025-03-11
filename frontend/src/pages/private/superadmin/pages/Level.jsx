@@ -9,6 +9,7 @@ import {
   Edit2,
   Trash2,
   GraduationCap,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
@@ -22,6 +23,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { LevelDetails } from "../components/level-details";
 import { LevelForm } from "../forms/LevelForm";
@@ -240,30 +249,42 @@ export default function Level() {
         />
 
         {/* View Dialog */}
-        <AlertDialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[600px]">
-            <AlertDialogHeader className="pb-4">
-              <AlertDialogTitle className="text-2xl font-semibold">
-                Level Details
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-500">
-                View comprehensive information about this level
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-2xl font-semibold">
+                    Level Details
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-500">
+                    View comprehensive information about this level
+                  </DialogDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsViewDialogOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogHeader>
             <div className="py-2">
               {selectedLevel && <LevelDetails level={selectedLevel} />}
             </div>
-            <AlertDialogFooter className="pt-4">
-              <AlertDialogCancel
+            <DialogFooter className="pt-4">
+              <Button
                 variant="outline"
                 onClick={() => setIsViewDialogOpen(false)}
                 className="w-full sm:w-auto"
               >
                 Close
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Create Dialog */}
         <AlertDialog
