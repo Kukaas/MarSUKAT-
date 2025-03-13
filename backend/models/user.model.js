@@ -125,5 +125,27 @@ const coordinatorSchema = new mongoose.Schema({
 
 const Coordinator = User.discriminator("Coordinator", coordinatorSchema);
 
+// JobOrder Schema
+const jobOrderSchema = new mongoose.Schema({
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  gender: {
+    type: String,
+    required: true,
+  },
+  jobType: {
+    type: String,
+    required: true,
+  },
+  jobDescription: {
+    type: String,
+    required: true,
+  },
+});
+
+const JobOrder = User.discriminator("JobOrder", jobOrderSchema);
+
 export default User;
-export { Student, CommercialJob, Coordinator, SuperAdmin };
+export { Student, CommercialJob, Coordinator, SuperAdmin, JobOrder };

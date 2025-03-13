@@ -13,7 +13,6 @@ import Schedule from "./pages/private/student/pages/Schedule";
 import CreateSuperAdmin from "./pages/private/superadmin/pages/CreateSuperAdmin";
 import SuperAdminDashboard from "./pages/private/superadmin/pages/Dashboard";
 import Level from "./pages/private/superadmin/pages/Level";
-import CreateJobOrder from "./pages/private/superadmin/pages/CreateJobOrder";
 import Department from "./pages/private/superadmin/pages/Department";
 import DepartmentLevelOptions from "./pages/private/superadmin/pages/DepartmentLevelOptions";
 import Units from "./pages/private/superadmin/pages/Units";
@@ -22,6 +21,7 @@ import Sizes from "./pages/private/superadmin/pages/Sizes";
 import Prices from "./pages/private/superadmin/pages/Prices";
 import RawMaterialTypes from "./pages/private/superadmin/pages/RawMaterialTypes";
 import ProductTypes from "./pages/private/superadmin/pages/ProductTypes";
+import JobOrders from "./pages/private/superadmin/pages/JobOrders";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -179,7 +179,7 @@ export default function App() {
         path="/superadmin/create-job-order"
         element={
           <PrivateRoute>
-            <CreateJobOrder />
+            <JobOrders />
           </PrivateRoute>
         }
       />

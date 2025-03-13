@@ -120,4 +120,71 @@ export const authAPI = {
   },
 };
 
+// User API calls
+export const userAPI = {
+  // JobOrder management
+  getAllJobOrders: async () => {
+    try {
+      const response = await api.get("/users/job-orders");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getJobOrderById: async (id) => {
+    try {
+      const response = await api.get(`/users/job-orders/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createJobOrder: async (jobOrderData) => {
+    try {
+      const response = await api.post("/users/job-orders", jobOrderData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateJobOrder: async (id, jobOrderData) => {
+    try {
+      const response = await api.put(`/users/job-orders/${id}`, jobOrderData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  activateJobOrder: async (jobOrderId) => {
+    try {
+      const response = await api.put(`/users/job-orders/${jobOrderId}/activate`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deactivateJobOrder: async (jobOrderId) => {
+    try {
+      const response = await api.put(`/users/job-orders/${jobOrderId}/deactivate`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteJobOrder: async (jobOrderId) => {
+    try {
+      const response = await api.delete(`/users/job-orders/${jobOrderId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
 export default api;

@@ -15,6 +15,7 @@ import sizeRoutes from "./routes/size.routes.js";
 import priceRoutes from "./routes/price.routes.js";
 import rawMaterialTypeRoutes from "./routes/rawMaterialType.routes.js";
 import productTypeRoutes from "./routes/productType.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ app.use("/api/v1/sizes", sizeRoutes);
 app.use("/api/v1/prices", priceRoutes);
 app.use("/api/v1/raw-material-types", rawMaterialTypeRoutes);
 app.use("/api/v1/product-types", productTypeRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // Connect to MongoDB
 mongoose

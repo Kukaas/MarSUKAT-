@@ -213,7 +213,9 @@ const DataTable = ({
                                   })}
                                 </span>
                               )}
-                              {action.label}
+                              {typeof action.label === "function"
+                                ? action.label(row)
+                                : action.label}
                             </DropdownMenuItem>
                           ))}
                       </React.Fragment>
@@ -239,7 +241,9 @@ const DataTable = ({
                               })}
                             </span>
                           )}
-                          {action.label}
+                          {typeof action.label === "function"
+                            ? action.label(row)
+                            : action.label}
                         </DropdownMenuItem>
                       </React.Fragment>
                     ))}
