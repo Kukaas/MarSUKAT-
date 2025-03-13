@@ -155,7 +155,7 @@ export const menuItems = {
       description: "Overview of system",
     },
     {
-      title: "Maintenance",
+      title: "Transactions",
       icon: <Wrench />,
       type: "accordion",
       items: [
