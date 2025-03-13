@@ -23,6 +23,11 @@ import {
   Store,
   KeyRound,
   CalendarRange,
+  Shirt,
+  Scissors,
+  GraduationCap as GownIcon,
+  Factory as FactoryProduction,
+  Package,
 } from "lucide-react";
 
 export const menuItems = {
@@ -182,6 +187,37 @@ export const menuItems = {
           icon: <CalendarRange />,
           path: () => "/job-order/schedules",
           description: "Manage schedules of students and commercial jobs",
+        },
+      ],
+    },
+    {
+      title: "Productions",
+      icon: <Factory />,
+      type: "accordion",
+      items: [
+        {
+          title: "Uniform Production",
+          icon: <Scissors />,
+          path: () => "/job-order/uniform-production",
+          description: "Manage uniform production",
+        },
+        {
+          title: "Academic Gowns Production",
+          icon: <GownIcon />,
+          path: () => "/job-order/academic-gowns-production",
+          description: "Manage academic gowns production",
+        },
+        {
+          title: "Commercial Job Production",
+          icon: <FactoryProduction />,
+          path: () => "/job-order/commercial-job-production",
+          description: "Manage commercial job production",
+        },
+        {
+          title: "Other Productions",
+          icon: <Package />,
+          path: () => "/job-order/other-productions",
+          description: "Manage other productions",
         },
       ],
     },
