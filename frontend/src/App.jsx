@@ -1,6 +1,9 @@
 import "./App.css";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { publicRoutes } from "./routes/publicRoutes";
+import { studentRoutes } from "./routes/studentRoutes";
+import { superAdminRoutes } from "./routes/superAdminRoutes";
 
 // Route Guards
 import PrivateRoute from "./components/PrivateRoute";
@@ -58,205 +61,22 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Always Accessible Routes */}
-      <Route
-        path="/create-super-admin"
-        element={
-          <PublicRoute skipAuthCheck={true}>
-            <CreateSuperAdmin />
-          </PublicRoute>
-        }
-      />
-      <Route path="/verification-success" element={<VerificationSuccess />} />
-      <Route path="/verification-error" element={<VerificationError />} />
-      <Route
-        path="/api/v1/auth/verify/:userId/:uniqueString"
-        element={<VerificationSuccess />}
-      />
+      {/* Public Routes */}
+      {publicRoutes.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element} />
+      ))}
 
-      {/* Public Routes - Redirect to dashboard if authenticated */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <SignUp />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <PublicRoute>
-            <Home />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <PublicRoute>
-            <RequestOtp />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/verify-otp/:userId"
-        element={
-          <PublicRoute>
-            <VerifyOtp />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/about"
-        element={
-          <PublicRoute>
-            <About />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/contact-us"
-        element={
-          <PublicRoute>
-            <Contact />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/faq"
-        element={
-          <PublicRoute>
-            <Faq />
-          </PublicRoute>
-        }
-      />
-
-      {/* Private Routes - Require Authentication */}
-      <Route
-        path="/student/dashboard/:id"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/student/orders/:id"
-        element={
-          <PrivateRoute>
-            <Orders />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/student/schedules/:id"
-        element={
-          <PrivateRoute>
-            <Schedule />
-          </PrivateRoute>
-        }
-      />
+      {/* Student Routes */}
+      {studentRoutes.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element} />
+      ))}
 
       {/* SuperAdmin Routes */}
-      <Route
-        path="/superadmin/dashboard/:id"
-        element={
-          <PrivateRoute>
-            <SuperAdminDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/create-job-order"
-        element={
-          <PrivateRoute>
-            <JobOrders />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/levels"
-        element={
-          <PrivateRoute>
-            <Level />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/departments"
-        element={
-          <PrivateRoute>
-            <Department />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/department-levels"
-        element={
-          <PrivateRoute>
-            <DepartmentLevelOptions />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/units"
-        element={
-          <PrivateRoute>
-            <Units />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/categories"
-        element={
-          <PrivateRoute>
-            <Categories />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/sizes"
-        element={
-          <PrivateRoute>
-            <Sizes />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/prices"
-        element={
-          <PrivateRoute>
-            <Prices />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/raw-material-types"
-        element={
-          <PrivateRoute>
-            <RawMaterialTypes />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/superadmin/maintenance/product-types"
-        element={
-          <PrivateRoute>
-            <ProductTypes />
-          </PrivateRoute>
-        }
-      />
+      {superAdminRoutes.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element} />
+      ))}
 
-      {/* Catch all route - Skip redirect for public routes */}
+      {/* Catch all route */}
       <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
     </Routes>
   );
