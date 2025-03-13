@@ -31,15 +31,7 @@ const genderOptions = [
   { value: "Female", label: "Female" },
 ];
 
-const jobTypeOptions = [
-  { value: "Carpenter", label: "Carpenter" },
-  { value: "Electrician", label: "Electrician" },
-  { value: "Plumber", label: "Plumber" },
-  { value: "Painter", label: "Painter" },
-  { value: "Mason", label: "Mason" },
-  { value: "HVAC Technician", label: "HVAC Technician" },
-  { value: "General Maintenance", label: "General Maintenance" },
-];
+const jobTypeOptions = [{ value: "Job Order", label: "Job Order" }];
 
 export function JobOrderForm({
   formData,

@@ -86,12 +86,6 @@ export const menuItems = {
       description: "Create a new job order",
     },
     {
-      title: "Create Super Admin",
-      icon: <UserPlus />,
-      path: () => "/superadmin/create-super-admin",
-      description: "Create a new super admin",
-    },
-    {
       title: "Maintenance",
       icon: <Wrench />,
       type: "accordion",
