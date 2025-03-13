@@ -260,7 +260,12 @@ export const login = async (req, res) => {
     if (isAccountLocked(email)) {
       return res.status(429).json({
         message: "Account temporarily locked. Please try again later.",
-        lockoutRemaining: Math.ceil((LOCKOUT_TIME - (Date.now() - loginAttempts.get(email).firstAttempt)) / 1000 / 60)
+        lockoutRemaining: Math.ceil(
+          (LOCKOUT_TIME -
+            (Date.now() - loginAttempts.get(email).firstAttempt)) /
+            1000 /
+            60
+        ),
       });
     }
 
@@ -272,7 +277,17 @@ export const login = async (req, res) => {
 
     // Check if user is verified
     if (!user.verified) {
-      return res.status(401).json({ message: "Please verify your email first" });
+      return res
+        .status(401)
+        .json({ message: "Please verify your email first" });
+    }
+
+    // Check if JobOrder account is active
+    if (user.role === "JobOrder" && !user.isActive) {
+      return res.status(401).json({
+        message:
+          "Your account is currently deactivated. Please contact the administrator for assistance.",
+      });
     }
 
     // Check password
@@ -294,10 +309,10 @@ export const login = async (req, res) => {
 
     // Create access token
     const accessToken = jwt.sign(
-      { 
-        id: user._id, 
+      {
+        id: user._id,
         role: user.role,
-        tokenVersion: user.tokenVersion || 0
+        tokenVersion: user.tokenVersion || 0,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
