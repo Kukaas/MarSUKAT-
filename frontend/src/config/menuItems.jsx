@@ -20,9 +20,10 @@ import {
   Scale,
   Warehouse,
   PackageSearch,
-  ListTodo,
-  ScrollText,
-  PhilippinePeso,
+  ClipboardList,
+  Store,
+  KeyRound,
+  CalendarRange,
 } from "lucide-react";
 
 export const menuItems = {
@@ -147,30 +148,43 @@ export const menuItems = {
       ],
     },
   ],
-  Staff: [
+  JobOrder: [
     {
       title: "Dashboard",
       icon: <LayoutDashboard />,
-      path: () => "/staff/dashboard",
-      description: "Staff overview",
+      path: (id) => `/job-order/dashboard/${id}`,
+      description: "Overview of system",
     },
     {
-      title: "Orders",
-      icon: <ScrollText />,
-      path: () => "/staff/orders",
-      description: "Process orders",
-    },
-    {
-      title: "Production",
-      icon: <Scissors />,
-      path: () => "/staff/production",
-      description: "Production management",
-    },
-    {
-      title: "Tasks",
-      icon: <ListTodo />,
-      path: () => "/staff/tasks",
-      description: "View assigned tasks",
+      title: "Maintenance",
+      icon: <Wrench />,
+      type: "accordion",
+      items: [
+        {
+          title: "Student Orders",
+          icon: <ClipboardList />,
+          path: () => "/job-order/student-orders",
+          description: "Manage student orders",
+        },
+        {
+          title: "Commercial Orders",
+          icon: <Store />,
+          path: () => "/job-order/commercial-orders",
+          description: "Manage commercial orders",
+        },
+        {
+          title: "Rentals",
+          icon: <KeyRound />,
+          path: () => "/job-order/rentals",
+          description: "Manage rentals",
+        },
+        {
+          title: "Schedules",
+          icon: <CalendarRange />,
+          path: () => "/job-order/schedules",
+          description: "Manage schedules of students and commercial jobs",
+        },
+      ],
     },
   ],
 };
