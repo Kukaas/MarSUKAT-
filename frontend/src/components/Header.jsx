@@ -186,9 +186,11 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.photo} alt={user?.name} />
-                  <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                <Avatar className="h-8 w-8 ring-2 ring-background transition-all duration-200 hover:opacity-90">
+                  <AvatarImage src={user?.photo?.data} alt={user?.name} />
+                  <AvatarFallback className="bg-muted">
+                    {user?.name?.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -239,9 +241,11 @@ const Header = () => {
               <div className="flex flex-col h-full">
                 <SheetHeader className="p-4 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.photo} alt={user?.name} />
-                      <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                    <Avatar className="h-8 w-8 ring-2 ring-background transition-all duration-200">
+                      <AvatarImage src={user?.photo?.data} alt={user?.name} />
+                      <AvatarFallback className="bg-muted">
+                        {user?.name?.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
                       <SheetTitle className="text-left">
