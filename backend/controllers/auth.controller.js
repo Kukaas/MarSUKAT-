@@ -5,7 +5,10 @@ import User, {
   Coordinator,
 } from "../models/user.model.js";
 import UserVerification from "../models/user.verification.js";
-import { sendVerificationEmail } from "../utils/emailService.js";
+import {
+  sendPasswordChangeEmail,
+  sendVerificationEmail,
+} from "../utils/emailService.js";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 
@@ -17,16 +20,19 @@ const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
 const isAccountLocked = (email) => {
   const attempts = loginAttempts.get(email);
   if (!attempts) return false;
-  
-  if (attempts.count >= MAX_LOGIN_ATTEMPTS && Date.now() - attempts.firstAttempt < LOCKOUT_TIME) {
+
+  if (
+    attempts.count >= MAX_LOGIN_ATTEMPTS &&
+    Date.now() - attempts.firstAttempt < LOCKOUT_TIME
+  ) {
     return true;
   }
-  
+
   if (Date.now() - attempts.firstAttempt >= LOCKOUT_TIME) {
     loginAttempts.delete(email);
     return false;
   }
-  
+
   return false;
 };
 
@@ -190,10 +196,11 @@ export const signup = async (req, res) => {
     }
   } catch (error) {
     console.error("Signup error:", error);
-    res.status(500).json({ 
-      message: "We encountered an issue while creating your account. Please try again later.",
+    res.status(500).json({
+      message:
+        "We encountered an issue while creating your account. Please try again later.",
       errors: [error.message],
-      error: process.env.NODE_ENV === "development" ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -347,9 +354,9 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "An error occurred during login",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -388,8 +395,10 @@ export const logout = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     // User is already verified by authenticateUser middleware
-    const user = await User.findById(req.user.id).select("-password -tokenVersion");
-    
+    const user = await User.findById(req.user.id).select(
+      "-password -tokenVersion"
+    );
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -397,9 +406,9 @@ export const getMe = async (req, res) => {
     res.status(200).json({ user });
   } catch (error) {
     console.error("Get user error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Error fetching user data",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -409,17 +418,17 @@ export const refreshToken = async (req, res) => {
   try {
     // User is already verified by verifyRefreshToken middleware
     const user = await User.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
     // Create new access token
     const accessToken = jwt.sign(
-      { 
-        id: user._id, 
+      {
+        id: user._id,
         role: user.role,
-        tokenVersion: user.tokenVersion
+        tokenVersion: user.tokenVersion,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
@@ -435,18 +444,18 @@ export const refreshToken = async (req, res) => {
       expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
     });
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: "Token refreshed successfully",
       user: {
         id: user._id,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (error) {
     console.error("Token refresh error:", error);
-    res.status(401).json({ 
+    res.status(401).json({
       message: "Failed to refresh token",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -477,6 +486,8 @@ export const changePassword = async (req, res) => {
     // Hash new password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await sendPasswordChangeEmail(user.email, user.name);
 
     // Update password
     user.password = hashedPassword;

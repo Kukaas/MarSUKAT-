@@ -67,8 +67,8 @@ export const sendVerificationEmail = async (
                       <td style="background-color: #ffffff; padding: 0;">
                         <!-- Logo Section with Overlap -->
                         <div style="text-align: center; margin-top: -60px; margin-bottom: 20px;">
-                          <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" 
-                               style="width: 120px; height: 120px; border-radius: 60px; border: 4px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                          <img src="https://www.marsu.edu.ph/logo.png" alt="MSU Logo" 
+                               style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
                         </div>
                         
                         <!-- Welcome Message -->
@@ -204,8 +204,8 @@ export const sendOTPEmail = async (email, otp) => {
                       <td style="background-color: #ffffff; padding: 0;">
                         <!-- Logo Section with Overlap -->
                         <div style="text-align: center; margin-top: -60px; margin-bottom: 20px;">
-                          <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" 
-                               style="width: 120px; height: 120px; border-radius: 60px; border: 4px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                          <img src="https://www.marsu.edu.ph/logo.png" alt="MSU Logo" 
+                               style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
                         </div>
                         
                         <!-- Content Section -->
@@ -297,8 +297,8 @@ export const sendPasswordChangeEmail = async (email, name) => {
                       <td style="background-color: #ffffff; padding: 0;">
                         <!-- Logo Section with Overlap -->
                         <div style="text-align: center; margin-top: -60px; margin-bottom: 20px;">
-                          <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" 
-                               style="width: 120px; height: 120px; border-radius: 60px; border: 4px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                          <img src="https://www.marsu.edu.ph/logo.png" alt="MSU Logo" 
+                               style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
                         </div>
                         
                         <!-- Content Section -->
