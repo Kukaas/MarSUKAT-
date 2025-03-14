@@ -450,3 +450,47 @@ export const refreshToken = async (req, res) => {
     });
   }
 };
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id; // Changed from _id to id to match the JWT payload
+
+    // Get user from database
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Check if current password matches
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        status: "error",
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in changePassword:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to change password",
+    });
+  }
+};

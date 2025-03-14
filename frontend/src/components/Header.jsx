@@ -41,6 +41,7 @@ import { useTheme } from "../context/ThemeContext";
 import { Switch } from "./ui/switch";
 import React, { useState } from "react";
 import { cn } from "../lib/utils";
+import ProfileModal from "./auth/ProfileModal";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
@@ -76,6 +77,7 @@ const Header = () => {
   const publicMenuItems = menuItems.PublicMenu || [];
   const location = useLocation();
   const [openAccordions, setOpenAccordions] = useState({});
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout(true);
@@ -202,11 +204,12 @@ const Header = () => {
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
+              <DropdownMenuItem
+                onClick={() => setProfileModalOpen(true)}
+                className="cursor-pointer"
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleLogout}
@@ -332,18 +335,15 @@ const Header = () => {
                 </div>
                 <div className="border-t border-border mt-auto">
                   <div className="p-4 space-y-2">
-                    <Link
-                      to="/profile"
+                    <button
+                      onClick={() => setProfileModalOpen(true)}
                       className={cn(
-                        "flex items-center p-2 rounded-lg transition-colors",
-                        location.pathname === "/profile"
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent/50"
+                        "flex w-full items-center p-2 rounded-lg transition-colors hover:bg-accent/50"
                       )}
                     >
                       <User className="h-4 w-4" />
                       <span className="ml-2 text-sm">Profile</span>
-                    </Link>
+                    </button>
                     <button
                       onClick={handleLogout}
                       className="flex w-full items-center p-2 rounded-lg hover:bg-destructive hover:text-destructive-foreground transition-colors"
@@ -357,6 +357,12 @@ const Header = () => {
             </SheetContent>
           </Sheet>
         </div>
+
+        {/* Profile Modal */}
+        <ProfileModal
+          open={profileModalOpen}
+          onOpenChange={setProfileModalOpen}
+        />
       </>
     );
   };

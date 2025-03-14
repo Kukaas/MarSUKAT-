@@ -6,6 +6,7 @@ import {
   logout,
   getMe,
   refreshToken,
+  changePassword,
 } from "../controllers/auth.controller.js";
 import {
   authenticateUser,
@@ -28,5 +29,7 @@ router.post("/logout", authenticateUser, logout);
 
 // Token refresh route (requires refresh token)
 router.post("/refresh-token", verifyRefreshToken, refreshToken);
+
+router.put("/change-password", authenticateUser, changePassword);
 
 export default router;

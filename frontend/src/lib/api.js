@@ -118,6 +118,16 @@ export const authAPI = {
       throw error;
     }
   },
+
+  // Change password
+  changePassword: async (passwordData) => {
+    try {
+      const response = await api.put("/auth/change-password", passwordData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 // User API calls
@@ -161,7 +171,9 @@ export const userAPI = {
 
   activateJobOrder: async (jobOrderId) => {
     try {
-      const response = await api.put(`/users/job-orders/${jobOrderId}/activate`);
+      const response = await api.put(
+        `/users/job-orders/${jobOrderId}/activate`
+      );
       return response.data;
     } catch (error) {
       throw error;
@@ -170,7 +182,9 @@ export const userAPI = {
 
   deactivateJobOrder: async (jobOrderId) => {
     try {
-      const response = await api.put(`/users/job-orders/${jobOrderId}/deactivate`);
+      const response = await api.put(
+        `/users/job-orders/${jobOrderId}/deactivate`
+      );
       return response.data;
     } catch (error) {
       throw error;
