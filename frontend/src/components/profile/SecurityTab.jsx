@@ -2,8 +2,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form } from "@/components/ui/form";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldCheck, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldCheck, AlertCircle, ShieldAlert } from "lucide-react";
 import PasswordInput from "../custom-components/PasswordInput";
 import { authAPI } from "../../lib/api";
 import { toast } from "sonner";
@@ -112,8 +112,12 @@ const SecurityTab = ({
 
   return (
     <div className="space-y-6">
-      <Alert>
-        <AlertDescription>
+      <Alert className="border-2 border-yellow-500/50 dark:border-yellow-400/50 bg-yellow-50/50 dark:bg-yellow-900/20">
+        <ShieldAlert className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+        <AlertTitle className="text-yellow-800 dark:text-yellow-300 font-semibold">
+          Security Notice
+        </AlertTitle>
+        <AlertDescription className="text-yellow-700 dark:text-yellow-200">
           For your security, please enter your current password first.
         </AlertDescription>
       </Alert>
