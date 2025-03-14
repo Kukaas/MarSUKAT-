@@ -22,6 +22,8 @@ export default function PublicRoute({ children, skipAuthCheck = false }) {
         return <Navigate to={`/student/dashboard/${userId}`} replace />;
       case "Admin":
         return <Navigate to="/admin/dashboard" replace />;
+      case "JobOrder":
+        return <Navigate to={`/job-order/dashboard/${userId}`} replace />;
       case "Staff":
         return <Navigate to="/staff/dashboard" replace />;
       case "SuperAdmin":
