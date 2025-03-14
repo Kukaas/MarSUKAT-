@@ -199,6 +199,25 @@ export const userAPI = {
       throw error;
     }
   },
+
+  // User profile management
+  getProfile: async (userId) => {
+    try {
+      const response = await api.get(`/users/${userId}/profile`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateProfile: async (userId, profileData) => {
+    try {
+      const response = await api.put(`/users/${userId}/profile`, profileData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default api;

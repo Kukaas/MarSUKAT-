@@ -209,7 +209,14 @@ export const login = async (req, res) => {
 // Get user profile
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    // Convert both IDs to strings for comparison
+    if (req.params.userId.toString() !== req.user.id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to access this profile" });
+    }
+
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -223,18 +230,48 @@ export const getProfile = async (req, res) => {
 // Update user profile
 export const updateProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    // Convert both IDs to strings for comparison
+    if (req.params.userId.toString() !== req.user.id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this profile" });
+    }
+
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-    user.photo = req.body.photo || user.photo;
 
-    if (req.body.password) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(req.body.password, salt);
+    // Handle photo update with base64 data
+    if (req.body.photo && req.body.photo.data) {
+      user.photo = {
+        filename: req.body.photo.filename || "profile-image",
+        contentType: req.body.photo.contentType || "image/jpeg",
+        data: req.body.photo.data,
+      };
+    }
+
+    // Handle role-specific updates
+    if (user.role === "Student") {
+      if (req.body.studentNumber) user.studentNumber = req.body.studentNumber;
+      if (req.body.studentGender) user.studentGender = req.body.studentGender;
+      if (req.body.department) user.department = req.body.department;
+      if (req.body.level) user.level = req.body.level;
+    } else if (user.role === "CommercialJob") {
+      if (req.body.address) user.address = req.body.address;
+      if (req.body.gender) user.gender = req.body.gender;
+    } else if (user.role === "Coordinator") {
+      if (req.body.department) user.department = req.body.department;
+      if (req.body.level) user.level = req.body.level;
+      if (req.body.gender) user.gender = req.body.gender;
+    } else if (user.role === "JobOrder") {
+      if (req.body.gender) user.gender = req.body.gender;
+      if (req.body.jobType) user.jobType = req.body.jobType;
+      if (req.body.jobDescription)
+        user.jobDescription = req.body.jobDescription;
     }
 
     const updatedUser = await user.save();
@@ -244,8 +281,10 @@ export const updateProfile = async (req, res) => {
       email: updatedUser.email,
       photo: updatedUser.photo,
       role: updatedUser.role,
+      ...updatedUser._doc,
     });
   } catch (error) {
+    console.error("Profile update error:", error);
     res.status(500).json({ message: error.message });
   }
 };

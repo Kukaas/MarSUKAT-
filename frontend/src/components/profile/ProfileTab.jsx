@@ -23,15 +23,15 @@ const InfoCard = ({ icon: Icon, label, value, className }) => (
       className
     )}
   >
-    <CardContent className="flex items-start p-4 gap-4">
-      <div className="rounded-full bg-primary/10 p-2.5 ring-1 ring-border/50 shrink-0 dark:bg-primary/20 group-hover:ring-primary/50 transition-all duration-200">
-        <Icon className="h-5 w-5 text-primary" />
+    <CardContent className="flex items-start p-3 sm:p-4 gap-3 sm:gap-4">
+      <div className="rounded-full bg-primary/10 p-2 sm:p-2.5 ring-1 ring-border/50 shrink-0 dark:bg-primary/20 group-hover:ring-primary/50 transition-all duration-200">
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
       </div>
-      <div className="flex-1 min-w-0 space-y-1">
-        <p className="text-sm font-medium text-muted-foreground truncate">
+      <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1">
+        <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
           {label}
         </p>
-        <p className="font-medium break-words text-foreground">
+        <p className="text-sm sm:text-base font-medium break-words text-foreground">
           {value || "Not specified"}
         </p>
       </div>
@@ -40,9 +40,11 @@ const InfoCard = ({ icon: Icon, label, value, className }) => (
 );
 
 const SectionTitle = ({ children }) => (
-  <div className="flex items-center gap-3">
-    <div className="h-6 w-1 rounded-full bg-gradient-to-b from-primary/80 to-primary/50" />
-    <h3 className="text-lg font-semibold text-foreground">{children}</h3>
+  <div className="flex items-center gap-2 sm:gap-3">
+    <div className="h-5 sm:h-6 w-1 rounded-full bg-gradient-to-b from-primary/80 to-primary/50" />
+    <h3 className="text-base sm:text-lg font-semibold text-foreground">
+      {children}
+    </h3>
   </div>
 );
 
@@ -166,24 +168,27 @@ const ProfileTab = ({ user }) => {
   const basicFields = getBasicFields(user);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Profile Avatar and Name */}
       <div className="relative">
-        <div className="absolute inset-0 h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50 dark:from-primary/10 dark:via-primary/5" />
-        <div className="relative pt-8 px-4 flex flex-col items-center space-y-4">
-          <Avatar className="h-24 w-24 ring-4 ring-background shadow-xl">
-            <AvatarImage src={user?.photo} alt={user?.name} />
-            <AvatarFallback className="text-lg bg-muted text-foreground">
+        <div className="absolute inset-0 h-32 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50 dark:from-primary/10 dark:via-primary/5" />
+        <div className="relative pt-6 sm:pt-8 px-4 flex flex-col items-center space-y-3 sm:space-y-4">
+          <Avatar className="h-20 w-20 sm:h-24 sm:w-24 ring-4 ring-background shadow-xl">
+            <AvatarImage
+              src={user?.photo?.data ? user.photo.data : undefined}
+              alt={user?.name}
+            />
+            <AvatarFallback className="text-base sm:text-lg bg-muted text-foreground">
               {user?.name?.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <div className="text-center pb-4">
-            <h3 className="text-xl font-semibold text-foreground">
+          <div className="text-center pb-3 sm:pb-4">
+            <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">
               {user?.name}
             </h3>
             <Badge
               variant="outline"
-              className="bg-card/80 backdrop-blur-sm border-border/50 dark:bg-card/40 dark:border-border/30 font-medium"
+              className="bg-card/80 backdrop-blur-sm border-border/50 dark:bg-card/40 dark:border-border/30 font-medium text-xs sm:text-sm"
             >
               {user?.role}
             </Badge>
@@ -192,9 +197,9 @@ const ProfileTab = ({ user }) => {
       </div>
 
       {/* Basic User Details */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <SectionTitle>Basic Information</SectionTitle>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           {basicFields.map((field, index) => (
             <InfoCard
               key={index}
@@ -223,7 +228,11 @@ const ProfileTab = ({ user }) => {
       </div>
 
       {/* Role-specific fields */}
-      <RoleSpecificFields user={user} />
+      {user && (
+        <div className="space-y-4 sm:space-y-6">
+          <RoleSpecificFields user={user} />
+        </div>
+      )}
     </div>
   );
 };

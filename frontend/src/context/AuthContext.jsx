@@ -150,12 +150,20 @@ export function AuthProvider({ children }) {
     setUser(userData.user);
   };
 
+  const updateUserInfo = (updatedUserData) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      ...updatedUserData,
+    }));
+  };
+
   const value = {
     user,
     login,
     logout,
     loading,
     isAuthenticated: !!user,
+    updateUserInfo,
   };
 
   if (loading && !isPublicRoute(location.pathname)) {

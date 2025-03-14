@@ -8,13 +8,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Key, User as UserIcon } from "lucide-react";
+import { Key, User as UserIcon, Edit, Save } from "lucide-react";
 import { useState, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ProfileTab from "./ProfileTab";
 import SecurityTab from "./SecurityTab";
+import UpdateProfileTab from "./UpdateProfileTab";
 
 const TabItem = ({ value, icon: Icon, children, isActive }) => (
   <TabsTrigger
@@ -36,14 +37,19 @@ const TabItem = ({ value, icon: Icon, children, isActive }) => (
         isActive ? "text-primary" : "text-muted-foreground"
       )}
     />
-    {children}
+    <span className="hidden sm:inline">{children}</span>
   </TabsTrigger>
 );
 
 const ProfileModal = ({ open, onOpenChange }) => {
-  const { user } = useAuth();
+  const auth = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If auth context is not available yet, don't render the modal
+  if (!auth || !auth.user) {
+    return null;
+  }
 
   const handleCancel = useCallback(() => {
     if (!isSubmitting) {
@@ -96,6 +102,9 @@ const ProfileModal = ({ open, onOpenChange }) => {
               >
                 Profile
               </TabItem>
+              <TabItem value="edit" icon={Edit} isActive={activeTab === "edit"}>
+                Edit Profile
+              </TabItem>
               <TabItem
                 value="security"
                 icon={Key}
@@ -109,7 +118,16 @@ const ProfileModal = ({ open, onOpenChange }) => {
           <ScrollArea className="h-[calc(95vh-280px)] sm:h-[420px]">
             <div className="p-6">
               <TabsContent value="profile" className="mt-0">
-                <ProfileTab user={user} />
+                <ProfileTab user={auth.user} />
+              </TabsContent>
+
+              <TabsContent value="edit" className="mt-0">
+                <UpdateProfileTab
+                  onCancel={handleCancel}
+                  onSubmitSuccess={handleSubmitSuccess}
+                  isSubmitting={isSubmitting}
+                  setIsSubmitting={setIsSubmitting}
+                />
               </TabsContent>
 
               <TabsContent value="security" className="mt-0">
@@ -139,6 +157,26 @@ const ProfileModal = ({ open, onOpenChange }) => {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Changing Password..." : "Change Password"}
+              </Button>
+            </DialogFooter>
+          )}
+
+          {activeTab === "edit" && (
+            <DialogFooter className="p-6 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="updateProfileForm"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Updating Profile..." : "Update Profile"}
               </Button>
             </DialogFooter>
           )}

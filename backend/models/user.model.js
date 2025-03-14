@@ -45,9 +45,18 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     photo: {
-      type: String,
-      default:
-        "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
+      filename: {
+        type: String,
+        default: "default-profile",
+      },
+      contentType: {
+        type: String,
+        default: "image/png",
+      },
+      data: {
+        type: String,
+        default: "", // Will store base64 data URL
+      },
     },
     isAdmin: {
       type: Boolean,
