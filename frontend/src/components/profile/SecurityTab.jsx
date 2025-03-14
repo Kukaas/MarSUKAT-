@@ -8,6 +8,7 @@ import PasswordInput from "../custom-components/PasswordInput";
 import { authAPI } from "../../lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const formSchema = z
   .object({
@@ -75,9 +76,12 @@ const PasswordRequirements = ({ password }) => {
   );
 };
 
-const SecurityTab = ({ onCancel, onSubmitSuccess }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+const SecurityTab = ({
+  onCancel,
+  onSubmitSuccess,
+  isSubmitting,
+  setIsSubmitting,
+}) => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -102,7 +106,6 @@ const SecurityTab = ({ onCancel, onSubmitSuccess }) => {
       onSubmitSuccess?.();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to change password");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -126,6 +129,7 @@ const SecurityTab = ({ onCancel, onSubmitSuccess }) => {
             name="currentPassword"
             label="Current Password"
             placeholder="Enter your current password"
+            disabled={isSubmitting}
           />
 
           <div className="space-y-4">
@@ -134,6 +138,7 @@ const SecurityTab = ({ onCancel, onSubmitSuccess }) => {
               name="newPassword"
               label="New Password"
               placeholder="Enter your new password"
+              disabled={isSubmitting}
             />
             <PasswordRequirements password={newPassword || ""} />
           </div>
@@ -143,6 +148,7 @@ const SecurityTab = ({ onCancel, onSubmitSuccess }) => {
             name="confirmPassword"
             label="Confirm New Password"
             placeholder="Confirm your new password"
+            disabled={isSubmitting}
           />
         </form>
       </Form>

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Key, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -45,17 +45,29 @@ const ProfileModal = ({ open, onOpenChange }) => {
   const [activeTab, setActiveTab] = useState("profile");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCancel = () => {
-    setActiveTab("profile");
-  };
+  const handleCancel = useCallback(() => {
+    if (!isSubmitting) {
+      setActiveTab("profile");
+    }
+  }, [isSubmitting]);
 
-  const handleSubmitSuccess = () => {
+  const handleSubmitSuccess = useCallback(() => {
     setIsSubmitting(false);
     handleCancel();
-  };
+  }, [handleCancel]);
+
+  const handleOpenChange = useCallback(
+    (isOpen) => {
+      if (!isOpen && !isSubmitting) {
+        setActiveTab("profile");
+      }
+      onOpenChange?.(isOpen);
+    },
+    [isSubmitting, onOpenChange]
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] sm:max-w-[600px] p-0 gap-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-2xl font-semibold text-foreground">
@@ -68,7 +80,11 @@ const ProfileModal = ({ open, onOpenChange }) => {
 
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(value) => {
+            if (!isSubmitting) {
+              setActiveTab(value);
+            }
+          }}
           className="flex flex-col flex-1"
         >
           <div className="relative mt-2 border-b border-border/50">
@@ -100,6 +116,8 @@ const ProfileModal = ({ open, onOpenChange }) => {
                 <SecurityTab
                   onCancel={handleCancel}
                   onSubmitSuccess={handleSubmitSuccess}
+                  isSubmitting={isSubmitting}
+                  setIsSubmitting={setIsSubmitting}
                 />
               </TabsContent>
             </div>
@@ -120,14 +138,7 @@ const ProfileModal = ({ open, onOpenChange }) => {
                 form="changePasswordForm"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm mr-2"></span>
-                    Changing Password...
-                  </>
-                ) : (
-                  "Change Password"
-                )}
+                {isSubmitting ? "Changing Password..." : "Change Password"}
               </Button>
             </DialogFooter>
           )}
