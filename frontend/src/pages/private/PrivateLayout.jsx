@@ -1,7 +1,28 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import { getTitleFromPath } from "../../utils/getTitleFromPath";
 
 const PrivateLayout = ({ children }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Get the new title based on the current path
+    const newTitle = getTitleFromPath(location.pathname);
+
+    // Update the document title if it's different
+    if (document.title !== newTitle) {
+      document.title = newTitle;
+      console.log(
+        "Title updated to:",
+        newTitle,
+        "for path:",
+        location.pathname
+      );
+    }
+  }, [location.pathname]);
+
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-background">
       <Header className="fixed top-0 z-50 w-full" />
