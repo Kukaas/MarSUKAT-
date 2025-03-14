@@ -41,7 +41,7 @@ import { useTheme } from "../context/ThemeContext";
 import { Switch } from "./ui/switch";
 import React, { useState } from "react";
 import { cn } from "../lib/utils";
-import ProfileModal from "./auth/ProfileModal";
+import ProfileModal from "./profile/ProfileModal";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
