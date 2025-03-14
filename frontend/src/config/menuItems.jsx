@@ -28,6 +28,11 @@ import {
   GraduationCap as GownIcon,
   Factory as FactoryProduction,
   Package,
+  Box,
+  Boxes,
+  BookOpenCheck,
+  BarChart3,
+  FileText,
 } from "lucide-react";
 
 export const menuItems = {
@@ -198,26 +203,82 @@ export const menuItems = {
         {
           title: "Uniform Production",
           icon: <Scissors />,
-          path: () => "/job-order/uniform-production",
+          path: () => "/job-order/productions/school-uniforms",
           description: "Manage uniform production",
         },
         {
           title: "Academic Gowns Production",
           icon: <GownIcon />,
-          path: () => "/job-order/academic-gowns-production",
+          path: () => "/job-order/productions/academic-gowns",
           description: "Manage academic gowns production",
         },
         {
           title: "Commercial Job Production",
           icon: <FactoryProduction />,
-          path: () => "/job-order/commercial-job-production",
+          path: () => "/job-order/productions/commercial-jobs",
           description: "Manage commercial job production",
         },
         {
           title: "Other Productions",
           icon: <Package />,
-          path: () => "/job-order/other-productions",
+          path: () => "/job-order/productions/others",
           description: "Manage other productions",
+        },
+      ],
+    },
+    {
+      title: "Inventory",
+      icon: <Boxes />,
+      type: "accordion",
+      items: [
+        {
+          title: "Raw Materials Inventory",
+          icon: <Box />,
+          path: () => "/job-order/inventory/raw-materials",
+          description: "Manage raw materials inventory",
+        },
+        {
+          title: "School Uniform Inventory",
+          icon: <Shirt />,
+          path: () => "/job-order/inventory/school-uniforms",
+          description: "Manage school uniform inventory",
+        },
+        {
+          title: "Academic Gown Inventory",
+          icon: <GownIcon />,
+          path: () => "/job-order/inventory/academic-gowns",
+          description: "Manage academic gown inventory",
+        },
+        {
+          title: "Commercial Job Inventory",
+          icon: <Package />,
+          path: () => "/job-order/inventory/commercial-jobs",
+          description: "Manage commercial job inventory",
+        },
+        {
+          title: "Others Inventory",
+          icon: <Warehouse />,
+          path: () => "/job-order/inventory/others",
+          description: "Manage other inventory items",
+        },
+      ],
+    },
+    {
+      title: "Reports",
+      icon: <FileText />,
+      type: "accordion",
+      items: [
+        {
+          title: "Sales Report",
+          icon: <BarChart3 />,
+          path: () => "/job-order/reports/sales",
+          description: "View sales reports",
+        },
+        {
+          title: "Accomplishment Reports",
+          icon: <BookOpenCheck />,
+          path: () => "/job-order/reports/accomplishments",
+          description: "View accomplishment reports",
         },
       ],
     },

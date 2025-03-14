@@ -1,4 +1,4 @@
-import PrivateLayout from "../PrivateLayout";
+import PrivateLayout from "../../PrivateLayout";
 
 export function Rentals() {
   return (
