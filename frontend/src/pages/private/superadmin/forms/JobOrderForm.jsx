@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 const createFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
   gender: z.string().min(1, "Gender is required"),
   jobType: z.string().min(1, "Job type is required"),
   jobDescription: z.string().min(1, "Job description is required"),
@@ -20,7 +19,6 @@ const createFormSchema = z.object({
 const editFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  password: z.string().optional(),
   gender: z.string().min(1, "Gender is required"),
   jobType: z.string().min(1, "Job type is required"),
   jobDescription: z.string().min(1, "Job description is required"),
@@ -45,7 +43,6 @@ export function JobOrderForm({
     defaultValues: {
       name: formData?.name || "",
       email: formData?.email || "",
-      password: "",
       gender: formData?.gender || "",
       jobType: formData?.jobType || "",
       jobDescription: formData?.jobDescription || "",
@@ -93,17 +90,6 @@ export function JobOrderForm({
                     required
                     disabled={isSubmitting}
                   />
-                  {!isEdit && (
-                    <FormInput
-                      form={form}
-                      name="password"
-                      label="Password"
-                      type="password"
-                      placeholder="Enter password"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  )}
                   <FormSelect
                     form={form}
                     name="gender"

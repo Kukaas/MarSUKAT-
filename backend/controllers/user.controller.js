@@ -1,10 +1,10 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { sendJobOrderAccountEmail } from "../utils/emailService.js";
 import { v4 as uuidv4 } from "uuid";
 import { sendVerificationEmail } from "../utils/emailService.js";
 import UserVerification from "../models/user.verification.js";
+import { generateSecurePassword } from "../utils/passwordGenerator.js";
 
 // Register a new user
 export const register = async (req, res) => {
@@ -24,8 +24,12 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
+    // Generate verification string
+    const uniqueString = uuidv4();
     const salt = await bcrypt.genSalt(10);
+    const hashedUniqueString = await bcrypt.hash(uniqueString, salt);
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
@@ -34,16 +38,49 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      verified: false,
       ...req.body,
     });
 
     if (user) {
+      // Create verification record
+      const verificationRecord = new UserVerification({
+        userId: user._id,
+        uniqueString: hashedUniqueString,
+        createdAt: Date.now(),
+        expireAt: Date.now() + 21600000, // 6 hours
+      });
+      await verificationRecord.save();
+
+      // Send verification email
+      try {
+        await sendVerificationEmail(
+          {
+            _id: user._id,
+            email,
+            name,
+            role,
+          },
+          uniqueString
+        );
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // Delete the created user and verification record if email fails
+        await UserVerification.deleteOne({ userId: user._id });
+        await User.findByIdAndDelete(user._id);
+        return res
+          .status(500)
+          .json({ message: "Failed to send verification email" });
+      }
+
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id),
+        verified: user.verified,
+        message:
+          "Account created successfully. Please check your email for verification.",
       });
     }
   } catch (error) {
@@ -54,13 +91,16 @@ export const register = async (req, res) => {
 // Create JobOrder (SuperAdmin only)
 export const createJobOrder = async (req, res) => {
   try {
-    const { name, email, password, gender, jobType, jobDescription } = req.body;
+    const { name, email, gender, jobType, jobDescription } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
+
+    // Generate random password
+    const password = generateSecurePassword();
 
     // Generate verification string
     const uniqueString = uuidv4();
@@ -96,9 +136,18 @@ export const createJobOrder = async (req, res) => {
       verificationRecord.userId = jobOrder._id;
       await verificationRecord.save();
 
-      // Send verification email
+      // Send verification email with account details
       try {
-        await sendVerificationEmail(jobOrder, uniqueString);
+        await sendVerificationEmail(
+          {
+            _id: jobOrder._id,
+            email,
+            name,
+            role: "JobOrder",
+            password,
+          },
+          uniqueString
+        );
       } catch (emailError) {
         console.error("Failed to send verification email:", emailError);
         // Delete the created user and verification record if email fails
@@ -107,19 +156,6 @@ export const createJobOrder = async (req, res) => {
         return res
           .status(500)
           .json({ message: "Failed to send verification email" });
-      }
-
-      // Send job order account details email
-      try {
-        await sendJobOrderAccountEmail({
-          name,
-          email,
-          password, // Send original unhashed password
-          jobType,
-        });
-      } catch (emailError) {
-        console.error("Failed to send job order account email:", emailError);
-        // Don't delete the user in this case since verification email was sent
       }
 
       res.status(201).json({

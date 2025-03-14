@@ -19,17 +19,10 @@ const accessKeySchema = z.object({
   accessKey: z.string().min(1, "Access key is required"),
 });
 
-const superAdminSchema = z
-  .object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const superAdminSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+});
 
 const CreateSuperAdmin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,8 +41,6 @@ const CreateSuperAdmin = () => {
     defaultValues: {
       name: "",
       email: "",
-      password: "",
-      confirmPassword: "",
     },
   });
 
@@ -65,16 +56,35 @@ const CreateSuperAdmin = () => {
   const handleCreateSuperAdmin = async (data) => {
     try {
       setIsLoading(true);
-      // Remove confirmPassword before sending to API
-      const { confirmPassword, ...adminData } = data;
-      await authAPI.createSuperAdmin(adminData);
+      await authAPI.createSuperAdmin(data);
       toast.success("Super admin created successfully!");
-      form.reset();
+      superAdminForm.reset();
       navigate("/login");
     } catch (error) {
+      console.error("SuperAdmin creation error:", error);
+
+      // Get error code and message
+      const errorCode = error.response?.data?.error;
       const errorMessage =
         error.response?.data?.message || "Failed to create super admin";
-      toast.error(errorMessage);
+
+      // Show appropriate error message based on error code
+      switch (errorCode) {
+        case "MISSING_FIELDS":
+          toast.error("Please fill in all required fields");
+          break;
+        case "EMAIL_EXISTS":
+          toast.error("This email is already registered");
+          break;
+        case "SUPERADMIN_EXISTS":
+          toast.error("A verified Super Admin account already exists");
+          break;
+        case "EMAIL_SEND_FAILED":
+          toast.error("Failed to send verification email. Please try again");
+          break;
+        default:
+          toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -136,18 +146,6 @@ const CreateSuperAdmin = () => {
                 type="email"
                 placeholder="Enter email"
                 icon={Mail}
-              />
-              <PasswordInput
-                form={superAdminForm}
-                name="password"
-                label="Password"
-                placeholder="Enter password"
-              />
-              <PasswordInput
-                form={superAdminForm}
-                name="confirmPassword"
-                label="Confirm Password"
-                placeholder="Confirm password"
               />
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Super Admin"}

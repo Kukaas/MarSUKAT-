@@ -23,7 +23,10 @@ transporter.verify((error, success) => {
   }
 });
 
-export const sendVerificationEmail = async ({ _id, email }, uniqueString) => {
+export const sendVerificationEmail = async (
+  { _id, email, name, role, password },
+  uniqueString
+) => {
   try {
     const backendUrl = process.env.BACKEND_URL || "http://localhost:3000";
     const mailOptions = {
@@ -32,60 +35,117 @@ export const sendVerificationEmail = async ({ _id, email }, uniqueString) => {
         address: process.env.AUTH_EMAIL,
       },
       to: email,
-      subject: "Verify Your Email",
+      subject:
+        role === "JobOrder" || role === "SuperAdmin"
+          ? "Verify Your Email and Account Information"
+          : "Verify Your Email",
       html: `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           </head>
-          <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             <table role="presentation" style="width: 100%; border: none; margin: 0; padding: 0;">
               <tr>
                 <td align="center" style="padding: 40px 0;">
-                  <table role="presentation" style="width: 94%; max-width: 600px; border: none; margin: 0; padding: 0; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);">
+                  <table role="presentation" style="width: 94%; max-width: 600px; border: none; margin: 0; padding: 0;">
                     <!-- Header with Maroon Background -->
                     <tr>
-                      <td style="background-color: #800000; padding: 20px 30px; border-radius: 8px 8px 0 0;">
+                      <td style="background: linear-gradient(135deg, #800000 0%, #b30000 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
                         <div style="text-align: center;">
-                          <h1 style="color: #ffffff; font-size: 20px; font-weight: 600; margin: 0; font-family: Times New Roman, serif;">Republic of the Philippines</h1>
-                          <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 8px 0; font-family: Times New Roman, serif;">Marinduque State University</h1>
-                          <p style="color: #ffffff; font-size: 14px; margin: 0; font-style: italic;">Tanza, Boac, Marinduque</p>
+                          <h1 style="color: #ffffff; font-size: 22px; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Republic of the Philippines</h1>
+                          <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 12px 0; text-transform: uppercase; letter-spacing: 1px;">Marinduque State University</h1>
+                          <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; margin: 0; font-style: italic;">Tanza, Boac, Marinduque</p>
                         </div>
                       </td>
                     </tr>
-                    <!-- Logo Section -->
+                    <!-- Main Content Section with White Background -->
                     <tr>
-                      <td style="padding: 30px 30px 20px; text-align: center;">
-                        <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" style="width: 120px; height: 120px; margin: 0 auto;" />
-                      </td>
-                    </tr>
-                    <!-- Content Section -->
-                    <tr>
-                      <td style="padding: 0 30px 30px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                          <p style="color: #333333; font-size: 16px; line-height: 24px; margin: 0 0 16px;">Verify your email address to complete the signup process.</p>
-                          <p style="color: #666666; font-size: 14px; margin: 0 0 24px;">This link expires in 6 hours.</p>
+                      <td style="background-color: #ffffff; padding: 0;">
+                        <!-- Logo Section with Overlap -->
+                        <div style="text-align: center; margin-top: -60px; margin-bottom: 20px;">
+                          <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" 
+                               style="width: 120px; height: 120px; border-radius: 60px; border: 4px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
                         </div>
-                        <div style="text-align: center; margin-bottom: 30px;">
-                          <a href="${backendUrl}/api/v1/auth/verify/${_id}/${uniqueString}"
-                             style="display: inline-block; background-color: #800000; color: #ffffff; font-size: 16px; font-weight: 500; text-decoration: none; padding: 12px 32px; border-radius: 4px; transition: all 0.2s;">
-                            Verify Email
-                          </a>
-                        </div>
-                        <div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 30px;">
-                          <p style="color: #666666; font-size: 14px; margin: 0;">
-                            If you did not request this, please ignore this message.
-                          </p>
+                        
+                        <!-- Welcome Message -->
+                        <div style="padding: 0 40px 30px;">
+                          <h2 style="color: #1a1a1a; font-size: 24px; font-weight: 600; text-align: center; margin: 0 0 20px;">Welcome to MarSUKAT!</h2>
+                          
+                          ${
+                            role === "JobOrder" || role === "SuperAdmin"
+                              ? `
+                          <!-- Account Information Card -->
+                          <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; margin: 30px 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
+                            <h3 style="color: #800000; font-size: 20px; font-weight: 600; margin: 0 0 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Account Information</h3>
+                            <div style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e5e7eb;">
+                              <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                  <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <p style="color: #64748b; font-size: 14px; margin: 0;">Name</p>
+                                    <p style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 4px 0 0;">${name}</p>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <p style="color: #64748b; font-size: 14px; margin: 0;">Email</p>
+                                    <p style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 4px 0 0;">${email}</p>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <p style="color: #64748b; font-size: 14px; margin: 0;">Role</p>
+                                    <p style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 4px 0 0;">${role}</p>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td style="padding: 12px 0;">
+                                    <p style="color: #64748b; font-size: 14px; margin: 0;">Password</p>
+                                    <div style="background: #800000; padding: 8px 12px; border-radius: 6px; display: inline-block; margin-top: 4px;">
+                                      <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 0; font-family: monospace; letter-spacing: 1px;">${password}</p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </div>
+                            <div style="margin-top: 20px; padding: 12px; border-radius: 8px; background-color: #fff7ed; border: 1px solid #ffedd5;">
+                              <p style="color: #9a3412; font-size: 14px; margin: 0; text-align: center; font-style: italic;">
+                                Please change your password after your first login for security purposes.
+                              </p>
+                            </div>
+                          </div>
+                          `
+                              : ""
+                          }
+
+                          <!-- Verification Section -->
+                          <div style="text-align: center; background-color: #f8fafc; border-radius: 16px; padding: 30px; margin: 30px 0; border: 1px solid #e5e7eb;">
+                            <h3 style="color: #1a1a1a; font-size: 20px; font-weight: 600; margin: 0 0 15px;">Email Verification Required</h3>
+                            <p style="color: #4b5563; font-size: 16px; line-height: 24px; margin: 0 0 20px;">Please verify your email address to complete the signup process.</p>
+                            <p style="color: #64748b; font-size: 14px; margin: 0 0 25px;">This verification link will expire in 6 hours.</p>
+                            <a href="${backendUrl}/api/v1/auth/verify/${_id}/${uniqueString}"
+                               style="display: inline-block; background: #800000; color: #ffffff; font-size: 16px; font-weight: 500; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: all 0.2s;">
+                              Verify Email
+                            </a>
+                          </div>
+
+                          <!-- Security Notice -->
+                          <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                              If you did not request this, please ignore this message or contact support.
+                            </p>
+                          </div>
                         </div>
                       </td>
                     </tr>
                     <!-- Footer -->
                     <tr>
-                      <td style="padding: 20px 30px; background-color: #f8f8f8; border-radius: 0 0 8px 8px; text-align: center;">
-                        <p style="color: #666666; font-size: 12px; margin: 0;">
-                          All rights reserved, MarSUKAT 2024
+                      <td style="background-color: #f8fafc; padding: 20px 30px; border-radius: 0 0 16px 16px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                          © ${new Date().getFullYear()} MarSUKAT. All rights reserved.
                         </p>
                       </td>
                     </tr>
@@ -99,7 +159,6 @@ export const sendVerificationEmail = async ({ _id, email }, uniqueString) => {
     };
 
     await transporter.sendMail(mailOptions);
-
     return true;
   } catch (error) {
     console.error("Error sending verification email:", error);
@@ -123,51 +182,63 @@ export const sendOTPEmail = async (email, otp) => {
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           </head>
-          <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             <table role="presentation" style="width: 100%; border: none; margin: 0; padding: 0;">
               <tr>
                 <td align="center" style="padding: 40px 0;">
-                  <table role="presentation" style="width: 94%; max-width: 600px; border: none; margin: 0; padding: 0; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);">
+                  <table role="presentation" style="width: 94%; max-width: 600px; border: none; margin: 0; padding: 0;">
                     <!-- Header with Maroon Background -->
                     <tr>
-                      <td style="background-color: #800000; padding: 20px 30px; border-radius: 8px 8px 0 0;">
+                      <td style="background: linear-gradient(135deg, #800000 0%, #b30000 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
                         <div style="text-align: center;">
-                          <h1 style="color: #ffffff; font-size: 20px; font-weight: 600; margin: 0; font-family: Times New Roman, serif;">Republic of the Philippines</h1>
-                          <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 8px 0; font-family: Times New Roman, serif;">Marinduque State University</h1>
-                          <p style="color: #ffffff; font-size: 14px; margin: 0; font-style: italic;">Tanza, Boac, Marinduque</p>
+                          <h1 style="color: #ffffff; font-size: 22px; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Republic of the Philippines</h1>
+                          <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 12px 0; text-transform: uppercase; letter-spacing: 1px;">Marinduque State University</h1>
+                          <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; margin: 0; font-style: italic;">Tanza, Boac, Marinduque</p>
                         </div>
                       </td>
                     </tr>
-                    <!-- Logo Section -->
+                    <!-- Main Content Section with White Background -->
                     <tr>
-                      <td style="padding: 30px 30px 20px; text-align: center;">
-                        <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" style="width: 120px; height: 120px; margin: 0 auto;" />
-                      </td>
-                    </tr>
-                    <!-- Content Section -->
-                    <tr>
-                      <td style="padding: 0 30px 30px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                          <h2 style="color: #333333; font-size: 24px; margin: 0 0 16px;">Password Reset Request</h2>
-                          <p style="color: #333333; font-size: 16px; line-height: 24px; margin: 0 0 16px;">Your OTP for password reset is:</p>
-                          <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                            <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #800000;">${otp}</span>
+                      <td style="background-color: #ffffff; padding: 0;">
+                        <!-- Logo Section with Overlap -->
+                        <div style="text-align: center; margin-top: -60px; margin-bottom: 20px;">
+                          <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" 
+                               style="width: 120px; height: 120px; border-radius: 60px; border: 4px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                        </div>
+                        
+                        <!-- Content Section -->
+                        <div style="padding: 0 40px 30px;">
+                          <h2 style="color: #1a1a1a; font-size: 24px; font-weight: 600; text-align: center; margin: 0 0 20px;">Password Reset Request</h2>
+                          
+                          <!-- OTP Card -->
+                          <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; margin: 30px 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
+                            <h3 style="color: #800000; font-size: 20px; font-weight: 600; margin: 0 0 20px; text-align: center;">Your OTP Code</h3>
+                            <div style="background: #800000; padding: 25px; border-radius: 12px; text-align: center;">
+                              <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #ffffff; margin: 0; font-family: monospace;">${otp}</p>
+                            </div>
+                            <div style="margin-top: 20px; padding: 12px; border-radius: 8px; background-color: #fff7ed; border: 1px solid #ffedd5;">
+                              <p style="color: #9a3412; font-size: 14px; margin: 0; text-align: center; font-style: italic;">
+                                This OTP will expire in 5 minutes.
+                              </p>
+                            </div>
                           </div>
-                          <p style="color: #666666; font-size: 14px; margin: 16px 0 0;">This OTP will expire in 5 minutes.</p>
-                        </div>
-                        <div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 30px;">
-                          <p style="color: #666666; font-size: 14px; margin: 0;">
-                            If you did not request this password reset, please ignore this message.
-                          </p>
+
+                          <!-- Security Notice -->
+                          <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                              If you did not request this password reset, please ignore this message or contact support.
+                            </p>
+                          </div>
                         </div>
                       </td>
                     </tr>
                     <!-- Footer -->
                     <tr>
-                      <td style="padding: 20px 30px; background-color: #f8f8f8; border-radius: 0 0 8px 8px; text-align: center;">
-                        <p style="color: #666666; font-size: 12px; margin: 0;">
-                          All rights reserved, MarSUKAT 2024
+                      <td style="background-color: #f8fafc; padding: 20px 30px; border-radius: 0 0 16px 16px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                          © ${new Date().getFullYear()} MarSUKAT. All rights reserved.
                         </p>
                       </td>
                     </tr>
@@ -184,95 +255,6 @@ export const sendOTPEmail = async (email, otp) => {
     return true;
   } catch (error) {
     console.error("Error sending OTP email:", error);
-    throw error;
-  }
-};
-
-// Send job order account creation email
-export const sendJobOrderAccountEmail = async ({ name, email, password, jobType }) => {
-  try {
-    const mailOptions = {
-      from: {
-        name: "MarSUKAT",
-        address: process.env.AUTH_EMAIL,
-      },
-      to: email,
-      subject: "Your Job Order Account Has Been Created",
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-            <table role="presentation" style="width: 100%; border: none; margin: 0; padding: 0;">
-              <tr>
-                <td align="center" style="padding: 40px 0;">
-                  <table role="presentation" style="width: 94%; max-width: 600px; border: none; margin: 0; padding: 0; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);">
-                    <!-- Header with Maroon Background -->
-                    <tr>
-                      <td style="background-color: #800000; padding: 20px 30px; border-radius: 8px 8px 0 0;">
-                        <div style="text-align: center;">
-                          <h1 style="color: #ffffff; font-size: 20px; font-weight: 600; margin: 0; font-family: Times New Roman, serif;">Republic of the Philippines</h1>
-                          <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 8px 0; font-family: Times New Roman, serif;">Marinduque State University</h1>
-                          <p style="color: #ffffff; font-size: 14px; margin: 0; font-style: italic;">Tanza, Boac, Marinduque</p>
-                        </div>
-                      </td>
-                    </tr>
-                    <!-- Logo Section -->
-                    <tr>
-                      <td style="padding: 30px 30px 20px; text-align: center;">
-                        <img src="https://www.marinduque.edu.ph/wp-content/uploads/2023/03/MSU-Logo-1.png" alt="MSU Logo" style="width: 120px; height: 120px; margin: 0 auto;" />
-                      </td>
-                    </tr>
-                    <!-- Content Section -->
-                    <tr>
-                      <td style="padding: 0 30px 30px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                          <h2 style="color: #333333; font-size: 24px; margin: 0 0 16px;">Welcome to MarSUKAT!</h2>
-                          <p style="color: #333333; font-size: 16px; line-height: 24px; margin: 0 0 16px;">Dear ${name},</p>
-                          <p style="color: #333333; font-size: 16px; line-height: 24px; margin: 0 0 24px;">
-                            Your job order account has been created successfully. Here are your account details:
-                          </p>
-                          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 0 auto; max-width: 400px; text-align: left;">
-                            <p style="margin: 8px 0; color: #374151;"><strong>Name:</strong> ${name}</p>
-                            <p style="margin: 8px 0; color: #374151;"><strong>Email:</strong> ${email}</p>
-                            <p style="margin: 8px 0; color: #374151;"><strong>Job Type:</strong> ${jobType}</p>
-                            <p style="margin: 8px 0; color: #374151;"><strong>Password:</strong> ${password}</p>
-                          </div>
-                          <p style="color: #666666; font-size: 14px; margin: 24px 0 0;">
-                            Please change your password after your first login for security purposes.
-                          </p>
-                        </div>
-                        <div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 30px;">
-                          <p style="color: #666666; font-size: 14px; margin: 0;">
-                            If you have any questions, please contact the administrator.
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding: 20px 30px; background-color: #f8f8f8; border-radius: 0 0 8px 8px; text-align: center;">
-                        <p style="color: #666666; font-size: 12px; margin: 0;">
-                          All rights reserved, MarSUKAT 2024
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    return true;
-  } catch (error) {
-    console.error("Error sending job order account email:", error);
     throw error;
   }
 };
