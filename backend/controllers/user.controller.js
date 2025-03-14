@@ -247,6 +247,14 @@ export const updateProfile = async (req, res) => {
 
     // Handle photo update with base64 data
     if (req.body.photo && req.body.photo.data) {
+      // Check if image size exceeds 10MB (10 * 1024 * 1024 bytes)
+      const base64Size = Buffer.from(req.body.photo.data, "base64").length;
+      if (base64Size > 10 * 1024 * 1024) {
+        return res
+          .status(400)
+          .json({ message: "Image size must not exceed 10MB" });
+      }
+
       user.photo = {
         filename: req.body.photo.filename || "profile-image",
         contentType: req.body.photo.contentType || "image/jpeg",
