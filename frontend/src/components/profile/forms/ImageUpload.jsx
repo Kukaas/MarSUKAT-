@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FormField,
   FormItem,
@@ -11,7 +11,16 @@ import { Camera, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const ImageUpload = ({ form, name = "photo" }) => {
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(
+    form.getValues(name)?.data || null
+  );
+
+  useEffect(() => {
+    const photoData = form.getValues(name)?.data;
+    if (photoData && !previewUrl) {
+      setPreviewUrl(photoData);
+    }
+  }, [form, name, previewUrl]);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -27,11 +36,15 @@ export const ImageUpload = ({ form, name = "photo" }) => {
       reader.onloadend = () => {
         const base64Data = reader.result;
         setPreviewUrl(base64Data);
-        form.setValue(name, {
-          filename: file.name,
-          contentType: file.type,
-          data: base64Data,
-        });
+        form.setValue(
+          name,
+          {
+            filename: file.name,
+            contentType: file.type,
+            data: base64Data,
+          },
+          { shouldDirty: true }
+        );
       };
       reader.readAsDataURL(file);
     }
@@ -39,11 +52,7 @@ export const ImageUpload = ({ form, name = "photo" }) => {
 
   const handleRemoveImage = () => {
     setPreviewUrl(null);
-    form.setValue(name, {
-      filename: "default-profile",
-      contentType: "image/png",
-      data: "",
-    });
+    form.setValue(name, null, { shouldDirty: true });
   };
 
   const currentPhotoData = form.watch(name)?.data;

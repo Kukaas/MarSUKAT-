@@ -175,11 +175,11 @@ const ProfileTab = ({ user }) => {
         <div className="relative pt-6 sm:pt-8 px-4 flex flex-col items-center space-y-3 sm:space-y-4">
           <Avatar className="h-20 w-20 sm:h-24 sm:w-24 ring-4 ring-background shadow-xl">
             <AvatarImage
-              src={user?.photo?.data ? user.photo.data : undefined}
+              src={user?.photo?.data || undefined}
               alt={user?.name}
             />
             <AvatarFallback className="text-base sm:text-lg bg-muted text-foreground">
-              {user?.name?.charAt(0)}
+              {user?.name?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="text-center pb-3 sm:pb-4">

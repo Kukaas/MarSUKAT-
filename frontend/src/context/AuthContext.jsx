@@ -150,12 +150,13 @@ export function AuthProvider({ children }) {
     setUser(userData.user);
   };
 
-  const updateUserInfo = (updatedUserData) => {
+  const updateUserInfo = useCallback((updatedUserData) => {
     setUser((prevUser) => ({
       ...prevUser,
       ...updatedUserData,
+      photo: updatedUserData.photo, // Explicitly handle photo updates
     }));
-  };
+  }, []);
 
   const value = {
     user,

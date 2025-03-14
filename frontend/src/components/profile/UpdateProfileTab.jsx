@@ -84,12 +84,6 @@ const UpdateProfileTab = ({
   setIsSubmitting,
 }) => {
   const { user, updateUserInfo } = useAuth();
-  const [imagePreview, setImagePreview] = useState("");
-  const [photoData, setPhotoData] = useState({
-    filename: "",
-    contentType: "",
-    data: "",
-  });
   const [departmentLevels, setDepartmentLevels] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [levelOptions, setLevelOptions] = useState([]);
@@ -102,7 +96,11 @@ const UpdateProfileTab = ({
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
-      photo: user?.photo || { filename: "", contentType: "", data: "" },
+      photo: user?.photo || {
+        filename: "",
+        contentType: "",
+        data: "",
+      },
       ...(user?.role === "Student" && {
         studentNumber: user?.studentNumber || "",
         studentGender: user?.studentGender || "",
@@ -127,6 +125,7 @@ const UpdateProfileTab = ({
         accessLevel: user?.accessLevel || "full",
       }),
     },
+    resolver: zodResolver(profileSchema),
   });
 
   // Get selected level for department filtering
@@ -191,73 +190,56 @@ const UpdateProfileTab = ({
 
   useEffect(() => {
     if (user) {
-      // Reset form with user data
       const formValues = {
         name: user.name || "",
         email: user.email || "",
+        photo: user.photo || {
+          filename: "",
+          contentType: "",
+          data: "",
+        },
+        ...(user.role === "Student" && {
+          studentNumber: user.studentNumber || "",
+          studentGender: user.studentGender || "",
+          department: user.department || "",
+          level: user.level || "",
+        }),
+        ...(user.role === "CommercialJob" && {
+          address: user.address || "",
+          gender: user.gender || "",
+        }),
+        ...(user.role === "Coordinator" && {
+          department: user.department || "",
+          level: user.level || "",
+          gender: user.gender || "",
+        }),
+        ...(user.role === "JobOrder" && {
+          gender: user.gender || "",
+          jobType: user.jobType || "",
+          jobDescription: user.jobDescription || "",
+        }),
       };
-
-      // Add role-specific fields
-      if (user.role === "Student") {
-        formValues.studentNumber = user.studentNumber || "";
-        formValues.studentGender = user.studentGender || "";
-        formValues.department = user.department || "";
-        formValues.level = user.level || "";
-      } else if (user.role === "CommercialJob") {
-        formValues.address = user.address || "";
-        formValues.gender = user.gender || "";
-      } else if (user.role === "Coordinator") {
-        formValues.department = user.department || "";
-        formValues.level = user.level || "";
-        formValues.gender = user.gender || "";
-      } else if (user.role === "JobOrder") {
-        formValues.gender = user.gender || "";
-        formValues.jobType = user.jobType || "";
-        formValues.jobDescription = user.jobDescription || "";
-      }
 
       form.reset(formValues);
-
-      // Set photo data
-      if (user.photo) {
-        setPhotoData({
-          filename: user.photo.filename || "",
-          contentType: user.photo.contentType || "",
-          data: user.photo.data || "",
-        });
-
-        if (user.photo.data) {
-          setImagePreview(user.photo.data);
-        }
-      }
     }
   }, [user, form]);
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Update photo data
-        const newPhotoData = {
-          filename: file.name,
-          contentType: file.type,
-          data: reader.result, // base64 data URL
-        };
-
-        setPhotoData(newPhotoData);
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      // Make sure to pass the user ID here
-      const response = await userAPI.updateProfile(user._id, data);
-      updateUserInfo(response);
+      const formData = {
+        ...data,
+        photo: form.getValues("photo"),
+      };
+
+      const response = await userAPI.updateProfile(user._id, formData);
+
+      // Immediately update the user context with the new data
+      updateUserInfo({
+        ...response,
+        photo: formData.photo, // Ensure photo state is immediately updated
+      });
+
       toast.success("Profile updated successfully");
       onSubmitSuccess();
     } catch (error) {
