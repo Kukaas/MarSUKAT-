@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ const GridView = ({
   cardClassName,
   skeletonCount = 6,
   actions = [],
+  actionCategories,
 }) => {
   if (isLoading) {
     return (
@@ -88,7 +90,7 @@ const GridView = ({
                   ? columns[0].render(item[columns[0].key], item)
                   : item[columns[0].key]}
               </div>
-              {actions.length > 0 && (
+              {(actions.length > 0 || actionCategories) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -96,42 +98,73 @@ const GridView = ({
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {actions.map((action, index) => {
-                      // If the action should be hidden based on row data
-                      if (action.show && !action.show(item)) {
-                        return null;
-                      }
-
-                      // If this is not the first visible action and the previous action was visible, show separator
-                      const shouldShowSeparator =
-                        index > 0 &&
-                        (!actions[index - 1].show ||
-                          actions[index - 1].show(item));
-
-                      return (
-                        <React.Fragment key={action.label}>
-                          {shouldShowSeparator && <DropdownMenuSeparator />}
-                          <DropdownMenuItem
-                            onClick={() => action.onClick(item)}
-                            className={cn(
-                              action.variant === "destructive" &&
-                                "text-destructive",
-                              "cursor-pointer"
-                            )}
-                          >
-                            {action.icon && (
-                              <span className="mr-2 h-4 w-4">
-                                {React.createElement(action.icon, {
-                                  className: "h-4 w-4",
-                                })}
-                              </span>
-                            )}
-                            {action.label}
-                          </DropdownMenuItem>
-                        </React.Fragment>
-                      );
-                    })}
+                  <DropdownMenuContent align="end" className="w-[200px]">
+                    {actionCategories
+                      ? Object.entries(actionCategories).map(
+                          (
+                            [category, { label, actions: categoryActions }],
+                            categoryIndex
+                          ) => (
+                            <React.Fragment key={category}>
+                              {categoryIndex > 0 && <DropdownMenuSeparator />}
+                              <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                                {label}
+                              </DropdownMenuLabel>
+                              {categoryActions
+                                .filter(
+                                  (action) => !action.show || action.show(item)
+                                )
+                                .map((action) => (
+                                  <DropdownMenuItem
+                                    key={action.label}
+                                    onClick={() => action.onClick(item)}
+                                    className={cn(
+                                      "cursor-pointer gap-2",
+                                      action.variant === "destructive" &&
+                                        "text-destructive"
+                                    )}
+                                  >
+                                    {action.icon && (
+                                      <span className="h-4 w-4">
+                                        {React.createElement(action.icon, {
+                                          className: "h-4 w-4",
+                                        })}
+                                      </span>
+                                    )}
+                                    {typeof action.label === "function"
+                                      ? action.label(item)
+                                      : action.label}
+                                  </DropdownMenuItem>
+                                ))}
+                            </React.Fragment>
+                          )
+                        )
+                      : actions
+                          .filter((action) => !action.show || action.show(item))
+                          .map((action, index) => (
+                            <React.Fragment key={action.label}>
+                              {index > 0 && <DropdownMenuSeparator />}
+                              <DropdownMenuItem
+                                onClick={() => action.onClick(item)}
+                                className={cn(
+                                  "cursor-pointer gap-2",
+                                  action.variant === "destructive" &&
+                                    "text-destructive"
+                                )}
+                              >
+                                {action.icon && (
+                                  <span className="h-4 w-4">
+                                    {React.createElement(action.icon, {
+                                      className: "h-4 w-4",
+                                    })}
+                                  </span>
+                                )}
+                                {typeof action.label === "function"
+                                  ? action.label(item)
+                                  : action.label}
+                              </DropdownMenuItem>
+                            </React.Fragment>
+                          ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}

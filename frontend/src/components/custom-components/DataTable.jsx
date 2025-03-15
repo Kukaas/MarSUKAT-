@@ -437,6 +437,7 @@ const DataTable = ({
           data={currentData}
           columns={columns}
           actions={actions}
+          actionCategories={actionCategories}
           isLoading={isLoading}
           gridClassName="mt-2"
         />
