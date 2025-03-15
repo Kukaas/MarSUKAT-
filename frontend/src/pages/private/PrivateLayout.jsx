@@ -14,12 +14,6 @@ const PrivateLayout = ({ children }) => {
     // Update the document title if it's different
     if (document.title !== newTitle) {
       document.title = newTitle;
-      console.log(
-        "Title updated to:",
-        newTitle,
-        "for path:",
-        location.pathname
-      );
     }
   }, [location.pathname]);
 
