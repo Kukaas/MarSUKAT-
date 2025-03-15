@@ -1,49 +1,102 @@
 import { formatDate, cn } from "@/lib/utils";
-import { Coins, Calendar } from "lucide-react";
+import { Coins, Calendar, Info } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import StatusBadge from "@/components/custom-components/StatusBadge";
+import { ViewDetailsDialog } from "@/components/custom-components/ViewDetailsDialog";
 
-const DetailItem = ({ icon: Icon, label, value, className }) => (
-  <div className={cn("flex items-center gap-2", className)}>
-    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-    <div className="min-w-0">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="font-medium truncate">{value}</div>
-    </div>
+const InfoCard = ({ icon: Icon, label, value, className }) => (
+  <Card
+    className={cn(
+      "group border-border/50 shadow-sm",
+      "bg-card hover:bg-accent transition-colors duration-200",
+      "dark:bg-card/95 dark:hover:bg-accent/90",
+      className
+    )}
+  >
+    <CardContent className="flex items-start p-3 sm:p-4 gap-3 sm:gap-4">
+      <div className="rounded-full bg-primary/10 p-2 sm:p-2.5 ring-1 ring-border/50 shrink-0 dark:bg-primary/20 group-hover:ring-primary/50 transition-all duration-200">
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <p className="text-xs font-medium text-muted-foreground truncate">
+          {label}
+        </p>
+        <p className="text-xs sm:text-sm font-medium break-words text-foreground">
+          {value || "Not specified"}
+        </p>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const SectionTitle = ({ children }) => (
+  <div className="flex items-center gap-2 sm:gap-3">
+    <div className="h-5 sm:h-6 w-1 rounded-full bg-gradient-to-b from-primary/80 to-primary/50" />
+    <h3 className="text-base sm:text-lg font-semibold text-foreground">
+      {children}
+    </h3>
   </div>
 );
 
-export function PriceDetails({ price }) {
+function PriceContent({ price }) {
   return (
-    <div className="flex flex-col h-full divide-y">
-      {/* Header Information */}
-      <div className="pb-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="text-sm text-muted-foreground">Price ID</div>
-            <div className="font-semibold text-lg">{price?.priceId || "-"}</div>
+    <ScrollArea className="h-full">
+      <div className="space-y-6 sm:space-y-8 px-6">
+        {/* Header with Price Info */}
+        <div className="relative">
+          <div className="absolute inset-0 h-32 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50 dark:from-primary/10 dark:via-primary/5" />
+          <div className="relative pt-6 sm:pt-8 px-4 flex flex-col items-center space-y-3 sm:space-y-4">
+            <div className="rounded-full bg-primary/10 p-3 sm:p-4 ring-4 ring-background shadow-xl">
+              <Coins className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+            </div>
+            <div className="text-center pb-3 sm:pb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">
+                ₱{price?.price?.toFixed(2) || "-"}
+              </h3>
+              <StatusBadge
+                status={price?.priceId || "Unknown"}
+                icon={Info}
+                className="text-xs sm:text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Price Information */}
+        <div className="space-y-4 sm:space-y-6">
+          <SectionTitle>Details</SectionTitle>
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+            <InfoCard
+              icon={Calendar}
+              label="Created At"
+              value={formatDate(price?.createdAt, "long")}
+            />
+            <InfoCard
+              icon={Calendar}
+              label="Updated At"
+              value={formatDate(price?.updatedAt, "long") || "Not updated yet"}
+            />
           </div>
         </div>
       </div>
-
-      {/* Price Details */}
-      <div className="py-6 flex-1">
-        <h3 className="font-semibold mb-4">Details</h3>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <DetailItem
-            icon={Coins}
-            label="Price"
-            value={
-              typeof price?.price === "number"
-                ? `₱${price.price.toFixed(2)}`
-                : "-"
-            }
-          />
-          <DetailItem
-            icon={Calendar}
-            label="Created At"
-            value={formatDate(price?.createdAt, "long")}
-          />
-        </div>
-      </div>
-    </div>
+    </ScrollArea>
   );
 }
+
+const PriceDetailsDialog = ({ isOpen, onClose, price }) => {
+  if (!price) return null;
+
+  return (
+    <ViewDetailsDialog open={isOpen} onClose={onClose} title="Price Details">
+      <PriceContent price={price} />
+    </ViewDetailsDialog>
+  );
+};
+
+// Add PriceDetails export for backward compatibility
+const PriceDetails = ({ price }) => (
+  <PriceContent price={price} />
+);
+
+export { PriceDetailsDialog, PriceDetails };
