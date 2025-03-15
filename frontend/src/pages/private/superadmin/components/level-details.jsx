@@ -106,4 +106,9 @@ const LevelDetailsDialog = ({ isOpen, onClose, level }) => {
   );
 };
 
-export { LevelDetailsDialog };
+// Add LevelDetails export for backward compatibility
+const LevelDetails = ({ level }) => (
+  <LevelContent level={level} />
+);
+
+export { LevelDetailsDialog, LevelDetails };
