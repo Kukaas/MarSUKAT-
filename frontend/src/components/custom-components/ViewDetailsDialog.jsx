@@ -30,19 +30,11 @@ const ViewDetailsDialog = ({
         )}
       >
         {/* Sticky Header */}
-        <DialogHeader className="flex-none sticky top-0 z-50 bg-background px-6 py-4 border-b border-border">
+        <DialogHeader className="flex-none bg-background px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-foreground">
               {title}
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </DialogHeader>
 

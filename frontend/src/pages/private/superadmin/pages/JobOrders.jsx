@@ -1,9 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
-import { Button } from "@/components/ui/button";
 import {
-  FileText,
   Plus,
   Eye,
   Edit2,
@@ -12,6 +10,7 @@ import {
   Mail,
   Briefcase,
   Power,
+  Activity,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { userAPI } from "@/lib/api";
@@ -25,22 +24,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { JobOrderDetailsDialog } from "../components/job-order-details";
 import { JobOrderForm } from "../forms/JobOrderForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { StatusConfirmation } from "@/components/custom-components/StatusConfirmation";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/custom-components/StatusBadge";
 
 export default function JobOrders() {
   const { user } = useAuth();
@@ -126,13 +117,11 @@ export default function JobOrders() {
       key: "isActive",
       header: "Status",
       render: (value) => (
-        <Badge
-          className={
-            value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-          }
-        >
-          {value ? "Active" : "Inactive"}
-        </Badge>
+        <StatusBadge
+          status={value ? "Active" : "Inactive"}
+          icon={Activity}
+          className="text-xs"
+        />
       ),
     },
     {
