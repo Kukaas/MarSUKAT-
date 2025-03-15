@@ -15,20 +15,13 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ProductTypeDetails } from "../components/product-type-details";
 import { ProductTypeForm } from "../forms/ProductTypeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProductTypeDetailsDialog } from "../components/product-type-details";
 
 export default function ProductTypes() {
   const { user } = useAuth();
@@ -327,38 +320,11 @@ export default function ProductTypes() {
         />
 
         {/* View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-semibold">
-                    Product Type Details
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-500">
-                    View comprehensive information about this product type
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="py-2">
-                {selectedProductType && (
-                  <ProductTypeDetails productType={selectedProductType} />
-                )}
-              </div>
-            </ScrollArea>
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ProductTypeDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          productType={selectedProductType}
+        />
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
