@@ -4,10 +4,32 @@ import { Form } from "@/components/ui/form";
 import FormInput from "@/components/custom-components/FormInput";
 import FormSelect from "@/components/custom-components/FormSelect";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  GraduationCap,
+  Box,
+  Tag,
+  Ruler,
+  DollarSign,
+} from "lucide-react";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
+
+// Helper function to sort options alphabetically
+const sortOptionsAlphabetically = (data, valueKey) => {
+  return [...data]
+    .sort((a, b) =>
+      a[valueKey]
+        .trim()
+        .localeCompare(b[valueKey].trim(), "en", { sensitivity: "base" })
+    )
+    .map((item) => ({
+      value: item[valueKey],
+      label: item[valueKey],
+    }));
+};
 
 const formSchema = z.object({
   level: z.string().min(1, "Level is required"),
@@ -86,18 +108,10 @@ export function ProductTypeForm({
           ]);
 
         // Sort levels alphabetically
-        setLevels(
-          levelsData
-            .map((l) => ({ value: l.level, label: l.level }))
-            .sort((a, b) => a.label.localeCompare(b.label))
-        );
+        setLevels(sortOptionsAlphabetically(levelsData, "level"));
 
         // Sort sizes alphabetically
-        setSizes(
-          sizesData
-            .map((s) => ({ value: s.size, label: s.size }))
-            .sort((a, b) => a.label.localeCompare(b.label))
-        );
+        setSizes(sortOptionsAlphabetically(sizesData, "size"));
 
         // Sort prices numerically
         setPrices(
@@ -109,43 +123,34 @@ export function ProductTypeForm({
             .sort((a, b) => parseFloat(a.value) - parseFloat(b.value))
         );
 
-        // Store raw material types
-        setRawMaterialTypes(typesData);
-
-        // Get unique categories from raw material types and sort alphabetically
-        const uniqueCategories = [...new Set(typesData.map((t) => t.category))];
-        setCategories(
-          uniqueCategories
-            .map((c) => ({
-              value: c,
-              label: c,
-            }))
-            .sort((a, b) => a.label.localeCompare(b.label))
+        // Store raw material types (sorted alphabetically)
+        setRawMaterialTypes(
+          [...typesData].sort((a, b) =>
+            a.name
+              .trim()
+              .localeCompare(b.name.trim(), "en", { sensitivity: "base" })
+          )
         );
+
+        // Get unique categories and sort alphabetically
+        const uniqueCategories = [...new Set(typesData.map((t) => t.category))]
+          .sort((a, b) =>
+            a.trim().localeCompare(b.trim(), "en", { sensitivity: "base" })
+          )
+          .map((c) => ({
+            value: c,
+            label: c,
+          }));
+        setCategories(uniqueCategories);
 
         // Sort units alphabetically
-        setUnits(
-          unitsData
-            .map((u) => ({ value: u.unit, label: u.unit }))
-            .sort((a, b) => a.label.localeCompare(b.label))
-        );
+        setUnits(sortOptionsAlphabetically(unitsData, "unit"));
 
-        // If we're in edit mode, set up the filtered types for each material
+        // Handle edit mode filtered types
         if (isEdit && formData?.rawMaterialsUsed) {
           formData.rawMaterialsUsed.forEach((material, index) => {
             if (material.category) {
-              const typesForCategory = typesData
-                .filter((type) => type.category === material.category)
-                .map((type) => ({
-                  value: type.name,
-                  label: type.name,
-                  unit: type.unit,
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label));
-              setFilteredTypes((prev) => ({
-                ...prev,
-                [index]: typesForCategory,
-              }));
+              handleCategoryChange(index, material.category);
             }
           });
         }
@@ -159,7 +164,6 @@ export function ProductTypeForm({
 
   useEffect(() => {
     if (formData) {
-      console.log("Setting form data:", formData);
       form.reset({
         level: formData.level || "",
         productType: formData.productType || "",
@@ -188,27 +192,25 @@ export function ProductTypeForm({
 
   // Handle category change
   const handleCategoryChange = (index, category) => {
-    console.log("Handling category change:", { index, category });
     // Filter types for the selected category and sort alphabetically
     const typesForCategory = rawMaterialTypes
       .filter((type) => type.category === category)
+      .sort((a, b) =>
+        a.name
+          .trim()
+          .localeCompare(b.name.trim(), "en", { sensitivity: "base" })
+      )
       .map((type) => ({
         value: type.name,
-        label: type.name,
+        label: type.name.trim(),
         unit: type.unit,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-
-    console.log("Types for category:", typesForCategory);
+      }));
 
     // Update filtered types for this index
-    setFilteredTypes((prev) => {
-      const newState = {
-        ...prev,
-        [index]: typesForCategory,
-      };
-      return newState;
-    });
+    setFilteredTypes((prev) => ({
+      ...prev,
+      [index]: typesForCategory,
+    }));
   };
 
   // Handle type change to set the corresponding unit
@@ -264,6 +266,7 @@ export function ProductTypeForm({
             label="Level"
             placeholder="Select level"
             options={levels}
+            icon={GraduationCap}
             required
             disabled={isSubmitting}
           />
@@ -281,6 +284,7 @@ export function ProductTypeForm({
             label="Size"
             placeholder="Select size"
             options={sizes}
+            icon={Box}
             required
             disabled={isSubmitting}
           />
@@ -290,6 +294,7 @@ export function ProductTypeForm({
             label="Price"
             placeholder="Select price"
             options={prices}
+            icon={DollarSign}
             required
             disabled={isSubmitting}
           />
@@ -337,16 +342,13 @@ export function ProductTypeForm({
                   label="Category"
                   placeholder="Select category"
                   options={categories}
+                  icon={Tag}
                   required
                   disabled={isSubmitting}
                   onValueChange={(value) => {
-                    console.log("Category selected:", value);
-                    // Clear the type and unit fields
                     form.setValue(`rawMaterialsUsed.${index}.type`, "");
                     form.setValue(`rawMaterialsUsed.${index}.unit`, "");
-                    // Set the new category
                     form.setValue(`rawMaterialsUsed.${index}.category`, value);
-                    // Update filtered types
                     handleCategoryChange(index, value);
                   }}
                 />
@@ -356,6 +358,7 @@ export function ProductTypeForm({
                   label="Type"
                   placeholder="Select type"
                   options={filteredTypes[index] || []}
+                  icon={Box}
                   required
                   disabled={
                     isSubmitting ||

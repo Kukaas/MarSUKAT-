@@ -65,7 +65,19 @@ export default function RawMaterialTypes() {
     try {
       setIsLoading(true);
       const data = await systemMaintenanceAPI.getAllRawMaterialTypes();
-      setTypes(data);
+      // Sort data first by category, then by name
+      const sortedData = [...data].sort((a, b) => {
+        // First sort by category
+        const categoryComparison = a.category
+          .trim()
+          .localeCompare(b.category.trim(), "en", { sensitivity: "base" });
+        if (categoryComparison !== 0) return categoryComparison;
+        // If categories are equal, sort by name
+        return a.name
+          .trim()
+          .localeCompare(b.name.trim(), "en", { sensitivity: "base" });
+      });
+      setTypes(sortedData);
     } catch (error) {
       toast.error("Failed to fetch raw material types");
       console.error("Error fetching raw material types:", error);

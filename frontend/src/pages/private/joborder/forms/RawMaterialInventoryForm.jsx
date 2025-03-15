@@ -74,15 +74,19 @@ export function RawMaterialInventoryForm({
     const fetchMaterialTypes = async () => {
       try {
         const data = await systemMaintenanceAPI.getAllRawMaterialTypes();
-        setAllMaterialTypes(data);
+        // Sort the raw data first by name
+        const sortedData = data.sort((a, b) =>
+          a.name.trim().localeCompare(b.name.trim())
+        );
+        setAllMaterialTypes(sortedData);
 
-        // Extract unique categories
+        // Extract unique categories and sort them
         const uniqueCategories = [...new Set(data.map((type) => type.category))]
+          .sort()
           .map((category) => ({
             value: category,
             label: category,
-          }))
-          .sort((a, b) => a.label.localeCompare(b.label));
+          }));
 
         setCategories(uniqueCategories);
       } catch (error) {
@@ -100,7 +104,7 @@ export function RawMaterialInventoryForm({
         .filter((type) => type.category === category)
         .map((type) => ({
           value: type._id,
-          label: type.name,
+          label: type.name.trim(), // Trim whitespace from labels
           unit: type.unit,
         }))
         .sort((a, b) => a.label.localeCompare(b.label));

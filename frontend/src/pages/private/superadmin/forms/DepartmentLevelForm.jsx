@@ -26,7 +26,9 @@ const sortOptionsAlphabetically = (data, labelKey) => {
       name: item[labelKey], // Add the name for reference
     }))
     .sort((a, b) =>
-      a.label.localeCompare(b.label, "en", { sensitivity: "base" })
+      a.label
+        .trim()
+        .localeCompare(b.label.trim(), "en", { sensitivity: "base" })
     );
 };
 

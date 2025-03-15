@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
-import { Tag } from "lucide-react";
+import { Tag, Ruler } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -14,6 +14,20 @@ const formSchema = z.object({
   unit: z.string().min(1, "Unit is required"),
   description: z.string().optional(),
 });
+
+// Helper function to sort options alphabetically
+const sortOptionsAlphabetically = (data, valueKey) => {
+  return [...data]
+    .sort((a, b) =>
+      a[valueKey]
+        .trim()
+        .localeCompare(b[valueKey].trim(), "en", { sensitivity: "base" })
+    )
+    .map((item) => ({
+      value: item[valueKey],
+      label: item[valueKey],
+    }));
+};
 
 export function RawMaterialTypeForm({
   formData,
@@ -54,20 +68,17 @@ export function RawMaterialTypeForm({
           systemMaintenanceAPI.getAllCategories(),
           systemMaintenanceAPI.getAllUnits(),
         ]);
-        
-        setCategories(
-          categoriesData.map((cat) => ({
-            value: cat.category,
-            label: cat.category,
-          }))
-        );
 
-        setUnits(
-          unitsData.map((unit) => ({
-            value: unit.unit,
-            label: unit.unit,
-          }))
+        // Sort categories alphabetically
+        const sortedCategories = sortOptionsAlphabetically(
+          categoriesData,
+          "category"
         );
+        setCategories(sortedCategories);
+
+        // Sort units alphabetically
+        const sortedUnits = sortOptionsAlphabetically(unitsData, "unit");
+        setUnits(sortedUnits);
       } catch (error) {
         console.error("Error fetching options:", error);
       }
@@ -123,6 +134,7 @@ export function RawMaterialTypeForm({
           label="Unit"
           placeholder="Select a unit"
           options={units}
+          icon={Ruler}
           required
           disabled={isSubmitting}
         />
