@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { DepartmentLevelForm } from "../forms/DepartmentLevelForm";
-import { DepartmentLevelDetails } from "../components/department-level-details";
+import { DepartmentLevelDetailsDialog } from "../components/department-level-details";
 
 export default function DepartmentLevelOptions() {
   const { user } = useAuth();
@@ -249,38 +249,11 @@ export default function DepartmentLevelOptions() {
         />
 
         {/* View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-semibold">
-                    Department Level Details
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-500">
-                    View comprehensive information about this combination
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="py-2">
-              {selectedDepartmentLevel && (
-                <DepartmentLevelDetails
-                  departmentLevel={selectedDepartmentLevel}
-                />
-              )}
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DepartmentLevelDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          departmentLevel={selectedDepartmentLevel}
+        />
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
