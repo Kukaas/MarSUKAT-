@@ -41,6 +41,7 @@ import StatusBadge from "@/components/custom-components/StatusBadge";
 import { inventoryAPI } from "../api/inventoryApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { RawMaterialInventoryDetailsDialog } from "../components/raw-material-inventory-details";
 
 export default function RawMaterialsInventory() {
   const { user } = useAuth();
@@ -314,38 +315,11 @@ export default function RawMaterialsInventory() {
         />
 
         {/* View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-semibold">
-                    Inventory Item Details
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-500">
-                    View comprehensive information about this inventory item
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="py-2">
-                {selectedItem && (
-                  <RawMaterialInventoryDetails item={selectedItem} />
-                )}
-              </div>
-            </ScrollArea>
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <RawMaterialInventoryDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          item={selectedItem}
+        />
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
