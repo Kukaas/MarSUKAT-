@@ -24,7 +24,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CategoryDetails } from "../components/category-details";
+import { CategoryDetailsDialog } from "../components/category-details";
 import { CategoryForm } from "../forms/CategoryForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
@@ -247,36 +247,11 @@ export default function Categories() {
         />
 
         {/* View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-semibold">
-                    Category Details
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-500">
-                    View comprehensive information about this category
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="py-2">
-              {selectedCategory && (
-                <CategoryDetails category={selectedCategory} />
-              )}
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CategoryDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          category={selectedCategory}
+        />
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
