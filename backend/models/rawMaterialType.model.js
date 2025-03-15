@@ -32,9 +32,11 @@ const rawMaterialTypeSchema = new mongoose.Schema(
 rawMaterialTypeSchema.pre("save", async function (next) {
   if (!this.typeId) {
     const year = new Date().getFullYear();
-    const count =
-      (await mongoose.model("RawMaterialType").countDocuments()) + 1;
-    this.typeId = `RMT-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.typeId = `RMT-${year}-${randomString}`;
   }
   next();
 });

@@ -56,9 +56,11 @@ const rawMaterialInventorySchema = new mongoose.Schema(
 rawMaterialInventorySchema.pre("save", async function (next) {
   if (!this.inventoryId) {
     const year = new Date().getFullYear();
-    const count =
-      (await mongoose.model("RawMaterialInventory").countDocuments()) + 1;
-    this.inventoryId = `RMI-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.inventoryId = `RMI-${year}-${randomString}`;
   }
   next();
 });

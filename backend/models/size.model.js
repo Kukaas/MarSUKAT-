@@ -20,8 +20,11 @@ const sizeSchema = new mongoose.Schema(
 sizeSchema.pre("save", async function (next) {
   if (!this.sizeId) {
     const year = new Date().getFullYear();
-    const count = (await mongoose.model("Size").countDocuments()) + 1;
-    this.sizeId = `SIZ-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.sizeId = `SIZ-${year}-${randomString}`;
   }
   next();
 });

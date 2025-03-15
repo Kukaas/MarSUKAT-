@@ -38,12 +38,11 @@ const departmentLevelSchema = new mongoose.Schema(
 departmentLevelSchema.pre("save", async function (next) {
   if (!this.departmentLevelId) {
     const year = new Date().getFullYear();
-    const count =
-      (await mongoose.model("DepartmentLevel").countDocuments()) + 1;
-    this.departmentLevelId = `DEPTLVL-${year}-${String(count).padStart(
-      3,
-      "0"
-    )}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.departmentLevelId = `DEPTLVL-${year}-${randomString}`;
   }
   next();
 });

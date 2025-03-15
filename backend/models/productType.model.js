@@ -69,8 +69,11 @@ productTypeSchema.pre("save", async function (next) {
     // Generate productTypeId if not exists
     if (!this.productTypeId) {
       const year = new Date().getFullYear();
-      const count = (await mongoose.model("ProductType").countDocuments()) + 1;
-      this.productTypeId = `PT-${year}-${String(count).padStart(3, "0")}`;
+      const randomString = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
+      this.productTypeId = `PT-${year}-${randomString}`;
     }
 
     // Validate level exists

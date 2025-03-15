@@ -20,8 +20,11 @@ const categorySchema = new mongoose.Schema(
 categorySchema.pre("save", async function (next) {
   if (!this.categoryId) {
     const year = new Date().getFullYear();
-    const count = (await mongoose.model("Category").countDocuments()) + 1;
-    this.categoryId = `CAT-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.categoryId = `CAT-${year}-${randomString}`;
   }
   next();
 });

@@ -24,8 +24,11 @@ const departmentSchema = new mongoose.Schema(
 departmentSchema.pre("save", async function (next) {
   if (!this.departmentId) {
     const year = new Date().getFullYear();
-    const count = (await mongoose.model("Department").countDocuments()) + 1;
-    this.departmentId = `DEPT-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.departmentId = `DEPT-${year}-${randomString}`;
   }
   next();
 });

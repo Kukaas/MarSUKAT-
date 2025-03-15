@@ -20,8 +20,11 @@ const unitSchema = new mongoose.Schema(
 unitSchema.pre("save", async function (next) {
   if (!this.unitId) {
     const year = new Date().getFullYear();
-    const count = (await mongoose.model("Unit").countDocuments()) + 1;
-    this.unitId = `UNT-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.unitId = `UNT-${year}-${randomString}`;
   }
   next();
 });

@@ -29,8 +29,11 @@ const priceSchema = new mongoose.Schema(
 priceSchema.pre("save", async function (next) {
   if (!this.priceId) {
     const year = new Date().getFullYear();
-    const count = (await mongoose.model("Price").countDocuments()) + 1;
-    this.priceId = `PRC-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.priceId = `PRC-${year}-${randomString}`;
   }
   next();
 });

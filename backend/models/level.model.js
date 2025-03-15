@@ -24,8 +24,11 @@ const levelSchema = new mongoose.Schema(
 levelSchema.pre("save", async function (next) {
   if (!this.levelId) {
     const year = new Date().getFullYear();
-    const count = (await mongoose.model("Level").countDocuments()) + 1;
-    this.levelId = `LVL-${year}-${String(count).padStart(3, "0")}`;
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    this.levelId = `LVL-${year}-${randomString}`;
   }
   next();
 });
