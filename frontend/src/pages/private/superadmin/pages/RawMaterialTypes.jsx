@@ -24,19 +24,12 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { RawMaterialTypeDetails } from "../components/raw-material-type-details";
 import { RawMaterialTypeForm } from "../forms/RawMaterialTypeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
+import { RawMaterialTypeDetailsDialog } from "../components/raw-material-type-details";
 
 export default function RawMaterialTypes() {
   const { user } = useAuth();
@@ -299,34 +292,11 @@ export default function RawMaterialTypes() {
         />
 
         {/* View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-semibold">
-                    Raw Material Type Details
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-500">
-                    View comprehensive information about this raw material type
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="py-2">
-              {selectedType && <RawMaterialTypeDetails type={selectedType} />}
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <RawMaterialTypeDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          type={selectedType}
+        />
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
