@@ -36,6 +36,7 @@ import { LevelDetails } from "../components/level-details";
 import { LevelForm } from "../forms/LevelForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
+import { LevelDetailsDialog } from "../components/level-details";
 
 export default function Level() {
   const { user } = useAuth();
@@ -265,34 +266,11 @@ export default function Level() {
         />
 
         {/* View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-semibold">
-                    Level Details
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-500">
-                    View comprehensive information about this level
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="py-2">
-              {selectedLevel && <LevelDetails level={selectedLevel} />}
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <LevelDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          level={selectedLevel}
+        />
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
