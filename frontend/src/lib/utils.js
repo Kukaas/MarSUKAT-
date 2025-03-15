@@ -5,6 +5,17 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+export function isDevelopment() {
+  // Multiple ways to check for development mode
+  return (
+    import.meta.env.MODE === 'development' || 
+    import.meta.env.VITE_NODE_ENV === 'development' ||
+    import.meta.env.DEV === true ||
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  );
+}
+
 export const dateFormats = {
   short: {
     weekday: "short",
@@ -38,3 +49,5 @@ export function formatDate(date, format = "medium") {
     return "-";
   }
 }
+
+// Add more utility functions as needed

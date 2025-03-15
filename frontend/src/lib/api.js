@@ -19,6 +19,28 @@ api.interceptors.request.use(
   }
 );
 
+// Developer API calls (only for development)
+export const devAPI = {
+  getAvailableUsers: async () => {
+    try {
+      const response = await api.get("/dev/available-users");
+      return response.data.users;
+    } catch (error) {
+      console.error("Error fetching available users:", error);
+      return [];
+    }
+  },
+  
+  switchUser: async (email) => {
+    try {
+      const response = await api.post("/dev/switch-user", { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+};
+
 // System Maintenance API calls
 export const systemMaintenanceAPI = {
   getActiveDepartmentLevels: async () => {
