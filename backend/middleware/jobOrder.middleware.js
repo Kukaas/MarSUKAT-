@@ -7,12 +7,6 @@ export const isJobOrder = (req, res, next) => {
     });
   }
 
-  console.log("User Role Check:", {
-    userRole: req.user.role,
-    isActive: req.user.isActive,
-    user: req.user,
-  });
-
   // Check if user has JobOrder role (case-insensitive)
   // Consider user active if isActive is undefined or true
   if (
