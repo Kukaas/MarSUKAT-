@@ -4,7 +4,6 @@ import { StudentOrders } from "@/pages/private/joborder/pages/StudentOrders";
 import { CommercialOrders } from "@/pages/private/joborder/pages/CommercialOrders";
 import { Rentals } from "@/pages/private/joborder/pages/Rentals";
 import { Schedules } from "@/pages/private/joborder/pages/Schedules";
-import { RawMaterialsInventory } from "@/pages/private/joborder/pages/RawMaterialsInventory";
 import { SchoolUniformInventory } from "@/pages/private/joborder/pages/SchoolUniformInventory";
 import { AcademicGownInventory } from "@/pages/private/joborder/pages/AcademicGownInventory";
 import { CommercialJobInventory } from "@/pages/private/joborder/pages/CommercialJobInventory";
@@ -15,6 +14,7 @@ import { SchoolUniformProduction } from "@/pages/private/joborder/pages/SchoolUn
 import { AcademicGownProduction } from "@/pages/private/joborder/pages/AcademicGownProduction";
 import { CommercialJobProduction } from "@/pages/private/joborder/pages/CommercialJobProduction";
 import { OthersProduction } from "@/pages/private/joborder/pages/OthersProduction";
+import RawMaterialsInventory from "@/pages/private/joborder/pages/RawMaterialsInventory";
 
 export const jobOrderRoutes = [
   {

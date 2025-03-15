@@ -14,6 +14,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import sizeRoutes from "./routes/size.routes.js";
 import priceRoutes from "./routes/price.routes.js";
 import rawMaterialTypeRoutes from "./routes/rawMaterialType.routes.js";
+import rawMaterialInventoryRoutes from "./routes/rawMaterialInventory.routes.js";
 import productTypeRoutes from "./routes/productType.routes.js";
 import userRoutes from "./routes/user.routes.js";
 
@@ -30,8 +31,8 @@ app.use(
   })
 );
 // Increase payload size limit to 10MB
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
 
 // Routes
@@ -46,6 +47,7 @@ app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/sizes", sizeRoutes);
 app.use("/api/v1/prices", priceRoutes);
 app.use("/api/v1/raw-material-types", rawMaterialTypeRoutes);
+app.use("/api/v1/raw-material-inventory", rawMaterialInventoryRoutes);
 app.use("/api/v1/product-types", productTypeRoutes);
 app.use("/api/v1/users", userRoutes);
 
