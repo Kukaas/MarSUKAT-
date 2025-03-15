@@ -1,4 +1,9 @@
 export const isJobOrder = (req, res, next) => {
+  // Development bypass
+  if (process.env.NODE_ENV === "development" && req.user?.isDevOverride) {
+    return next();
+  }
+
   // Check if user exists and has the correct role
   if (!req.user) {
     return res.status(401).json({

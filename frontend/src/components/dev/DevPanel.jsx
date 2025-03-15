@@ -26,10 +26,49 @@ import AccountSwitcherTab from "./tabs/AccountSwitcherTab";
 import EnvironmentTab from "./tabs/EnvironmentTab";
 import ApiDebuggerTab from "./tabs/ApiDebuggerTab";
 
+const TABS = [
+  { id: "account-switcher", shortcut: "1" },
+  { id: "environment", shortcut: "2" },
+  { id: "api-debugger", shortcut: "3" },
+];
+
 const DevPanel = () => {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("account-switcher");
   const { user: currentUser } = useAuth();
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Shift + D to toggle dev panel
+      if (e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        setOpen((prev) => !prev);
+        return;
+      }
+
+      // Only handle other shortcuts if panel is open
+      if (!open) return;
+
+      // Number keys 1-3 to switch tabs
+      if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+        const tab = TABS.find((t) => t.shortcut === e.key);
+        if (tab) {
+          e.preventDefault();
+          setActiveTab(tab.id);
+          return;
+        }
+      }
+
+      // Escape to close
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   // Only show in development mode
   if (!isDevelopment()) {
@@ -55,8 +94,13 @@ const DevPanel = () => {
                 <Code2 className="h-5 w-5" />
                 Developer Tools
               </DialogTitle>
-              <DialogDescription className="m-0 text-xs">
-                Development mode only
+              <DialogDescription className="m-0 text-xs flex items-center gap-2">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  <span className="text-xs">⇧</span> D
+                </kbd>
+                <span className="text-muted-foreground">
+                  Development mode only
+                </span>
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -71,27 +115,36 @@ const DevPanel = () => {
               <TabsList className="grid grid-cols-3 w-full">
                 <TabsTrigger
                   value="account-switcher"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 justify-center"
                 >
                   <UserCheck className="h-4 w-4" />
                   <span className="hidden sm:inline">Account Switcher</span>
                   <span className="sm:hidden">Accounts</span>
+                  <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+                    1
+                  </kbd>
                 </TabsTrigger>
                 <TabsTrigger
                   value="environment"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 justify-center"
                 >
                   <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">Environment</span>
                   <span className="sm:hidden">Env</span>
+                  <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+                    2
+                  </kbd>
                 </TabsTrigger>
                 <TabsTrigger
                   value="api-debugger"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 justify-center"
                 >
                   <Bug className="h-4 w-4" />
                   <span className="hidden sm:inline">API Debugger</span>
                   <span className="sm:hidden">API</span>
+                  <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+                    3
+                  </kbd>
                 </TabsTrigger>
               </TabsList>
 

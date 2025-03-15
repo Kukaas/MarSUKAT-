@@ -2,6 +2,21 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 
 export const authenticateUser = async (req, res, next) => {
+  // Development bypass
+  if (
+    process.env.NODE_ENV === "development" &&
+    req.headers["x-dev-override"] === "true"
+  ) {
+    // For development testing, bypass authentication
+    req.user = {
+      id: "dev-user",
+      email: "dev@example.com",
+      roles: req.headers["x-dev-roles"]?.split(",") || ["admin"],
+      isDevOverride: true,
+    };
+    return next();
+  }
+
   try {
     // Get token from cookie
     const accessToken = req.cookies.access_token;
