@@ -20,6 +20,7 @@ import userRoutes from "./routes/user.routes.js";
 import devRoutes from "./routes/dev.routes.js";
 import uniformInventoryRoutes from "./routes/uniformInventory.routes.js";
 import schoolUniformProductionRoutes from "./routes/schoolUniformProduction.routes.js";
+import productRoutes from "./routes/product.routes.js";
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ app.use("/api/v1/product-types", productTypeRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/uniform-inventory", uniformInventoryRoutes);
 app.use("/api/v1/school-uniform-productions", schoolUniformProductionRoutes);
+app.use("/api/v1/products", productRoutes);
 
 // Developer routes - only enabled in development mode
 if (process.env.NODE_ENV === "development") {

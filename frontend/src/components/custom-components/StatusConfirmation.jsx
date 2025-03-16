@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Power } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function StatusConfirmation({
   isOpen,
@@ -16,8 +17,8 @@ export function StatusConfirmation({
   onConfirm,
   title,
   description,
-  isProcessing = false,
-  isActivating = false,
+  isUpdating,
+  status = "deactivate", // or "activate"
 }) {
   return (
     <AlertDialog open={isOpen}>
@@ -26,7 +27,7 @@ export function StatusConfirmation({
           <AlertDialogTitle className="flex items-center gap-2">
             <Power
               className={`h-5 w-5 ${
-                isActivating ? "text-green-500" : "text-red-500"
+                status === "activate" ? "text-green-500" : "text-red-500"
               }`}
             />
             <span>{title}</span>
@@ -36,30 +37,30 @@ export function StatusConfirmation({
         <AlertDialogFooter>
           <AlertDialogCancel
             type="button"
-            onClick={() => !isProcessing && onClose()}
-            disabled={isProcessing}
+            onClick={() => !isUpdating && onClose()}
+            disabled={isUpdating}
           >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             type="button"
             onClick={onConfirm}
-            disabled={isProcessing}
-            className={
-              isActivating
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-red-600 hover:bg-red-700"
-            }
+            disabled={isUpdating}
+            className={cn(
+              status === "deactivate"
+                ? "bg-destructive hover:bg-destructive/90"
+                : "bg-primary hover:bg-primary/90"
+            )}
           >
-            {isProcessing ? (
+            {isUpdating ? (
               <>
                 <span className="loading loading-spinner loading-sm mr-2"></span>
-                {isActivating ? "Activating..." : "Deactivating..."}
+                Updating...
               </>
-            ) : isActivating ? (
-              "Activate"
-            ) : (
+            ) : status === "deactivate" ? (
               "Deactivate"
+            ) : (
+              "Activate"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
