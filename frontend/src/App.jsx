@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { publicRoutes } from "./routes/publicRoutes";
 import { studentRoutes } from "./routes/studentRoutes";
@@ -9,24 +9,6 @@ import DevModeWrapper from "./components/dev/DevModeWrapper";
 
 export default function App() {
   const { user } = useAuth();
-  const location = useLocation();
-
-  const getDefaultRoute = () => {
-    if (!user) return "/login";
-    const userId = user._id;
-    switch (user.role) {
-      case "Student":
-        return `/student/dashboard/${userId}`;
-      case "Admin":
-        return "/admin/dashboard";
-      case "JobOrder":
-        return `/job-order/dashboard/${userId}`;
-      case "SuperAdmin":
-        return `/superadmin/dashboard/${userId}`;
-      default:
-        return "/login";
-    }
-  };
 
   return (
     <DevModeWrapper>
