@@ -18,6 +18,7 @@ import rawMaterialInventoryRoutes from "./routes/rawMaterialInventory.routes.js"
 import productTypeRoutes from "./routes/productType.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import devRoutes from "./routes/dev.routes.js";
+import uniformInventoryRoutes from "./routes/uniformInventory.routes.js";
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use("/api/v1/raw-material-types", rawMaterialTypeRoutes);
 app.use("/api/v1/raw-material-inventory", rawMaterialInventoryRoutes);
 app.use("/api/v1/product-types", productTypeRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/uniform-inventory", uniformInventoryRoutes);
 
 // Developer routes - only enabled in development mode
 if (process.env.NODE_ENV === "development") {

@@ -21,7 +21,7 @@ export const ROUTES = {
       { path: "/users/job-orders/:id", method: "DELETE" },
     ],
   },
-  "Raw Materials": {
+  "Inventory Management": {
     routes: [
       // Raw Material Inventory (JobOrder role required)
       { path: "/raw-material-inventory", method: "GET", role: "JobOrder" },
@@ -39,6 +39,25 @@ export const ROUTES = {
       },
       {
         path: "/raw-material-inventory/:id",
+        method: "DELETE",
+        role: "JobOrder",
+      },
+      // Uniform Inventory (JobOrder role required)
+      { path: "/uniform-inventory", method: "GET", role: "JobOrder" },
+      { path: "/uniform-inventory/:id", method: "GET", role: "JobOrder" },
+      {
+        path: "/uniform-inventory/level/:level",
+        method: "GET",
+        role: "JobOrder",
+      },
+      {
+        path: "/uniform-inventory",
+        method: "POST",
+        body: true,
+        role: "JobOrder",
+      },
+      {
+        path: "/uniform-inventory/:id",
         method: "DELETE",
         role: "JobOrder",
       },
@@ -210,5 +229,27 @@ export const DEFAULT_BODIES = {
     }`,
     type: ["Product", "Material"][Math.floor(Math.random() * 2)],
     status: ["Active", "Inactive"][Math.floor(Math.random() * 2)],
+  }),
+
+  "/uniform-inventory": () => ({
+    level: ["College", "High School", "Senior High School", "Elementary"][
+      Math.floor(Math.random() * 4)
+    ],
+    productType: ["Polo Shirt", "Shorts", "Skirt", "T-Shirt"][
+      Math.floor(Math.random() * 4)
+    ],
+    size: ["S16", "S18", "S20", "S22", "X/S", "X/M", "X/L", "X/XL"][
+      Math.floor(Math.random() * 8)
+    ],
+    quantity: Number((Math.random() * 100 + 1).toFixed(2)),
+    status: ["Available", "Low Stock", "Out of Stock"][
+      Math.floor(Math.random() * 3)
+    ],
+    price: Number((Math.random() * 1000 + 500).toFixed(2)),
+    image: {
+      filename: `uniform-${Date.now()}`,
+      contentType: "image/jpeg",
+      data: "",
+    },
   }),
 };
