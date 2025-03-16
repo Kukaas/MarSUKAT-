@@ -90,7 +90,7 @@ const FormDateInput = ({
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-full pl-3 text-left font-normal flex justify-start items-center",
+                      "w-full pl-3 text-left font-normal flex justify-start items-center h-11",
                       !field.value && "text-muted-foreground"
                     )}
                     disabled={disabled}
