@@ -1,4 +1,5 @@
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1",
@@ -8,10 +9,13 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor for CSRF protection if needed
+// Add request interceptor to include token
 api.interceptors.request.use(
-  async (config) => {
-    // You can add CSRF token here if your backend requires it
+  (config) => {
+    const token = Cookies.get("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {

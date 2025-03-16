@@ -7,6 +7,7 @@ import {
 } from "react";
 import api from "@/lib/api";
 import { useNavigate, useLocation, matchPath } from "react-router-dom";
+import { navigateToRoleDashboard } from "../utils/roleNavigation";
 
 const AuthContext = createContext();
 
@@ -125,15 +126,25 @@ export function AuthProvider({ children }) {
     const initializeAuth = async () => {
       try {
         setLoading(true);
+        // Try to get user data using existing tokens
         const response = await api.get("/auth/me");
         setUser(response.data.user);
       } catch (error) {
-        // Only log the error if it's not a 401 (unauthorized)
-        if (error.response?.status !== 401) {
+        if (error.response?.status === 401) {
+          // If unauthorized, try to refresh token
+          try {
+            await api.post("/auth/refresh-token");
+            // If refresh successful, try getting user data again
+            const retryResponse = await api.get("/auth/me");
+            setUser(retryResponse.data.user);
+          } catch (refreshError) {
+            // If refresh fails, clear user state
+            setUser(null);
+          }
+        } else {
           console.error("Auth initialization error:", error);
+          setUser(null);
         }
-        // Clear user state if unauthorized
-        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -143,7 +154,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (userData) => {
-    setUser(userData.user);
+    const user = userData.user;
+    setUser(user);
+    // Use the utility function for navigation
+    navigateToRoleDashboard(navigate, user);
   };
 
   const updateUserInfo = useCallback((updatedUserData) => {
