@@ -53,12 +53,13 @@ export function formatDate(date, format = "medium") {
 export const isChromeBrowser = () => {
   // Check if window is defined (for SSR)
   if (typeof window !== "undefined") {
+    // Check for Brave's specific navigator property
+    if (navigator.brave?.isBrave) {
+      return false;
+    }
+
     const userAgent = navigator.userAgent.toLowerCase();
-    return (
-      userAgent.includes("chrome") &&
-      !userAgent.includes("edg") &&
-      !userAgent.includes("brave")
-    );
+    return userAgent.includes("chrome") && !userAgent.includes("edg");
   }
   return false;
 };

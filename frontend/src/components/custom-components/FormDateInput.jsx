@@ -40,17 +40,46 @@ const FormDateInput = ({
             // Native date input for Chrome
             <FormControl>
               <div className="relative">
-                <Icon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <div
+                  className="absolute left-2 top-3 h-3.5 w-3.5 cursor-pointer"
+                  onClick={() => {
+                    const input = document.querySelector(
+                      `input[name="${name}"]`
+                    );
+                    input?.showPicker();
+                  }}
+                >
+                  <Icon className="opacity-70 dark:opacity-60 h-3.5 w-3.5" />
+                </div>
                 <Input
                   type="date"
-                  className="pl-8"
+                  className={cn(
+                    "pl-8 [color-scheme:inherit] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer",
+                    "text-transparent"
+                  )}
                   disabled={disabled}
                   {...field}
                   value={field.value || ""}
+                  placeholder="Pick a date"
+                  max={format(new Date(), "yyyy-MM-dd")}
                   onChange={(e) => {
                     field.onChange(e.target.value);
                   }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.target.showPicker();
+                  }}
+                  onKeyDown={(e) => {
+                    e.preventDefault();
+                  }}
                 />
+                <div className="absolute inset-0 pointer-events-none pl-8 flex items-center text-sm">
+                  {field.value ? (
+                    format(new Date(field.value), "MMMM d, yyyy")
+                  ) : (
+                    <span className="text-muted-foreground">Pick a date</span>
+                  )}
+                </div>
               </div>
             </FormControl>
           ) : (
@@ -82,7 +111,8 @@ const FormDateInput = ({
                   onSelect={(date) => {
                     field.onChange(date ? format(date, "yyyy-MM-dd") : "");
                   }}
-                  disabled={disabled}
+                  disabled={(date) => date > new Date()}
+                  defaultMonth={new Date()}
                   initialFocus
                 />
               </PopoverContent>
