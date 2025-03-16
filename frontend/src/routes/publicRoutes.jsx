@@ -1,5 +1,4 @@
 import { Navigate } from "react-router-dom";
-import PublicRoute from "../components/PublicRoute";
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
 import SignUp from "../pages/public/SignUp";
@@ -16,94 +15,59 @@ import NotFound from "../pages/public/NotFound";
 export const publicRoutes = [
   {
     path: "/create-super-admin",
-    element: (
-      <PublicRoute skipAuthCheck={true}>
-        <CreateSuperAdmin />
-      </PublicRoute>
-    ),
+    element: <CreateSuperAdmin />,
+    skipAuthCheck: true,
   },
   {
     path: "/verification-success",
     element: <VerificationSuccess />,
+    skipAuthCheck: true,
   },
   {
     path: "/verification-error",
     element: <VerificationError />,
+    skipAuthCheck: true,
   },
   {
     path: "/api/v1/auth/verify/:userId/:uniqueString",
     element: <VerificationSuccess />,
+    skipAuthCheck: true,
   },
   {
     path: "/login",
-    element: (
-      <PublicRoute>
-        <Login />
-      </PublicRoute>
-    ),
+    element: <Login />,
   },
   {
     path: "/signup",
-    element: (
-      <PublicRoute>
-        <SignUp />
-      </PublicRoute>
-    ),
+    element: <SignUp />,
   },
   {
     path: "/",
-    element: (
-      <PublicRoute>
-        <Home />
-      </PublicRoute>
-    ),
+    element: <Home />,
   },
   {
     path: "/forgot-password",
-    element: (
-      <PublicRoute>
-        <RequestOtp />
-      </PublicRoute>
-    ),
+    element: <RequestOtp />,
   },
   {
     path: "/verify-otp/:userId",
-    element: (
-      <PublicRoute>
-        <VerifyOtp />
-      </PublicRoute>
-    ),
+    element: <VerifyOtp />,
   },
   {
     path: "/about",
-    element: (
-      <PublicRoute>
-        <About />
-      </PublicRoute>
-    ),
+    element: <About />,
   },
   {
     path: "/contact-us",
-    element: (
-      <PublicRoute>
-        <Contact />
-      </PublicRoute>
-    ),
+    element: <Contact />,
   },
   {
     path: "/faq",
-    element: (
-      <PublicRoute>
-        <Faq />
-      </PublicRoute>
-    ),
+    element: <Faq />,
   },
   {
     path: "*",
-    element: (
-      <PublicRoute skipAuthCheck={true}>
-        <NotFound />
-      </PublicRoute>
-    ),
+    element: <NotFound />,
+    skipAuthCheck: true,
   },
 ];

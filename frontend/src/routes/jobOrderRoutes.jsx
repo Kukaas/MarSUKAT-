@@ -1,4 +1,3 @@
-import PrivateRoute from "@/components/PrivateRoute";
 import { Dashboard } from "@/pages/private/joborder/pages/Dashboard";
 import { StudentOrders } from "@/pages/private/joborder/pages/StudentOrders";
 import { CommercialOrders } from "@/pages/private/joborder/pages/CommercialOrders";
@@ -19,130 +18,66 @@ import RawMaterialsInventory from "@/pages/private/joborder/pages/RawMaterialsIn
 export const jobOrderRoutes = [
   {
     path: "/job-order/dashboard/:id",
-    element: (
-      <PrivateRoute>
-        <Dashboard />
-      </PrivateRoute>
-    ),
+    element: <Dashboard />
   },
   {
     path: "/job-order/student-orders",
-    element: (
-      <PrivateRoute>
-        <StudentOrders />
-      </PrivateRoute>
-    ),
+    element: <StudentOrders />
   },
   {
     path: "/job-order/commercial-orders",
-    element: (
-      <PrivateRoute>
-        <CommercialOrders />
-      </PrivateRoute>
-    ),
+    element: <CommercialOrders />
   },
   {
     path: "/job-order/rentals",
-    element: (
-      <PrivateRoute>
-        <Rentals />
-      </PrivateRoute>
-    ),
+    element: <Rentals />
   },
   {
     path: "/job-order/schedules",
-    element: (
-      <PrivateRoute>
-        <Schedules />
-      </PrivateRoute>
-    ),
+    element: <Schedules />
   },
   {
     path: "/job-order/productions/school-uniforms",
-    element: (
-      <PrivateRoute>
-        <SchoolUniformProduction />
-      </PrivateRoute>
-    ),
+    element: <SchoolUniformProduction />
   },
   {
     path: "/job-order/productions/commercial-jobs",
-    element: (
-      <PrivateRoute>
-        <CommercialJobProduction />
-      </PrivateRoute>
-    ),
+    element: <CommercialJobProduction />
   },
   {
     path: "/job-order/productions/others",
-    element: (
-      <PrivateRoute>
-        <OthersProduction />
-      </PrivateRoute>
-    ),
+    element: <OthersProduction />
   },
   {
     path: "/job-order/productions/academic-gowns",
-    element: (
-      <PrivateRoute>
-        <AcademicGownProduction />
-      </PrivateRoute>
-    ),
+    element: <AcademicGownProduction />
   },
   {
     path: "/job-order/inventory/raw-materials",
-    element: (
-      <PrivateRoute>
-        <RawMaterialsInventory />
-      </PrivateRoute>
-    ),
+    element: <RawMaterialsInventory />
   },
   {
     path: "/job-order/inventory/school-uniforms",
-    element: (
-      <PrivateRoute>
-        <SchoolUniformInventory />
-      </PrivateRoute>
-    ),
+    element: <SchoolUniformInventory />
   },
   {
     path: "/job-order/inventory/academic-gowns",
-    element: (
-      <PrivateRoute>
-        <AcademicGownInventory />
-      </PrivateRoute>
-    ),
+    element: <AcademicGownInventory />
   },
   {
     path: "/job-order/inventory/commercial-jobs",
-    element: (
-      <PrivateRoute>
-        <CommercialJobInventory />
-      </PrivateRoute>
-    ),
+    element: <CommercialJobInventory />
   },
   {
     path: "/job-order/inventory/others",
-    element: (
-      <PrivateRoute>
-        <OthersInventory />
-      </PrivateRoute>
-    ),
+    element: <OthersInventory />
   },
   {
     path: "/job-order/reports/sales",
-    element: (
-      <PrivateRoute>
-        <SalesReport />
-      </PrivateRoute>
-    ),
+    element: <SalesReport />
   },
   {
     path: "/job-order/reports/accomplishments",
-    element: (
-      <PrivateRoute>
-        <AccomplishmentReport />
-      </PrivateRoute>
-    ),
+    element: <AccomplishmentReport />
   },
 ];

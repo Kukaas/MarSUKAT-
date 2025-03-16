@@ -6,6 +6,8 @@ import { studentRoutes } from "./routes/studentRoutes";
 import { superAdminRoutes } from "./routes/superAdminRoutes";
 import { jobOrderRoutes } from "./routes/jobOrderRoutes";
 import DevModeWrapper from "./components/dev/DevModeWrapper";
+import PrivateRoute from "./components/PrivateRoute";
+import PublicRoute from "./components/PublicRoute";
 
 export default function App() {
   const { user } = useAuth();
@@ -15,22 +17,43 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         {publicRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <PublicRoute skipAuthCheck={route.skipAuthCheck}>
+                {route.element}
+              </PublicRoute>
+            }
+          />
         ))}
 
+        {/* Protected Routes */}
         {/* Student Routes */}
         {studentRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<PrivateRoute>{route.element}</PrivateRoute>}
+          />
         ))}
 
         {/* SuperAdmin Routes */}
         {superAdminRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<PrivateRoute>{route.element}</PrivateRoute>}
+          />
         ))}
 
         {/* Job Order Routes */}
         {jobOrderRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<PrivateRoute>{route.element}</PrivateRoute>}
+          />
         ))}
       </Routes>
     </DevModeWrapper>

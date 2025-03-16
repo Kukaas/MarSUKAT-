@@ -10,9 +10,11 @@ export default function PrivateRoute({ children }) {
   }
 
   if (!user) {
-    // Save the attempted URL for redirecting after login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
+  // Check if user has the required role for this route
+  // You can add role-based checks here if needed
 
   return children;
 }

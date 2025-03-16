@@ -124,12 +124,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Skip auth check for public routes
-        if (isPublicRoute(location.pathname)) {
-          setLoading(false);
-          return;
-        }
-
+        setLoading(true);
         const response = await api.get("/auth/me");
         setUser(response.data.user);
       } catch (error) {
@@ -145,7 +140,7 @@ export function AuthProvider({ children }) {
     };
 
     initializeAuth();
-  }, [location.pathname]);
+  }, []);
 
   const login = async (userData) => {
     setUser(userData.user);

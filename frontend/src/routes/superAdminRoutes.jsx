@@ -1,4 +1,3 @@
-import PrivateRoute from "../components/PrivateRoute";
 import SuperAdminDashboard from "../pages/private/superadmin/pages/Dashboard";
 import Level from "../pages/private/superadmin/pages/Level";
 import Department from "../pages/private/superadmin/pages/Department";
@@ -14,90 +13,46 @@ import JobOrders from "../pages/private/superadmin/pages/JobOrders";
 export const superAdminRoutes = [
   {
     path: "/superadmin/dashboard/:id",
-    element: (
-      <PrivateRoute>
-        <SuperAdminDashboard />
-      </PrivateRoute>
-    ),
+    element: <SuperAdminDashboard />,
   },
   {
     path: "/superadmin/create-job-order",
-    element: (
-      <PrivateRoute>
-        <JobOrders />
-      </PrivateRoute>
-    ),
+    element: <JobOrders />,
   },
   {
     path: "/superadmin/maintenance/levels",
-    element: (
-      <PrivateRoute>
-        <Level />
-      </PrivateRoute>
-    ),
+    element: <Level />,
   },
   {
     path: "/superadmin/maintenance/departments",
-    element: (
-      <PrivateRoute>
-        <Department />
-      </PrivateRoute>
-    ),
+    element: <Department />,
   },
   {
     path: "/superadmin/maintenance/department-levels",
-    element: (
-      <PrivateRoute>
-        <DepartmentLevelOptions />
-      </PrivateRoute>
-    ),
+    element: <DepartmentLevelOptions />,
   },
   {
     path: "/superadmin/maintenance/units",
-    element: (
-      <PrivateRoute>
-        <Units />
-      </PrivateRoute>
-    ),
+    element: <Units />,
   },
   {
     path: "/superadmin/maintenance/categories",
-    element: (
-      <PrivateRoute>
-        <Categories />
-      </PrivateRoute>
-    ),
+    element: <Categories />,
   },
   {
     path: "/superadmin/maintenance/sizes",
-    element: (
-      <PrivateRoute>
-        <Sizes />
-      </PrivateRoute>
-    ),
+    element: <Sizes />,
   },
   {
     path: "/superadmin/maintenance/prices",
-    element: (
-      <PrivateRoute>
-        <Prices />
-      </PrivateRoute>
-    ),
+    element: <Prices />,
   },
   {
     path: "/superadmin/maintenance/raw-material-types",
-    element: (
-      <PrivateRoute>
-        <RawMaterialTypes />
-      </PrivateRoute>
-    ),
+    element: <RawMaterialTypes />,
   },
   {
     path: "/superadmin/maintenance/product-types",
-    element: (
-      <PrivateRoute>
-        <ProductTypes />
-      </PrivateRoute>
-    ),
+    element: <ProductTypes />,
   },
 ];

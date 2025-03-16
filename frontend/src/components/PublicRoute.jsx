@@ -9,14 +9,24 @@ export default function PublicRoute({ children, skipAuthCheck = false }) {
     return null; // Or a loading spinner component
   }
 
-  // Skip auth check if skipAuthCheck is true
   if (skipAuthCheck) {
     return children;
   }
 
-  // If user is authenticated and trying to access login/signup/home, redirect to their dashboard
-  if (user && ["/login", "/signup", "/"].includes(location.pathname)) {
+  if (user) {
     const userId = user._id;
+    const from = location.state?.from;
+
+    // If there's a saved location and it's not a public route, go there
+    if (
+      from &&
+      !from.pathname.includes("/login") &&
+      !from.pathname.includes("/signup")
+    ) {
+      return <Navigate to={from.pathname} replace />;
+    }
+
+    // Otherwise, redirect based on role
     switch (user.role) {
       case "Student":
         return <Navigate to={`/student/dashboard/${userId}`} replace />;
