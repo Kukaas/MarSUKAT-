@@ -50,4 +50,17 @@ export function formatDate(date, format = "medium") {
   }
 }
 
+export const isChromeBrowser = () => {
+  // Check if window is defined (for SSR)
+  if (typeof window !== "undefined") {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return (
+      userAgent.includes("chrome") &&
+      !userAgent.includes("edg") &&
+      !userAgent.includes("brave")
+    );
+  }
+  return false;
+};
+
 // Add more utility functions as needed
