@@ -41,7 +41,7 @@ const FormDateInput = ({
             <FormControl>
               <div className="relative">
                 <div
-                  className="absolute left-2 top-3 h-3.5 w-3.5 cursor-pointer"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 cursor-pointer"
                   onClick={() => {
                     const input = document.querySelector(
                       `input[name="${name}"]`
@@ -49,12 +49,12 @@ const FormDateInput = ({
                     input?.showPicker();
                   }}
                 >
-                  <Icon className="opacity-70 dark:opacity-60 h-3.5 w-3.5" />
+                  <Icon className="opacity-70 dark:opacity-60 h-4 w-4" />
                 </div>
                 <Input
                   type="date"
                   className={cn(
-                    "pl-8 [color-scheme:inherit] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer",
+                    "h-11 pl-10 [color-scheme:inherit] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer",
                     "text-transparent"
                   )}
                   disabled={disabled}
@@ -73,7 +73,7 @@ const FormDateInput = ({
                     e.preventDefault();
                   }}
                 />
-                <div className="absolute inset-0 pointer-events-none pl-8 flex items-center text-sm">
+                <div className="absolute inset-0 pointer-events-none pl-10 flex items-center text-sm">
                   {field.value ? (
                     format(new Date(field.value), "MMMM d, yyyy")
                   ) : (
