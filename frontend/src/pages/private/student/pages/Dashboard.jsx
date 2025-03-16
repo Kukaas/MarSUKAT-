@@ -1,11 +1,15 @@
+import { useEffect, useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import EmptyState from "@/components/custom-components/EmptyState";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertCircle, Clock, CreditCard, Info } from "lucide-react";
+import { AlertCircle, Clock, CreditCard, Info, Package } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { dashboardAPI } from "../api/dashboardApi";
+import { toast } from "sonner";
+import { AvailableProducts } from "../components/AvailableProducts";
 
 export default function Dashboard() {
   return (
@@ -139,14 +143,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Products Section - Full width */}
-          <div className="max-w-7xl mx-auto">
-            <SectionHeader title="Available Products" />
-            <EmptyState
-              message="Products will be available soon!"
-              className="mt-4"
-            />
-          </div>
+          {/* Products Section */}
+          <AvailableProducts />
         </div>
       </ScrollArea>
     </PrivateLayout>
