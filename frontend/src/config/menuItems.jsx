@@ -33,6 +33,10 @@ import {
   BookOpenCheck,
   BarChart3,
   FileText,
+  Users,
+  Bell,
+  Settings,
+  MessageSquare,
 } from "lucide-react";
 
 export const menuItems = {
@@ -153,6 +157,31 @@ export const menuItems = {
           icon: <PackageSearch />,
           path: () => "/superadmin/maintenance/product-types",
           description: "Manage product types",
+        },
+      ],
+    },
+    {
+      title: "Students Management",
+      icon: <GraduationCap />,
+      type: "accordion",
+      items: [
+        {
+          title: "Product Management",
+          icon: <Package />,
+          path: () => "/superadmin/students/product-management",
+          description: "Manage product catalog and availability",
+        },
+        {
+          title: "Announcements",
+          icon: <Bell />,
+          path: () => "/superadmin/students/announcements",
+          description: "Manage student announcements",
+        },
+        {
+          title: "User Management",
+          icon: <Users />,
+          path: () => "/superadmin/students/users",
+          description: "Manage student accounts",
         },
       ],
     },

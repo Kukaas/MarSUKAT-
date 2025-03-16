@@ -9,6 +9,9 @@ import Prices from "../pages/private/superadmin/pages/Prices";
 import RawMaterialTypes from "../pages/private/superadmin/pages/RawMaterialTypes";
 import ProductTypes from "../pages/private/superadmin/pages/ProductTypes";
 import JobOrders from "../pages/private/superadmin/pages/JobOrders";
+import { StudentAnnouncement } from "../pages/private/superadmin/pages/StudentAnnouncement";
+import { StudentUser } from "../pages/private/superadmin/pages/StudentUser";
+import { ProductManagement } from "../pages/private/superadmin/pages/ProductManagement";
 
 export const superAdminRoutes = [
   {
@@ -54,5 +57,17 @@ export const superAdminRoutes = [
   {
     path: "/superadmin/maintenance/product-types",
     element: <ProductTypes />,
+  },
+  {
+    path: "/superadmin/students/product-management",
+    element: <ProductManagement />,
+  },
+  {
+    path: "/superadmin/students/announcements",
+    element: <StudentAnnouncement />,
+  },
+  {
+    path: "/superadmin/students/users",
+    element: <StudentUser />,
   },
 ];
