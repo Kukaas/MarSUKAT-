@@ -1,12 +1,154 @@
 import PrivateLayout from "../../PrivateLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import EmptyState from "@/components/custom-components/EmptyState";
+import SectionHeader from "@/components/custom-components/SectionHeader";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertCircle, Clock, CreditCard, Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Dashboard() {
   return (
     <PrivateLayout>
-      <div className="py-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome to your student dashboard</p>
-      </div>
+      <ScrollArea className="h-full">
+        <div className="p-4 space-y-6">
+          {/* Welcome Section - Full width */}
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Welcome Back!
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Let's get started with your uniform order
+              </p>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Quick Info Cards - Full width */}
+          <div className="max-w-7xl mx-auto grid gap-3">
+            <Alert className="bg-primary/5 border-primary/10">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <AlertTitle className="text-primary ml-2">
+                Important Notice
+              </AlertTitle>
+              <AlertDescription className="ml-6">
+                A ₱500 downpayment is required for your uniform order
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Card className="bg-card/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Downpayment</p>
+                      <p className="text-lg font-bold">₱500.00</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Processing</p>
+                      <p className="text-lg font-bold">2-3 Days</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Info className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Payment</p>
+                      <p className="text-lg font-bold">Cash Only</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* How to Order Section - Full width with contained steps */}
+          <div className="max-w-7xl mx-auto">
+            <SectionHeader title="Order Process" />
+            <div className="grid gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  number: "01",
+                  title: "Visit Garments",
+                  description: "Request a Downpayment Form for your uniform",
+                  icon: "👕",
+                },
+                {
+                  number: "02",
+                  title: "Make Payment",
+                  description:
+                    "Pay ₱500 at the cashier and secure your receipt",
+                  icon: "💳",
+                },
+                {
+                  number: "03",
+                  title: "Book Appointment",
+                  description: "Create an appointment through our system",
+                  icon: "📅",
+                },
+                {
+                  number: "04",
+                  title: "Fill Details",
+                  description: "Enter your receipt information in the form",
+                  icon: "✍️",
+                },
+                {
+                  number: "05",
+                  title: "Submit",
+                  description: "Wait for admin approval of your appointment",
+                  icon: "✅",
+                },
+              ].map((step, index) => (
+                <Card
+                  key={index}
+                  className="relative overflow-hidden border-l-4 border-l-primary h-full"
+                >
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-lg font-semibold">
+                        {step.number}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold flex items-center gap-2">
+                          {step.title}{" "}
+                          <span className="text-xl">{step.icon}</span>
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Products Section - Full width */}
+          <div className="max-w-7xl mx-auto">
+            <SectionHeader title="Available Products" />
+            <EmptyState
+              message="Products will be available soon!"
+              className="mt-4"
+            />
+          </div>
+        </div>
+      </ScrollArea>
     </PrivateLayout>
   );
 }
