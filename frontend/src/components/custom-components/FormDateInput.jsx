@@ -26,6 +26,7 @@ const FormDateInput = ({
   required = false,
   disabled = false,
   className,
+  disableFutureDates = false,
 }) => {
   const isChrome = isChromeBrowser();
 
@@ -61,7 +62,9 @@ const FormDateInput = ({
                   {...field}
                   value={field.value || ""}
                   placeholder="Pick a date"
-                  max={format(new Date(), "yyyy-MM-dd")}
+                  {...(disableFutureDates && {
+                    max: format(new Date(), "yyyy-MM-dd"),
+                  })}
                   onChange={(e) => {
                     field.onChange(e.target.value);
                   }}
@@ -111,8 +114,12 @@ const FormDateInput = ({
                   onSelect={(date) => {
                     field.onChange(date ? format(date, "yyyy-MM-dd") : "");
                   }}
-                  disabled={(date) => date > new Date()}
-                  defaultMonth={new Date()}
+                  disabled={
+                    disableFutureDates ? (date) => date > new Date() : undefined
+                  }
+                  defaultMonth={
+                    field.value ? new Date(field.value) : new Date()
+                  }
                   initialFocus
                 />
               </PopoverContent>

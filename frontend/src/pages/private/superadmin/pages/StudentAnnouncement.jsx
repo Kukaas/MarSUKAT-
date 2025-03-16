@@ -117,15 +117,26 @@ export function StudentAnnouncement() {
     try {
       setIsSubmitting(true);
 
+      // Ensure dates are properly formatted
+      const formattedData = {
+        ...data,
+        startDate: new Date(data.startDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
+      };
+
       if (isEditing) {
-        await systemMaintenanceAPI.updateAnnouncement(selectedId, data);
+        await systemMaintenanceAPI.updateAnnouncement(
+          selectedId,
+          formattedData
+        );
         toast.success("Announcement updated successfully");
         setIsEditDialogOpen(false);
       } else {
-        await systemMaintenanceAPI.createAnnouncement(data);
+        await systemMaintenanceAPI.createAnnouncement(formattedData);
         toast.success("Announcement created successfully");
         setIsCreateDialogOpen(false);
       }
+
       setIsEditing(false);
       setFormData({
         title: "",
@@ -244,7 +255,6 @@ export function StudentAnnouncement() {
               <div className="py-2">
                 <AnnouncementForm
                   formData={formData}
-                  setFormData={setFormData}
                   onSubmit={handleSubmit}
                   isSubmitting={isSubmitting}
                 />
@@ -252,7 +262,15 @@ export function StudentAnnouncement() {
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
-                onClick={() => setIsCreateDialogOpen(false)}
+                onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  setFormData({
+                    title: "",
+                    content: "",
+                    startDate: "",
+                    endDate: "",
+                  });
+                }}
                 disabled={isSubmitting}
               >
                 Cancel
@@ -283,7 +301,6 @@ export function StudentAnnouncement() {
               <div className="py-2">
                 <AnnouncementForm
                   formData={formData}
-                  setFormData={setFormData}
                   isEdit={true}
                   onSubmit={handleSubmit}
                   isSubmitting={isSubmitting}
@@ -292,7 +309,15 @@ export function StudentAnnouncement() {
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
-                onClick={() => !isSubmitting && setIsEditDialogOpen(false)}
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setFormData({
+                    title: "",
+                    content: "",
+                    startDate: "",
+                    endDate: "",
+                  });
+                }}
                 disabled={isSubmitting}
               >
                 Cancel

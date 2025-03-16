@@ -520,6 +520,52 @@ export const systemMaintenanceAPI = {
       throw error;
     }
   },
+
+  // Announcement Management API functions
+  getAllAnnouncements: async () => {
+    try {
+      const response = await api.get("/announcements");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getAnnouncementById: async (id) => {
+    try {
+      const response = await api.get(`/announcements/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createAnnouncement: async (announcementData) => {
+    try {
+      const response = await api.post("/announcements", announcementData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateAnnouncement: async (id, announcementData) => {
+    try {
+      const response = await api.put(`/announcements/${id}`, announcementData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteAnnouncement: async (id) => {
+    try {
+      const response = await api.delete(`/announcements/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default systemMaintenanceAPI;

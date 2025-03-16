@@ -303,6 +303,7 @@ export function SchoolUniformProductionForm({
               icon={Calendar}
               required
               disabled={isSubmitting}
+              disableFutureDates={true}
             />
 
             <FormDateInput
@@ -313,6 +314,7 @@ export function SchoolUniformProductionForm({
               icon={Calendar}
               required
               disabled={isSubmitting}
+              disableFutureDates={true}
             />
           </div>
 
