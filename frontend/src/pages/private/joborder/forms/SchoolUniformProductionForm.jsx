@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import EmptyState from "@/components/custom-components/EmptyState";
 
 const formSchema = z.object({
   level: z.string().min(1, "Level is required"),
@@ -316,37 +317,51 @@ export function SchoolUniformProductionForm({
           </div>
 
           {/* Raw Materials Section */}
-          {selectedProductType && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Raw Materials Required</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {selectedProductType.rawMaterialsUsed.map((material, index) => (
-                  <Card key={material._id || index} className="bg-muted/50">
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{material.category}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Box className="h-4 w-4 text-muted-foreground" />
-                          <span>{material.type}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Scale className="h-4 w-4 text-muted-foreground" />
-                          <span>{material.quantity}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Ruler className="h-4 w-4 text-muted-foreground" />
-                          <span>{material.unit}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Raw Materials Required</h3>
+            {selectedProductType ? (
+              selectedProductType.rawMaterialsUsed.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {selectedProductType.rawMaterialsUsed.map(
+                    (material, index) => (
+                      <Card key={material._id || index} className="bg-muted/50">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-primary" />
+                            <span className="font-medium">
+                              {material.category}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Box className="h-4 w-4 text-muted-foreground" />
+                              <span>{material.type}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Scale className="h-4 w-4 text-muted-foreground" />
+                              <span>{material.quantity}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Ruler className="h-4 w-4 text-muted-foreground" />
+                              <span>{material.unit}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
+                </div>
+              ) : (
+                <EmptyState 
+                  message="No raw materials have been specified for this product type."
+                />
+              )
+            ) : (
+              <EmptyState 
+                message="Select a level, product type, and size to view required raw materials."
+              />
+            )}
+          </div>
         </div>
       </form>
     </Form>
