@@ -50,9 +50,6 @@ export default function App() {
         {jobOrderRoutes.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
-
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
       </Routes>
     </DevModeWrapper>
   );

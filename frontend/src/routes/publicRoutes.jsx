@@ -11,6 +11,7 @@ import About from "../pages/public/About";
 import Contact from "../pages/public/Contact";
 import Faq from "../pages/public/Faq";
 import CreateSuperAdmin from "../pages/private/superadmin/pages/CreateSuperAdmin";
+import NotFound from "../pages/public/NotFound";
 
 export const publicRoutes = [
   {
@@ -94,6 +95,14 @@ export const publicRoutes = [
     element: (
       <PublicRoute>
         <Faq />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "*",
+    element: (
+      <PublicRoute skipAuthCheck={true}>
+        <NotFound />
       </PublicRoute>
     ),
   },

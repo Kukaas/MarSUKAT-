@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   "/about",
   "/contact-us",
   "/faq",
+  "*",
 ];
 
 export function AuthProvider({ children }) {
