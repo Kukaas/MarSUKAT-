@@ -37,6 +37,14 @@ const receiptSchema = new mongoose.Schema({
   },
 });
 
+// Add middleware to handle synchronization
+receiptSchema.pre('save', function(next) {
+  if (this.isVerified && this.parent().status === "Pending") {
+    this.parent().status = "Approved";
+  }
+  next();
+});
+
 const orderItemSchema = new mongoose.Schema({
   level: {
     type: String,
@@ -110,7 +118,11 @@ const studentOrderSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "Pending",
-      enum: ["Pending", "Approved", "Measured", "For Pickup", "Claimed"],
+      enum: ["Pending", "Approved", "Rejected", "Measured", "For Pickup", "Claimed"],
+    },
+    rejectionReason: {
+      type: String,
+      default: null,
     },
     receipt: receiptSchema,
     orderItems: [orderItemSchema],
@@ -125,6 +137,10 @@ const studentOrderSchema = new mongoose.Schema(
           `${props.value} is not a valid total price. Total price must have exactly 2 decimal places.`,
       },
       set: (v) => parseFloat(v),
+    },
+    measurementSchedule: {
+      date: Date,
+      time: String,
     },
   },
   {
@@ -143,6 +159,10 @@ studentOrderSchema.pre("save", async function (next) {
         .substring(2, 8)
         .toUpperCase();
       this.orderId = `SO-${year}${month}-${randomString}`;
+    }
+    // If order is being approved, verify the receipt
+    if (this.status === "Approved" && !this.receipt.isVerified) {
+      this.receipt.isVerified = true;
     }
     next();
   } catch (error) {

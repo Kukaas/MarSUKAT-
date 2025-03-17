@@ -19,13 +19,17 @@ import {
   ChevronDown,
   ChevronUp,
   ZoomIn,
+  CalendarIcon,
+  AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageViewer } from "@/components/custom-components/ImageViewer";
+import { StatusMessage } from "@/components/custom-components/StatusMessage";
 
 // Add status icons mapping
 const STATUS_ICONS = {
+  Rejected: AlertCircle,
   Pending: Clock,
   Approved: CheckCircle2,
   Measured: Ruler,
@@ -92,6 +96,9 @@ function OrderContent({ order }) {
   const downPayment = getReceiptsByType("Down Payment");
   const partialPayment = getReceiptsByType("Partial Payment");
   const fullPayment = getReceiptsByType("Full Payment");
+
+  // Add helper function to check if order is rejected
+  const isRejected = order?.status === "Rejected";
 
   const renderReceiptSection = (receipt, title, sectionId) => {
     if (!receipt) return null;
@@ -224,9 +231,69 @@ function OrderContent({ order }) {
                   className="text-xs sm:text-sm"
                 />
               </div>
+
+              {/* Replace Rejection Message */}
+              {isRejected && order?.rejectionReason && (
+                <StatusMessage
+                  type="rejected"
+                  title="Order Rejected"
+                  message={order.rejectionReason}
+                  reminder="Please contact the office for more information or to submit a new order."
+                />
+              )}
             </div>
           </div>
         </div>
+
+        {/* Add Measurement Schedule Section */}
+        {order?.status !== "Pending" && (
+          <div className="space-y-4">
+            <SectionTitle>Measurement Schedule</SectionTitle>
+            <Card className="overflow-hidden">
+              <CardContent className="p-4 space-y-4">
+                {order?.measurementSchedule ? (
+                  <>
+                    <div className="flex items-center gap-2 text-primary">
+                      <CalendarIcon className="h-5 w-5" />
+                      <span className="font-semibold">
+                        Scheduled Measurement
+                      </span>
+                    </div>
+                    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+                      <InfoCard
+                        icon={Calendar}
+                        label="Date"
+                        value={formatDate(
+                          order.measurementSchedule.date,
+                          "long"
+                        )}
+                      />
+                      <InfoCard
+                        icon={Clock}
+                        label="Time"
+                        value={order.measurementSchedule.time}
+                      />
+                    </div>
+                    {/* Update Measurement Schedule Message */}
+                    {order?.status === "Approved" &&
+                      order?.measurementSchedule && (
+                        <StatusMessage
+                          type="warning"
+                          title="Important Reminders"
+                          steps={["Valid School ID", "Payment Receipt"]}
+                          reminder="Please arrive on time for your scheduled measurement."
+                        />
+                      )}
+                  </>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No measurement schedule set
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Personal Information */}
         <div className="space-y-4 sm:space-y-6">

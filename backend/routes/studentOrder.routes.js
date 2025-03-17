@@ -6,6 +6,7 @@ import {
   updateStudentOrder,
   deleteStudentOrder,
   getOrdersByUserId,
+  rejectOrder,
 } from "../controllers/studentOrder.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
 import { isStudent } from "../middleware/student.middleware.js";
@@ -25,5 +26,8 @@ router.delete("/:id", authenticateUser, deleteStudentOrder);
 
 // Add this new route
 router.get("/user/:userId", authenticateUser, isStudent, getOrdersByUserId);
+
+// Add new route for rejecting orders
+router.put("/:id/reject", authenticateUser, isJobOrder, rejectOrder);
 
 export default router;

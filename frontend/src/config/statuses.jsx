@@ -53,6 +53,14 @@ export const JOB_ORDER_STATUSES = {
     color: "bg-green-100 text-green-800 hover:bg-green-200",
     description: "Job order has been completed",
   },
+  REJECTED: {
+    value: "Rejected",
+    label: "Rejected",
+    icon: AlertCircle,
+    color:
+      "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50",
+    description: "Order has been rejected",
+  },
 };
 
 // Inventory Statuses

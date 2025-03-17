@@ -1,6 +1,8 @@
 import StudentOrder from "../models/studentOrder.model.js";
 import User from "../models/user.model.js";
+import Announcement from "../models/announcement.model.js";
 import mongoose from "mongoose";
+import { getNextAvailableSchedule } from "../utils/scheduleUtils.js";
 
 // @desc    Get all orders
 // @route   GET /api/student-orders
@@ -81,12 +83,6 @@ export const createStudentOrder = async (req, res) => {
       },
     });
 
-    console.log("Creating order with data:", {
-      userId: newOrder.userId,
-      name: newOrder.name,
-      // ... other fields for debugging
-    });
-
     const savedOrder = await newOrder.save();
 
     // Find all active JobOrder users
@@ -127,8 +123,62 @@ export const updateStudentOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    const previousStatus = order.status;
+    const newStatus = req.body.status;
+    const isVerifyingReceipt = req.body["receipt.isVerified"] === true;
+
+    // If approving receipt or status
+    if (
+      (isVerifyingReceipt && !order.receipt.isVerified) ||
+      (newStatus === "Approved" && previousStatus !== "Approved")
+    ) {
+      try {
+        // Get next available schedule
+        const schedule = await getNextAvailableSchedule(new Date());
+
+        // Update order with schedule and sync approval
+        req.body.measurementSchedule = schedule;
+
+        // Synchronize both receipt verification and order status
+        if (isVerifyingReceipt) {
+          req.body.status = "Approved";
+          order.receipt.isVerified = true;
+        } else if (newStatus === "Approved") {
+          order.receipt.isVerified = true;
+          req.body["receipt.isVerified"] = true;
+        }
+
+        // Create notification for the student
+        const student = await User.findById(order.userId);
+        if (student) {
+          const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+          const notification = {
+            title: "Order Approved and Scheduled",
+            message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+            read: false,
+          };
+
+          student.notifications.push(notification);
+          await student.save();
+        }
+      } catch (error) {
+        return res.status(400).json({
+          message: "Could not schedule measurement",
+          error: error.message,
+        });
+      }
+    }
+
+    // Update the order
     Object.assign(order, req.body);
     const updatedOrder = await order.save();
+
     res.status(200).json(updatedOrder);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -173,5 +223,52 @@ export const getOrdersByUserId = async (req, res) => {
       message: "Error retrieving orders",
       error: error.message,
     });
+  }
+};
+
+// @desc    Reject order
+// @route   PUT /api/student-orders/:id/reject
+// @access  Private
+export const rejectOrder = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ message: "Rejection reason is required" });
+    }
+
+    const order = await StudentOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Update order status and add rejection reason
+    order.status = "Rejected";
+    order.rejectionReason = reason;
+
+    // If order was previously approved, clear the measurement schedule
+    if (order.measurementSchedule) {
+      order.measurementSchedule = null;
+    }
+
+    const updatedOrder = await order.save();
+
+    // Find the student and send notification
+    const student = await User.findById(order.userId);
+    if (student) {
+      const notification = {
+        title: "Order Rejected",
+        message: `Your order ${order.orderId} has been rejected. Reason: ${reason}`,
+        read: false,
+      };
+
+      student.notifications.push(notification);
+      await student.save();
+    }
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error("Error rejecting order:", error);
+    res.status(400).json({ message: error.message });
   }
 };
