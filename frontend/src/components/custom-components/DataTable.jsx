@@ -81,6 +81,7 @@ const DataTable = ({
   isLoading = false,
   actions = [],
   actionCategories,
+  gridView,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,7 +89,7 @@ const DataTable = ({
   const [filteredData, setFilteredData] = useState(data);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("all");
-  const [viewMode, setViewMode] = useState("table");
+  const [viewMode, setViewMode] = useState(gridView ? "grid" : "table");
 
   // Generate months for dropdown
   const months = React.useMemo(() => {
@@ -107,7 +108,8 @@ const DataTable = ({
         // md breakpoint
         setViewMode("grid");
       } else {
-        setViewMode("table");
+        // Only set to table if gridView is not provided
+        setViewMode(gridView ? "grid" : "table");
       }
     };
 
@@ -119,7 +121,7 @@ const DataTable = ({
 
     // Cleanup
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [gridView]);
 
   // Filter data based on search query, status, and selected month
   useEffect(() => {

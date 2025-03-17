@@ -21,8 +21,42 @@ const StatusBadge = ({
   pill = true,
   ...props
 }) => {
-  // Default status map with minimalist styling that supports dark mode
+  // Updated status map to match student order statuses
   const defaultStatusMap = {
+    // ... keep other existing statuses ...
+
+    // Student Order specific statuses
+    Pending: {
+      bg: outline ? "bg-transparent" : "bg-yellow-50 dark:bg-yellow-950/30",
+      text: "text-yellow-600 dark:text-yellow-400",
+      border: "border border-yellow-200 dark:border-yellow-800",
+      hoverBg: "hover:bg-yellow-50 dark:hover:bg-yellow-900/20",
+    },
+    Approved: {
+      bg: outline ? "bg-transparent" : "bg-blue-50 dark:bg-blue-950/30",
+      text: "text-blue-600 dark:text-blue-400",
+      border: "border border-blue-200 dark:border-blue-800",
+      hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+    },
+    Measured: {
+      bg: outline ? "bg-transparent" : "bg-purple-50 dark:bg-purple-950/30",
+      text: "text-purple-600 dark:text-purple-400",
+      border: "border border-purple-200 dark:border-purple-800",
+      hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
+    },
+    "For Pickup": {
+      bg: outline ? "bg-transparent" : "bg-indigo-50 dark:bg-indigo-950/30",
+      text: "text-indigo-600 dark:text-indigo-400",
+      border: "border border-indigo-200 dark:border-indigo-800",
+      hoverBg: "hover:bg-indigo-50 dark:hover:bg-indigo-900/20",
+    },
+    Claimed: {
+      bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
+      text: "text-green-600 dark:text-green-400",
+      border: "border border-green-200 dark:border-green-800",
+      hoverBg: "hover:bg-green-50 dark:hover:bg-green-900/20",
+    },
+    // Keep other existing statuses...
     Available: {
       bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
       text: "text-green-600 dark:text-green-400",
@@ -52,12 +86,6 @@ const StatusBadge = ({
       text: "text-gray-600 dark:text-gray-400",
       border: "border border-gray-200 dark:border-gray-700",
       hoverBg: "hover:bg-gray-50 dark:hover:bg-gray-800/50",
-    },
-    Pending: {
-      bg: outline ? "bg-transparent" : "bg-blue-50 dark:bg-blue-950/30",
-      text: "text-blue-600 dark:text-blue-400",
-      border: "border border-blue-200 dark:border-blue-800",
-      hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
     },
     Completed: {
       bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
