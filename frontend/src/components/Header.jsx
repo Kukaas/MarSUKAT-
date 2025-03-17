@@ -42,6 +42,7 @@ import { Switch } from "./ui/switch";
 import React, { useState } from "react";
 import { cn } from "../lib/utils";
 import ProfileModal from "./profile/ProfileModal";
+import NotificationsModal from "./notifications/NotificationsModal";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
@@ -78,6 +79,7 @@ const Header = () => {
   const location = useLocation();
   const [openAccordions, setOpenAccordions] = useState({});
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout(true);
@@ -167,22 +169,15 @@ const Header = () => {
         {/* Desktop view */}
         <div className="hidden md:flex items-center space-x-4">
           <MemoizedThemeToggle />
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80" align="end" sideOffset={8}>
-              <div className="space-y-1">
-                <h4 className="text-sm font-semibold">Notifications</h4>
-                <p className="text-sm text-muted-foreground">
-                  You have no new notifications.
-                </p>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setNotificationsModalOpen(true)}
+          >
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -227,7 +222,12 @@ const Header = () => {
         {/* Mobile view */}
         <div className="flex md:hidden items-center space-x-2">
           <MemoizedThemeToggle />
-          <Button variant="ghost" size="icon" className="relative h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative h-8 w-8"
+            onClick={() => setNotificationsModalOpen(true)}
+          >
             <Bell className="h-5 w-5" />
             <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
           </Button>
@@ -361,6 +361,12 @@ const Header = () => {
             </SheetContent>
           </Sheet>
         </div>
+
+        {/* NotificationsModal */}
+        <NotificationsModal
+          open={notificationsModalOpen}
+          onOpenChange={setNotificationsModalOpen}
+        />
 
         {/* Profile Modal */}
         <ProfileModal
