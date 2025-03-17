@@ -52,7 +52,7 @@ const SectionTitle = ({ children }) => (
 function SchoolUniformProductionContent({ item }) {
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-6 sm:space-y-8 px-6">
+      <div className="space-y-6 sm:space-y-8">
         {/* Header with Production Info */}
         <div className="relative">
           <div className="absolute inset-0 h-32 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50 dark:from-primary/10 dark:via-primary/5" />

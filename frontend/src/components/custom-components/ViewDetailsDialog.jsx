@@ -17,7 +17,7 @@ const ViewDetailsDialog = ({
   title,
   children,
   className,
-  maxWidth = "max-w-2xl",
+  maxWidth = "max-w-[95vw]",
 }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
