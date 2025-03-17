@@ -82,6 +82,7 @@ const DataTable = ({
   actions = [],
   actionCategories,
   gridView,
+  emptyMessage = "No results found.",
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -442,6 +443,7 @@ const DataTable = ({
           actionCategories={actionCategories}
           isLoading={isLoading}
           gridClassName="mt-2"
+          emptyMessage={emptyMessage}
         />
       )}
 

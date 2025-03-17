@@ -264,20 +264,14 @@ export default function Orders() {
           </Button>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
-          </div>
-        ) : (
-          <DataTable
-            data={orders}
-            columns={columns}
-            isLoading={isLoading}
-            actionCategories={actionCategories}
-            gridView={<OrderGrid orders={orders} />}
-            emptyMessage="No orders found. Create your first order!"
-          />
-        )}
+        <DataTable
+          data={orders}
+          columns={columns}
+          isLoading={isLoading}
+          actionCategories={actionCategories}
+          gridView={true}
+          emptyMessage="No orders found. Create your first order!"
+        />
 
         {/* Create Order Dialog */}
         <AlertDialog open={isCreateDialogOpen}>

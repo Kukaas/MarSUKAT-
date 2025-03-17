@@ -17,8 +17,37 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Search, MoreHorizontal } from "lucide-react";
+import { Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Update the LoadingSpinner styling to match the grid layout
+const LoadingSpinner = () => (
+  <div className="col-span-full min-h-[200px] relative bg-background rounded-md border">
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+      <div className="relative">
+        <div className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary relative" />
+      </div>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-base font-medium text-muted-foreground">
+          Loading Data
+        </p>
+        <p className="text-sm text-muted-foreground/60">
+          Please wait while we fetch your information
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const EmptyState = ({ message = "No items to display." }) => (
+  <div className="col-span-full min-h-[300px] md:min-h-[200px] relative bg-background rounded-md border">
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground p-4 text-center">
+      <Search className="h-6 w-6 md:h-8 md:w-8" />
+      <p className="text-sm md:text-base">{message}</p>
+    </div>
+  </div>
+);
 
 const GridView = ({
   data = [],
@@ -26,9 +55,9 @@ const GridView = ({
   isLoading = false,
   gridClassName,
   cardClassName,
-  skeletonCount = 6,
   actions = [],
   actionCategories,
+  emptyMessage = "No items to display.",
 }) => {
   if (isLoading) {
     return (
@@ -38,31 +67,20 @@ const GridView = ({
           gridClassName
         )}
       >
-        {[...Array(skeletonCount)].map((_, index) => (
-          <Card key={index} className={cn("", cardClassName)}>
-            <CardHeader className="space-y-2">
-              <Skeleton className="h-5 w-3/4" />
-              <div className="flex gap-2">
-                <Skeleton className="h-6 w-20 rounded-full" />
-                <Skeleton className="h-6 w-20 rounded-full" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardContent>
-          </Card>
-        ))}
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (!data.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
-        <Search className="h-8 w-8" />
-        <p>No items to display.</p>
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
+          gridClassName
+        )}
+      >
+        <EmptyState message={emptyMessage} />
       </div>
     );
   }
