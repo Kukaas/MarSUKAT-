@@ -1,5 +1,6 @@
 import StudentOrder from "../models/studentOrder.model.js";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
 
 // @desc    Get all orders
 // @route   GET /api/student-orders
@@ -148,5 +149,29 @@ export const deleteStudentOrder = async (req, res) => {
     res.status(200).json({ message: "Order deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get orders by user ID
+// @route   GET /api/student-orders/user/:userId
+// @access  Private
+export const getOrdersByUserId = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    const orders = await StudentOrder.find({ userId: req.params.userId })
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .lean();
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    res.status(500).json({
+      message: "Error retrieving orders",
+      error: error.message,
+    });
   }
 };

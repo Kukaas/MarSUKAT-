@@ -59,10 +59,11 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const data = await orderAPI.getMyOrders();
+      const data = await orderAPI.getOrdersByUserId(user?._id);
       setOrders(data);
     } catch (error) {
       toast.error("Failed to fetch your orders");
+      console.error("Error fetching orders:", error);
     } finally {
       setIsLoading(false);
     }

@@ -1,11 +1,6 @@
 import api from "@/lib/api";
 
 export const orderAPI = {
-  getMyOrders: async () => {
-    const response = await api.get("/student-orders/my-orders");
-    return response.data;
-  },
-
   getOrderById: async (id) => {
     const response = await api.get(`/student-orders/${id}`);
     return response.data;
@@ -23,6 +18,11 @@ export const orderAPI = {
 
   deleteStudentOrder: async (id) => {
     const response = await api.delete(`/student-orders/${id}`);
+    return response.data;
+  },
+
+  getOrdersByUserId: async (userId) => {
+    const response = await api.get(`/student-orders/user/${userId}`);
     return response.data;
   },
 };
