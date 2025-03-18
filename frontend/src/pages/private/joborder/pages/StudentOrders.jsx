@@ -101,6 +101,26 @@ export function StudentOrders() {
       ),
     },
     {
+      key: "receipts",
+      header: "Payment",
+      render: (receipts) => {
+        const latestReceipt =
+          receipts && receipts.length > 0
+            ? receipts[receipts.length - 1]
+            : null;
+        return (
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-gray-500" />
+            <span>
+              {latestReceipt
+                ? `${latestReceipt.type} - ₱${latestReceipt.amount.toFixed(2)}`
+                : "No payment"}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
       key: "status",
       header: "Status",
       render: (value) => (

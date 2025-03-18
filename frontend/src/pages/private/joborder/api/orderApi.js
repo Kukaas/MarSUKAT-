@@ -16,10 +16,13 @@ export const jobOrderAPI = {
     return response.data;
   },
 
-  verifyReceipt: async (id, verified) => {
-    const response = await api.put(`/student-orders/${id}`, {
-      "receipt.isVerified": verified,
-    });
+  verifyReceipt: async (orderId, receiptId) => {
+    const response = await api.put(
+      `/student-orders/${orderId}/verify-receipt`,
+      {
+        receiptId,
+      }
+    );
     return response.data;
   },
 

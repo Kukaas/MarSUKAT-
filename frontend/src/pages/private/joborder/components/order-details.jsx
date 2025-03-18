@@ -108,10 +108,10 @@ const getAvailableStatuses = (currentStatus) => {
 };
 
 function OrderContent({ order, onUpdate }) {
+  // Update receipt handling
   const getReceiptsByType = (type) => {
-    if (!order?.receipt) return null;
-    if (order.receipt.type === type) return order.receipt;
-    return null;
+    if (!order?.receipts || order.receipts.length === 0) return null;
+    return order.receipts.find((receipt) => receipt.type === type) || null;
   };
 
   // Update initial section states based on order status
@@ -177,17 +177,11 @@ function OrderContent({ order, onUpdate }) {
     }
   };
 
-  const handleVerifyReceipt = async (verified) => {
+  const handleVerifyReceipt = async (receiptId) => {
     try {
       setIsUpdating(true);
-      const updatedOrder = await jobOrderAPI.updateOrder(order._id, {
-        "receipt.isVerified": verified,
-      });
-      toast.success(
-        verified
-          ? "Receipt verified successfully"
-          : "Receipt marked as unverified"
-      );
+      const updatedOrder = await jobOrderAPI.verifyReceipt(order._id, receiptId);
+      toast.success("Receipt verified successfully");
       onUpdate && onUpdate(updatedOrder);
     } catch (error) {
       toast.error("Failed to update receipt verification");
@@ -221,11 +215,11 @@ function OrderContent({ order, onUpdate }) {
     });
   };
 
-  const openVerifyConfirmation = (verified) => {
+  const openVerifyConfirmation = (receiptId) => {
     setConfirmDialog({
       isOpen: true,
       type: "verify",
-      data: verified,
+      data: receiptId,
     });
   };
 
@@ -246,15 +240,16 @@ function OrderContent({ order, onUpdate }) {
 
   const getStatusConfirmationDetails = () => {
     if (selectedStatus === "Approved") {
+      const latestReceipt = order.receipts[order.receipts.length - 1];
       return {
         title: "Approve Order",
         description: (
           <div className="space-y-2">
             <p>Have you verified the following receipt information?</p>
             <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-              <li>OR Number: {order?.receipt?.orNumber}</li>
-              <li>Amount: ₱{order?.receipt?.amount.toFixed(2)}</li>
-              <li>Date Paid: {formatDate(order?.receipt?.datePaid)}</li>
+              <li>OR Number: {latestReceipt?.orNumber}</li>
+              <li>Amount: ₱{latestReceipt?.amount.toFixed(2)}</li>
+              <li>Date Paid: {formatDate(latestReceipt?.datePaid)}</li>
             </ul>
             <p className="mt-4 text-sm text-muted-foreground">
               Approving this order will:
@@ -311,7 +306,7 @@ function OrderContent({ order, onUpdate }) {
         <Button
           variant={receipt.isVerified ? "outline" : "default"}
           size="sm"
-          onClick={() => openVerifyConfirmation(true)}
+          onClick={() => openVerifyConfirmation(receipt._id)}
           disabled={isUpdating || receipt.isVerified || isRejected}
         >
           <Check className="h-4 w-4 mr-2" />
@@ -376,127 +371,53 @@ function OrderContent({ order, onUpdate }) {
 
   // Add renderReceiptSections function
   const renderReceiptSections = () => {
-    return (
-      <div className="space-y-4">
-        {/* Down Payment Receipt */}
-        {downPayment && (
-          <div className="space-y-4">
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleSection("downPayment")}
-            >
-              <div className="flex items-center justify-between flex-1">
-                <h4 className="text-sm font-medium">Down Payment Receipt</h4>
-                {!isRejected && (
-                  <StatusBadge
-                    status={downPayment.isVerified ? "Verified" : "Pending"}
-                    icon={downPayment.isVerified ? CheckCircle2 : Clock}
-                  />
-                )}
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                {openSections.downPayment ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+    if (!order?.receipts || order.receipts.length === 0) {
+      return (
+        <Card>
+          <CardContent className="p-6">
+            <EmptyState
+              icon={Receipt}
+              title="No Receipts"
+              description="No payment receipts have been added yet."
+            />
+          </CardContent>
+        </Card>
+      );
+    }
 
-            {openSections.downPayment && (
-              <Card className="overflow-hidden">
-                <CardContent className="p-4 space-y-4">
-                  {renderReceiptContent(downPayment)}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Partial Payment Receipt */}
-        {partialPayment && (
-          <div className="space-y-4">
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleSection("partialPayment")}
-            >
-              <div className="flex items-center justify-between flex-1">
-                <h4 className="text-sm font-medium">Partial Payment Receipt</h4>
-                {!isRejected && (
-                  <StatusBadge
-                    status={partialPayment.isVerified ? "Verified" : "Pending"}
-                    icon={partialPayment.isVerified ? CheckCircle2 : Clock}
-                  />
-                )}
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                {openSections.partialPayment ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-
-            {openSections.partialPayment && (
-              <Card className="overflow-hidden">
-                <CardContent className="p-4 space-y-4">
-                  {renderReceiptContent(partialPayment)}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Full Payment Receipt */}
-        {fullPayment && (
-          <div className="space-y-4">
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleSection("fullPayment")}
-            >
-              <div className="flex items-center justify-between flex-1">
-                <h4 className="text-sm font-medium">Full Payment Receipt</h4>
-                {!isRejected && (
-                  <StatusBadge
-                    status={fullPayment.isVerified ? "Verified" : "Pending"}
-                    icon={fullPayment.isVerified ? CheckCircle2 : Clock}
-                  />
-                )}
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                {openSections.fullPayment ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-
-            {openSections.fullPayment && (
-              <Card className="overflow-hidden">
-                <CardContent className="p-4 space-y-4">
-                  {renderReceiptContent(fullPayment)}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Show message if no receipts */}
-        {!downPayment && !partialPayment && !fullPayment && (
-          <Card>
-            <CardContent className="p-6">
-              <EmptyState
-                icon={Receipt}
-                title="No Receipts"
-                description="No payment receipts have been added yet."
+    return order.receipts.map((receipt, index) => (
+      <div key={receipt._id || index} className="space-y-4">
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => toggleSection(`receipt-${index}`)}
+        >
+          <div className="flex items-center justify-between flex-1">
+            <h4 className="text-sm font-medium">{receipt.type} Receipt</h4>
+            {!isRejected && (
+              <StatusBadge
+                status={receipt.isVerified ? "Verified" : "Pending"}
+                icon={receipt.isVerified ? CheckCircle2 : Clock}
               />
+            )}
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            {openSections[`receipt-${index}`] ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {openSections[`receipt-${index}`] && (
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 space-y-4">
+              {renderReceiptContent(receipt)}
             </CardContent>
           </Card>
         )}
       </div>
-    );
+    ));
   };
 
   // Helper function to render sections in order based on status
@@ -920,8 +841,16 @@ function OrderContent({ order, onUpdate }) {
       <ImageViewer
         isOpen={imageViewerOpen}
         onClose={() => setImageViewerOpen(false)}
-        imageUrl={order?.receipt?.image?.data}
-        title={`Receipt ${order?.receipt?.orNumber}`}
+        imageUrl={
+          order?.receipts?.length > 0
+            ? order.receipts[order.receipts.length - 1]?.image?.data
+            : null
+        }
+        title={`Receipt ${
+          order?.receipts?.length > 0
+            ? order.receipts[order.receipts.length - 1]?.orNumber
+            : ""
+        }`}
       />
 
       <ConfirmationDialog

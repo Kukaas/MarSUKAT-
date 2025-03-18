@@ -44,7 +44,7 @@ export const createStudentOrder = async (req, res) => {
       level,
       department,
       gender,
-      receipt,
+      receipt, // Single receipt during creation
     } = req.body;
 
     // Check if userId is provided
@@ -63,24 +63,27 @@ export const createStudentOrder = async (req, res) => {
     }
 
     const newOrder = new StudentOrder({
-      userId, // Use userId from request body
+      userId,
       name,
       email,
       studentNumber,
       level,
       department,
       gender,
-      receipt: {
-        type: receipt.type,
-        orNumber: receipt.orNumber.trim(),
-        datePaid: receipt.datePaid,
-        image: {
-          filename: receipt.image.filename,
-          contentType: receipt.image.contentType,
-          data: receipt.image.data,
+      receipts: [
+        {
+          // Add as first receipt in array
+          type: receipt.type,
+          orNumber: receipt.orNumber.trim(),
+          datePaid: receipt.datePaid,
+          image: {
+            filename: receipt.image.filename,
+            contentType: receipt.image.contentType,
+            data: receipt.image.data,
+          },
+          amount: receipt.amount,
         },
-        amount: receipt.amount,
-      },
+      ],
     });
 
     const savedOrder = await newOrder.save();
@@ -125,62 +128,95 @@ export const updateStudentOrder = async (req, res) => {
 
     const previousStatus = order.status;
     const newStatus = req.body.status;
-    const isVerifyingReceipt = req.body["receipt.isVerified"] === true;
 
-    // If approving receipt or status
-    if (
-      (isVerifyingReceipt && !order.receipt.isVerified) ||
-      (newStatus === "Approved" && previousStatus !== "Approved")
-    ) {
-      try {
-        // Get next available schedule
-        const schedule = await getNextAvailableSchedule(new Date());
+    // Check if we're verifying a specific receipt
+    if (req.body.receiptId && req.body.isVerified) {
+      const receipt = order.receipts.id(req.body.receiptId);
+      if (receipt) {
+        receipt.isVerified = true;
+        order.status = "Approved"; // Auto-approve order when receipt is verified
 
-        // Update order with schedule and sync approval
-        req.body.measurementSchedule = schedule;
+        try {
+          // Get next available schedule
+          const schedule = await getNextAvailableSchedule(new Date());
+          order.measurementSchedule = schedule;
 
-        // Synchronize both receipt verification and order status
-        if (isVerifyingReceipt) {
-          req.body.status = "Approved";
-          order.receipt.isVerified = true;
-        } else if (newStatus === "Approved") {
-          order.receipt.isVerified = true;
-          req.body["receipt.isVerified"] = true;
-        }
+          // Create notification for the student
+          const student = await User.findById(order.userId);
+          if (student) {
+            const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
 
-        // Create notification for the student
-        const student = await User.findById(order.userId);
-        if (student) {
-          const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
+            const notification = {
+              title: "Order Approved and Scheduled",
+              message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+              read: false,
+            };
+
+            student.notifications.push(notification);
+            await student.save();
+          }
+        } catch (error) {
+          return res.status(400).json({
+            message: "Could not schedule measurement",
+            error: error.message,
           });
-
-          const notification = {
-            title: "Order Approved and Scheduled",
-            message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
-            read: false,
-          };
-
-          student.notifications.push(notification);
-          await student.save();
         }
-      } catch (error) {
-        return res.status(400).json({
-          message: "Could not schedule measurement",
-          error: error.message,
-        });
       }
     }
+    // Handle regular status updates
+    else if (newStatus && newStatus !== previousStatus) {
+      if (newStatus === "Approved") {
+        try {
+          // Get next available schedule
+          const schedule = await getNextAvailableSchedule(new Date());
+          order.measurementSchedule = schedule;
 
-    // Update the order
+          // Verify the latest receipt
+          if (order.receipts.length > 0) {
+            order.receipts[order.receipts.length - 1].isVerified = true;
+          }
+
+          // Create notification for the student
+          const student = await User.findById(order.userId);
+          if (student) {
+            const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+
+            const notification = {
+              title: "Order Approved and Scheduled",
+              message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+              read: false,
+            };
+
+            student.notifications.push(notification);
+            await student.save();
+          }
+        } catch (error) {
+          return res.status(400).json({
+            message: "Could not schedule measurement",
+            error: error.message,
+          });
+        }
+      }
+      order.status = newStatus;
+    }
+
+    // Apply any other updates from req.body
     Object.assign(order, req.body);
-    const updatedOrder = await order.save();
 
+    const updatedOrder = await order.save();
     res.status(200).json(updatedOrder);
   } catch (error) {
+    console.error("Update error:", error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -282,12 +318,14 @@ export const getMySchedule = async (req, res) => {
 
     // First get all orders for the user
     const orders = await StudentOrder.find({ userId })
-      .select('orderId name studentNumber department measurementSchedule status')
+      .select(
+        "orderId name studentNumber department measurementSchedule status"
+      )
       .lean();
 
     // Filter for approved orders with measurement schedules
     const approvedOrders = orders.filter(
-      order => order.status === 'Approved' && order.measurementSchedule
+      (order) => order.status === "Approved" && order.measurementSchedule
     );
 
     if (!approvedOrders.length) {
@@ -295,7 +333,7 @@ export const getMySchedule = async (req, res) => {
     }
 
     // Transform the data
-    const schedules = approvedOrders.map(order => ({
+    const schedules = approvedOrders.map((order) => ({
       id: order._id,
       name: order.name,
       studentNumber: order.studentNumber,
@@ -303,12 +341,12 @@ export const getMySchedule = async (req, res) => {
       date: order.measurementSchedule.date,
       time: order.measurementSchedule.time,
       status: order.status,
-      orderId: order.orderId
+      orderId: order.orderId,
     }));
 
     res.status(200).json(schedules);
   } catch (error) {
-    console.error('Error fetching student schedule:', error);
+    console.error("Error fetching student schedule:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -320,17 +358,19 @@ export const getAllSchedules = async (req, res) => {
   try {
     const orders = await StudentOrder.find({
       measurementSchedule: { $exists: true, $ne: null },
-      status: 'Approved'
+      status: "Approved",
     })
-    .select('orderId name studentNumber department measurementSchedule status')
-    .lean();
+      .select(
+        "orderId name studentNumber department measurementSchedule status"
+      )
+      .lean();
 
     if (!orders || orders.length === 0) {
       return res.status(200).json([]); // Return empty array if no schedules found
     }
 
     // Transform the data before sending
-    const schedules = orders.map(order => ({
+    const schedules = orders.map((order) => ({
       id: order._id,
       name: order.name,
       studentNumber: order.studentNumber,
@@ -338,12 +378,12 @@ export const getAllSchedules = async (req, res) => {
       date: order.measurementSchedule.date,
       time: order.measurementSchedule.time,
       status: order.status,
-      orderId: order.orderId
+      orderId: order.orderId,
     }));
 
     res.status(200).json(schedules);
   } catch (error) {
-    console.error('Error fetching all schedules:', error);
+    console.error("Error fetching all schedules:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -366,8 +406,8 @@ export const addOrderItemsAndMeasure = async (req, res) => {
 
     // Validate order status
     if (order.status !== "Approved") {
-      return res.status(400).json({ 
-        message: "Order must be in 'Approved' status to be measured" 
+      return res.status(400).json({
+        message: "Order must be in 'Approved' status to be measured",
       });
     }
 
@@ -394,6 +434,67 @@ export const addOrderItemsAndMeasure = async (req, res) => {
     res.status(200).json(updatedOrder);
   } catch (error) {
     console.error("Error updating order items:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Verify receipt
+// @route   PUT /api/student-orders/:id/verify-receipt
+// @access  Private
+export const verifyReceipt = async (req, res) => {
+  try {
+    const { receiptId } = req.body;
+
+    const order = await StudentOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Find the receipt in the array
+    const receipt = order.receipts.id(receiptId);
+    if (!receipt) {
+      return res.status(404).json({ message: "Receipt not found" });
+    }
+
+    // Verify the receipt
+    receipt.isVerified = true;
+    order.status = "Approved"; // Auto-approve order when receipt is verified
+
+    try {
+      // Get next available schedule
+      const schedule = await getNextAvailableSchedule(new Date());
+      order.measurementSchedule = schedule;
+
+      // Create notification for the student
+      const student = await User.findById(order.userId);
+      if (student) {
+        const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+
+        const notification = {
+          title: "Order Approved and Scheduled",
+          message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+          read: false,
+        };
+
+        student.notifications.push(notification);
+        await student.save();
+      }
+
+      const updatedOrder = await order.save();
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      return res.status(400).json({
+        message: "Could not schedule measurement",
+        error: error.message,
+      });
+    }
+  } catch (error) {
+    console.error("Receipt verification error:", error);
     res.status(400).json({ message: error.message });
   }
 };

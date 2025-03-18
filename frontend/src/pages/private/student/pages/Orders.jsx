@@ -93,16 +93,24 @@ export default function Orders() {
       ),
     },
     {
-      key: "receipt",
+      key: "receipts",
       header: "Payment",
-      render: (value) => (
-        <div className="flex items-center gap-2">
-          <Receipt className="h-4 w-4 text-gray-500" />
-          <span>
-            {value.type} - ₱{value.amount.toFixed(2)}
-          </span>
-        </div>
-      ),
+      render: (receipts) => {
+        const latestReceipt =
+          receipts && receipts.length > 0
+            ? receipts[receipts.length - 1]
+            : null;
+        return (
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-gray-500" />
+            <span>
+              {latestReceipt
+                ? `${latestReceipt.type} - ₱${latestReceipt.amount.toFixed(2)}`
+                : "No payment"}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "createdAt",
@@ -187,7 +195,10 @@ export default function Orders() {
   const OrderGrid = ({ orders }) => (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {orders.map((order) => {
-        const statusConfig = getStudentOrderStatusConfig(order.status);
+        const latestReceipt =
+          order.receipts && order.receipts.length > 0
+            ? order.receipts[order.receipts.length - 1]
+            : null;
 
         return (
           <Card
@@ -212,7 +223,11 @@ export default function Orders() {
                 <div className="flex items-center gap-2">
                   <Receipt className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {order.receipt.type} - ₱{order.receipt.amount.toFixed(2)}
+                    {latestReceipt
+                      ? `${
+                          latestReceipt.type
+                        } - ₱${latestReceipt.amount.toFixed(2)}`
+                      : "No payment"}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -275,21 +290,25 @@ export default function Orders() {
 
         {/* Create Order Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[600px]">
-            <AlertDialogHeader>
+          <AlertDialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[90vh] flex flex-col gap-0">
+            <AlertDialogHeader className="flex-none">
               <AlertDialogTitle>Create New Order</AlertDialogTitle>
               <AlertDialogDescription>
                 Please fill in your order details
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <ScrollArea className="h-[500px] pr-4">
-              <OrderForm
-                onSubmit={handleCreateOrder}
-                isSubmitting={isSubmitting}
-                formData={{ userId: user?._id }}
-              />
-            </ScrollArea>
-            <AlertDialogFooter>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="px-1 py-4">
+                  <OrderForm
+                    onSubmit={handleCreateOrder}
+                    isSubmitting={isSubmitting}
+                    formData={{ userId: user?._id }}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+            <AlertDialogFooter className="flex-none border-t pt-4">
               <AlertDialogCancel
                 onClick={() => !isSubmitting && setIsCreateDialogOpen(false)}
                 disabled={isSubmitting}
@@ -316,22 +335,26 @@ export default function Orders() {
 
         {/* Edit Order Dialog */}
         <AlertDialog open={isEditDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[600px]">
-            <AlertDialogHeader>
+          <AlertDialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[90vh] flex flex-col gap-0">
+            <AlertDialogHeader className="flex-none">
               <AlertDialogTitle>Edit Order</AlertDialogTitle>
               <AlertDialogDescription>
                 Update your order details
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <ScrollArea className="h-[500px] pr-4">
-              <OrderForm
-                onSubmit={handleEditOrder}
-                isSubmitting={isSubmitting}
-                formData={orderToEdit}
-                isEditing={true}
-              />
-            </ScrollArea>
-            <AlertDialogFooter>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="px-1 py-4">
+                  <OrderForm
+                    onSubmit={handleEditOrder}
+                    isSubmitting={isSubmitting}
+                    formData={orderToEdit}
+                    isEditing={true}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+            <AlertDialogFooter className="flex-none border-t pt-4">
               <AlertDialogCancel
                 onClick={() => !isSubmitting && setIsEditDialogOpen(false)}
                 disabled={isSubmitting}

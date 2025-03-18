@@ -124,7 +124,7 @@ const studentOrderSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    receipt: receiptSchema,
+    receipts: [receiptSchema],
     orderItems: [orderItemSchema],
     totalPrice: {
       type: Number,
@@ -148,7 +148,7 @@ const studentOrderSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save middleware to generate orderId
+// Update pre-save middleware to handle receipt verification
 studentOrderSchema.pre("save", async function (next) {
   try {
     if (!this.orderId) {
@@ -160,9 +160,12 @@ studentOrderSchema.pre("save", async function (next) {
         .toUpperCase();
       this.orderId = `SO-${year}${month}-${randomString}`;
     }
-    // If order is being approved, verify the receipt
-    if (this.status === "Approved" && !this.receipt.isVerified) {
-      this.receipt.isVerified = true;
+    // If order is being approved, verify the latest receipt
+    if (this.status === "Approved" && this.receipts.length > 0) {
+      const latestReceipt = this.receipts[this.receipts.length - 1];
+      if (!latestReceipt.isVerified) {
+        latestReceipt.isVerified = true;
+      }
     }
     next();
   } catch (error) {

@@ -111,96 +111,98 @@ function OrderContent({ order }) {
   // Add helper function to check if order is rejected
   const isRejected = order?.status === "Rejected";
 
-  const renderReceiptSection = (receipt, title, sectionId) => {
-    if (!receipt) return null;
+  const renderReceiptSection = (receipts) => {
+    if (!receipts || receipts.length === 0) return null;
 
-    const isOpen = openSections[sectionId];
+    return receipts.map((receipt, index) => {
+      const isOpen = openSections[`receipt-${index}`];
 
-    return (
-      <div className="space-y-4">
-        <div
-          className="flex items-center justify-between cursor-pointer"
-          onClick={() => toggleSection(sectionId)}
-        >
-          <div className="flex items-center justify-between flex-1">
-            <h4 className="text-sm font-medium">{title}</h4>
-            <StatusBadge
-              status={receipt.isVerified ? "Verified" : "Pending"}
-              icon={receipt.isVerified ? CheckCircle2 : Clock}
-            />
-          </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            {isOpen ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-
-        {isOpen && (
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    OR Number
-                  </p>
-                  <p className="font-medium">{receipt.orNumber}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                <InfoCard
-                  icon={Receipt}
-                  label="Amount"
-                  value={`₱${receipt.amount.toFixed(2)}`}
-                />
-                <InfoCard
-                  icon={Calendar}
-                  label="Date Paid"
-                  value={formatDate(receipt.datePaid)}
-                />
-              </div>
-
-              {!receipt.isVerified && (
-                <StatusMessage
-                  type="warning"
-                  title="Receipt Pending Verification"
-                  message="Your receipt is currently being reviewed."
-                  steps={[
-                    "Verify payment details",
-                    "Schedule your measurement",
-                    "Send you a notification",
-                  ]}
-                />
+      return (
+        <div key={index} className="space-y-4">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => toggleSection(`receipt-${index}`)}
+          >
+            <div className="flex items-center justify-between flex-1">
+              <h4 className="text-sm font-medium">{`${receipt.type} Receipt`}</h4>
+              <StatusBadge
+                status={receipt.isVerified ? "Verified" : "Pending"}
+                icon={receipt.isVerified ? CheckCircle2 : Clock}
+              />
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
               )}
+            </Button>
+          </div>
 
-              {receipt.image?.data && (
-                <div className="pt-2">
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Receipt Image
-                  </p>
-                  <div
-                    className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border cursor-pointer group"
-                    onClick={() => setImageViewerOpen(true)}
-                  >
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <ZoomIn className="h-8 w-8 text-white" />
-                    </div>
-                    <img
-                      src={receipt.image.data}
-                      alt={`Receipt ${receipt.orNumber}`}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                    />
+          {isOpen && (
+            <Card className="overflow-hidden">
+              <CardContent className="p-4 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      OR Number
+                    </p>
+                    <p className="font-medium">{receipt.orNumber}</p>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
+
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+                  <InfoCard
+                    icon={Receipt}
+                    label="Amount"
+                    value={`₱${receipt.amount.toFixed(2)}`}
+                  />
+                  <InfoCard
+                    icon={Calendar}
+                    label="Date Paid"
+                    value={formatDate(receipt.datePaid)}
+                  />
+                </div>
+
+                {!receipt.isVerified && (
+                  <StatusMessage
+                    type="warning"
+                    title="Receipt Pending Verification"
+                    message="Your receipt is currently being reviewed."
+                    steps={[
+                      "Verify payment details",
+                      "Schedule your measurement",
+                      "Send you a notification",
+                    ]}
+                  />
+                )}
+
+                {receipt.image?.data && (
+                  <div className="pt-2">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">
+                      Receipt Image
+                    </p>
+                    <div
+                      className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border cursor-pointer group"
+                      onClick={() => setImageViewerOpen(true)}
+                    >
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <ZoomIn className="h-8 w-8 text-white" />
+                      </div>
+                      <img
+                        src={receipt.image.data}
+                        alt={`Receipt ${receipt.orNumber}`}
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      );
+    });
   };
 
   return (
@@ -281,23 +283,9 @@ function OrderContent({ order }) {
 
               {openSections.receipts && (
                 <div className="space-y-4 pl-4 border-l border-border/50">
-                  {renderReceiptSection(
-                    downPayment,
-                    "Down Payment Receipt",
-                    "downPayment"
-                  )}
-                  {renderReceiptSection(
-                    partialPayment,
-                    "Partial Payment Receipt",
-                    "partialPayment"
-                  )}
-                  {renderReceiptSection(
-                    fullPayment,
-                    "Full Payment Receipt",
-                    "fullPayment"
-                  )}
+                  {renderReceiptSection(order?.receipts)}
 
-                  {!downPayment && !partialPayment && !fullPayment && (
+                  {(!order?.receipts || order.receipts.length === 0) && (
                     <Card>
                       <CardContent className="p-6">
                         <EmptyState
@@ -603,23 +591,9 @@ function OrderContent({ order }) {
 
               {openSections.receipts && (
                 <div className="space-y-4 pl-4 border-l border-border/50">
-                  {renderReceiptSection(
-                    downPayment,
-                    "Down Payment Receipt",
-                    "downPayment"
-                  )}
-                  {renderReceiptSection(
-                    partialPayment,
-                    "Partial Payment Receipt",
-                    "partialPayment"
-                  )}
-                  {renderReceiptSection(
-                    fullPayment,
-                    "Full Payment Receipt",
-                    "fullPayment"
-                  )}
+                  {renderReceiptSection(order?.receipts)}
 
-                  {!downPayment && !partialPayment && !fullPayment && (
+                  {(!order?.receipts || order.receipts.length === 0) && (
                     <Card>
                       <CardContent className="p-6">
                         <EmptyState
@@ -961,23 +935,9 @@ function OrderContent({ order }) {
 
               {openSections.receipts && (
                 <div className="space-y-4 pl-4 border-l border-border/50">
-                  {renderReceiptSection(
-                    downPayment,
-                    "Down Payment Receipt",
-                    "downPayment"
-                  )}
-                  {renderReceiptSection(
-                    partialPayment,
-                    "Partial Payment Receipt",
-                    "partialPayment"
-                  )}
-                  {renderReceiptSection(
-                    fullPayment,
-                    "Full Payment Receipt",
-                    "fullPayment"
-                  )}
+                  {renderReceiptSection(order?.receipts)}
 
-                  {!downPayment && !partialPayment && !fullPayment && (
+                  {(!order?.receipts || order.receipts.length === 0) && (
                     <Card>
                       <CardContent className="p-6">
                         <EmptyState
