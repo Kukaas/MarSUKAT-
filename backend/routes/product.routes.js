@@ -10,7 +10,7 @@ import {
   deactivateProduct,
 } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
-import { isSuperAdmin } from "../middleware/superAdmin.middleware.js";
+import { isSuperAdmin } from "../middleware/superadmin.middleware.js";
 
 const router = express.Router();
 

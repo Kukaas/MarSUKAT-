@@ -6,7 +6,7 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../controllers/department.controller.js";
-import { isSuperAdmin } from "../middleware/superAdmin.middleware.js";
+import { isSuperAdmin } from "../middleware/superadmin.middleware.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
