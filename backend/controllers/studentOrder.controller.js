@@ -272,3 +272,78 @@ export const rejectOrder = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+// @desc    Get user's schedule
+// @route   GET /api/student-orders/schedules/user/:userId
+// @access  Private/Student
+export const getMySchedule = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // First get all orders for the user
+    const orders = await StudentOrder.find({ userId })
+      .select('orderId name studentNumber department measurementSchedule status')
+      .lean();
+
+    // Filter for approved orders with measurement schedules
+    const approvedOrders = orders.filter(
+      order => order.status === 'Approved' && order.measurementSchedule
+    );
+
+    if (!approvedOrders.length) {
+      return res.status(200).json([]);
+    }
+
+    // Transform the data
+    const schedules = approvedOrders.map(order => ({
+      id: order._id,
+      name: order.name,
+      studentNumber: order.studentNumber,
+      department: order.department,
+      date: order.measurementSchedule.date,
+      time: order.measurementSchedule.time,
+      status: order.status,
+      orderId: order.orderId
+    }));
+
+    res.status(200).json(schedules);
+  } catch (error) {
+    console.error('Error fetching student schedule:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all schedules
+// @route   GET /api/student-orders/schedules/all
+// @access  Private/JobOrder
+export const getAllSchedules = async (req, res) => {
+  try {
+    const orders = await StudentOrder.find({
+      measurementSchedule: { $exists: true, $ne: null },
+      status: 'Approved'
+    })
+    .select('orderId name studentNumber department measurementSchedule status')
+    .lean();
+
+    if (!orders || orders.length === 0) {
+      return res.status(200).json([]); // Return empty array if no schedules found
+    }
+
+    // Transform the data before sending
+    const schedules = orders.map(order => ({
+      id: order._id,
+      name: order.name,
+      studentNumber: order.studentNumber,
+      department: order.department,
+      date: order.measurementSchedule.date,
+      time: order.measurementSchedule.time,
+      status: order.status,
+      orderId: order.orderId
+    }));
+
+    res.status(200).json(schedules);
+  } catch (error) {
+    console.error('Error fetching all schedules:', error);
+    res.status(500).json({ message: error.message });
+  }
+};

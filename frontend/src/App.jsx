@@ -8,6 +8,7 @@ import { jobOrderRoutes } from "./routes/jobOrderRoutes";
 import DevModeWrapper from "./components/dev/DevModeWrapper";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
+import { Toaster } from "sonner";
 
 export default function App() {
   const { user } = useAuth();
@@ -56,6 +57,7 @@ export default function App() {
           />
         ))}
       </Routes>
+      <Toaster richColors position="top-center" />
     </DevModeWrapper>
   );
 }

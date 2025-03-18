@@ -246,4 +246,27 @@ export const userAPI = {
   },
 };
 
+// Schedule API calls
+export const scheduleAPI = {
+  // For JobOrder users - get all schedules
+  getAllSchedules: async () => {
+    try {
+      const response = await api.get('/student-orders/schedules/all');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // For Students - get their schedule by userId
+  getMySchedule: async (userId) => {
+    try {
+      const response = await api.get(`/student-orders/schedules/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+};
+
 export default api;
