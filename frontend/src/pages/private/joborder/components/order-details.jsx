@@ -154,7 +154,7 @@ function OrderContent({ order, onUpdate }) {
       setSelectedStatus(newStatus);
     } else if (newStatus === "Measure") {
       setShowMeasurementForm(true);
-      setSelectedStatus("Measure"); // Set to "Measure" to match the select value
+      setSelectedStatus("Approved");
     } else {
       setSelectedStatus(newStatus);
     }
@@ -180,7 +180,10 @@ function OrderContent({ order, onUpdate }) {
   const handleVerifyReceipt = async (receiptId) => {
     try {
       setIsUpdating(true);
-      const updatedOrder = await jobOrderAPI.verifyReceipt(order._id, receiptId);
+      const updatedOrder = await jobOrderAPI.verifyReceipt(
+        order._id,
+        receiptId
+      );
       toast.success("Receipt verified successfully");
       onUpdate && onUpdate(updatedOrder);
     } catch (error) {
@@ -281,14 +284,19 @@ function OrderContent({ order, onUpdate }) {
       setIsUpdating(true);
       const updatedOrder = await jobOrderAPI.addOrderItemsAndMeasure(
         order._id,
-        data.orderItems
+        data.orderItems.map((item) => ({
+          ...item,
+          level: order.level,
+        }))
       );
       toast.success("Measurements saved successfully");
       onUpdate && onUpdate(updatedOrder);
       setShowMeasurementForm(false);
-      setSelectedStatus("Measured"); // Update to "Measured" after successful submission
+      setSelectedStatus("Measured");
     } catch (error) {
-      toast.error("Failed to save measurements");
+      toast.error(
+        error.response?.data?.message || "Failed to save measurements"
+      );
       console.error("Error saving measurements:", error);
     } finally {
       setIsUpdating(false);
@@ -685,8 +693,19 @@ function OrderContent({ order, onUpdate }) {
   // Add renderMeasurementForm function
   const renderMeasurementForm = () => (
     <Card className="mt-4">
-      <CardContent className="p-4">
+      <CardContent className="p-4 space-y-4">
         <h3 className="text-lg font-semibold mb-4">Add Measurements</h3>
+        <StatusMessage
+          type="info"
+          title="Add Order Items"
+          message="Please manage your order items using the buttons below"
+          steps={[
+            "Click 'Add Item' button to add a new item",
+            "Fill in the measurements for each item",
+            "Click 'Remove' button to delete an unwanted item",
+            "Review all items before submitting",
+          ]}
+        />
         <OrderMeasurementForm
           onSubmit={handleMeasurementSubmit}
           isSubmitting={isUpdating}

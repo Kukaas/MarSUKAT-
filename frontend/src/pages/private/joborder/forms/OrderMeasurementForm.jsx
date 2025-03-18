@@ -158,9 +158,27 @@ export function OrderMeasurementForm({
     form.setValue("orderItems", currentItems);
   };
 
+  const handleFormSubmit = async (data) => {
+    // Ensure all required fields are present
+    const formattedData = {
+      orderItems: data.orderItems.map((item) => ({
+        level: studentLevel,
+        productType: item.productType,
+        size: item.size,
+        quantity: parseInt(item.quantity),
+        unitPrice: parseFloat(item.unitPrice),
+      })),
+    };
+
+    await onSubmit(formattedData);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(handleFormSubmit)}
+        className="space-y-6"
+      >
         <div className="space-y-4">
           {orderItems.map((item, index) => (
             <Card key={item.id}>
@@ -190,7 +208,7 @@ export function OrderMeasurementForm({
                     form={form}
                     name={`orderItems.${index}.productType`}
                     label="Product Type"
-                    placeholder="Select a product type"
+                    placeholder="Product Type"
                     options={filteredOptions.productTypes}
                     icon={Shirt}
                     required
@@ -211,7 +229,7 @@ export function OrderMeasurementForm({
                     form={form}
                     name={`orderItems.${index}.size`}
                     label="Size"
-                    placeholder="Select a size"
+                    placeholder="Size"
                     options={getSizeOptions(
                       form.watch(`orderItems.${index}.productType`)
                     )}
@@ -226,12 +244,6 @@ export function OrderMeasurementForm({
                       const productType = form.watch(
                         `orderItems.${index}.productType`
                       );
-                      console.log("Current Values:", {
-                        index,
-                        productType,
-                        level: studentLevel,
-                        size: value,
-                      });
 
                       if (value && productType) {
                         // Find the matching product

@@ -404,10 +404,14 @@ export const addOrderItemsAndMeasure = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Validate order status
-    if (order.status !== "Approved") {
+    // Debug log
+    console.log("Current order status:", order.status);
+
+    // Validate order status - make case insensitive comparison
+    if (order.status.toLowerCase() !== "approved") {
       return res.status(400).json({
         message: "Order must be in 'Approved' status to be measured",
+        currentStatus: order.status,
       });
     }
 
