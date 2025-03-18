@@ -118,7 +118,7 @@ const studentOrderSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "Pending",
-      enum: ["Pending", "Approved", "Rejected", "Measured", "For Pickup", "Claimed"],
+      enum: ["Pending", "Approved", "Rejected", "Measured", "For Pickup", "For Verification", "Payment Verified", "Claimed"],
     },
     rejectionReason: {
       type: String,

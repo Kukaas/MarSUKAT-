@@ -51,6 +51,8 @@ const STATUS_ICONS = {
   "For Pickup": PackageCheck,
   Claimed: ShoppingBag,
   Rejected: AlertCircle,
+  "For Verification": Clock,
+  "Payment Verified": CheckCircle2,
 };
 
 const InfoCard = ({ icon: Icon, label, value, className }) => (
@@ -87,17 +89,20 @@ const SectionTitle = ({ children }) => (
   </div>
 );
 
-// Update the getAvailableStatuses function
 const getAvailableStatuses = (currentStatus) => {
   switch (currentStatus) {
     case "Pending":
       return ["Pending", "Approved", "Reject"];
     case "Approved":
-      return ["Approved", "Measure"]; // Show current status and "Measure" option
+      return ["Approved", "Measure"];
     case "Measured":
       return ["Measured", "For Pickup"];
     case "For Pickup":
       return ["For Pickup", "Claimed"];
+    case "For Verification":
+      return ["For Verification", "Verify"];
+    case "Payment Verified":
+      return ["Payment Verified", "Claimed"];
     case "Claimed":
       return ["Claimed"];
     case "Rejected":
@@ -108,13 +113,11 @@ const getAvailableStatuses = (currentStatus) => {
 };
 
 function OrderContent({ order, onUpdate }) {
-  // Update receipt handling
   const getReceiptsByType = (type) => {
     if (!order?.receipts || order.receipts.length === 0) return null;
     return order.receipts.find((receipt) => receipt.type === type) || null;
   };
 
-  // Update initial section states based on order status
   const [openSections, setOpenSections] = useState({
     receipts: order?.status === "Pending",
     studentInfo: false,
@@ -133,10 +136,8 @@ function OrderContent({ order, onUpdate }) {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
 
-  // Get available statuses based on current status
   const availableStatuses = getAvailableStatuses(order?.status);
 
-  // Add these variables inside OrderContent
   const downPayment = getReceiptsByType("Down Payment");
   const partialPayment = getReceiptsByType("Partial Payment");
   const fullPayment = getReceiptsByType("Full Payment");
@@ -218,11 +219,11 @@ function OrderContent({ order, onUpdate }) {
     });
   };
 
-  const openVerifyConfirmation = (receiptId) => {
+  const openVerifyConfirmation = (receiptId, receipt) => {
     setConfirmDialog({
       isOpen: true,
       type: "verify",
-      data: receiptId,
+      data: { id: receiptId, type: receipt.type, amount: receipt.amount },
     });
   };
 
@@ -238,7 +239,6 @@ function OrderContent({ order, onUpdate }) {
     setConfirmDialog({ isOpen: false, type: null, data: null });
   };
 
-  // Add helper function to check if order is rejected
   const isRejected = order?.status === "Rejected";
 
   const getStatusConfirmationDetails = () => {
@@ -255,12 +255,24 @@ function OrderContent({ order, onUpdate }) {
               <li>Date Paid: {formatDate(latestReceipt?.datePaid)}</li>
             </ul>
             <p className="mt-4 text-sm text-muted-foreground">
-              Approving this order will:
+              {order.status === "For Verification"
+                ? "Approving this order will:"
+                : "Approving this order will:"}
             </p>
             <ul className="text-sm text-muted-foreground list-disc list-inside">
-              <li>Verify the receipt automatically</li>
-              <li>Schedule the student for measurement</li>
-              <li>Send notification to the student</li>
+              {order.status === "For Verification" ? (
+                <>
+                  <li>Verify the receipt</li>
+                  <li>Update order status</li>
+                  <li>Send notification to the student</li>
+                </>
+              ) : (
+                <>
+                  <li>Verify the receipt automatically</li>
+                  <li>Schedule the student for measurement</li>
+                  <li>Send notification to the student</li>
+                </>
+              )}
             </ul>
           </div>
         ),
@@ -303,7 +315,6 @@ function OrderContent({ order, onUpdate }) {
     }
   };
 
-  // Add this render function inside OrderContent
   const renderReceiptContent = (receipt) => (
     <>
       <div className="flex justify-between items-start">
@@ -314,7 +325,7 @@ function OrderContent({ order, onUpdate }) {
         <Button
           variant={receipt.isVerified ? "outline" : "default"}
           size="sm"
-          onClick={() => openVerifyConfirmation(receipt._id)}
+          onClick={() => openVerifyConfirmation(receipt._id, receipt)}
           disabled={isUpdating || receipt.isVerified || isRejected}
         >
           <Check className="h-4 w-4 mr-2" />
@@ -336,20 +347,36 @@ function OrderContent({ order, onUpdate }) {
       </div>
 
       {receipt.isVerified ? (
-        <StatusMessage
-          type="success"
-          title="Receipt Verified"
-          message="Payment has been verified and order has been approved"
-        />
+        receipt.type === "Full Payment" ? (
+          <StatusMessage
+            type="success"
+            title="Full Payment Verified"
+            message="The full payment has been verified. Please proceed with the next steps in the order process."
+          />
+        ) : (
+          <StatusMessage
+            type="success"
+            title="Receipt Verified"
+            message="Payment has been verified and order has been approved"
+          />
+        )
       ) : !isRejected ? (
         <StatusMessage
           type="warning"
           title="Receipt Pending Verification"
-          steps={[
-            "Approve the order automatically",
-            "Schedule the student for measurement",
-            "Send notification to the student",
-          ]}
+          steps={
+            order.status === "For Verification"
+              ? [
+                  "Verify the receipt",
+                  "Update order status",
+                  "Send notification to the student",
+                ]
+              : [
+                  "Approve the order automatically",
+                  "Schedule the student for measurement",
+                  "Send notification to the student",
+                ]
+          }
           message="Verifying this receipt will:"
         />
       ) : null}
@@ -377,7 +404,6 @@ function OrderContent({ order, onUpdate }) {
     </>
   );
 
-  // Add renderReceiptSections function
   const renderReceiptSections = () => {
     if (!order?.receipts || order.receipts.length === 0) {
       return (
@@ -428,14 +454,11 @@ function OrderContent({ order, onUpdate }) {
     ));
   };
 
-  // Helper function to render sections in order based on status
   const renderOrderSections = () => {
     const sections = [];
 
-    // Priority sections based on status
     if (order?.status === "Pending") {
       sections.push(
-        // Receipts Section (Priority for Pending)
         <div key="receipts-priority" className="space-y-4">
           <div
             className="flex items-center justify-between cursor-pointer"
@@ -459,7 +482,6 @@ function OrderContent({ order, onUpdate }) {
       );
     } else if (order?.status === "Approved") {
       sections.push(
-        // Measurement Schedule (Priority for Approved)
         <div key="measurementSchedule-priority" className="space-y-4">
           <div
             className="flex items-center justify-between cursor-pointer"
@@ -479,7 +501,6 @@ function OrderContent({ order, onUpdate }) {
       );
     } else if (order?.status === "Measured") {
       sections.push(
-        // Order Items (Priority for Measured)
         <div key="orderItems-priority" className="space-y-4">
           <div
             className="flex items-center justify-between cursor-pointer"
@@ -499,10 +520,8 @@ function OrderContent({ order, onUpdate }) {
       );
     }
 
-    // Always show all sections after priority sections
     if (order?.status !== "Pending") {
       sections.push(
-        // Receipts Section
         <div key="receipts" className="space-y-4">
           <div
             className="flex items-center justify-between cursor-pointer"
@@ -528,7 +547,6 @@ function OrderContent({ order, onUpdate }) {
 
     if (order?.status !== "Approved") {
       sections.push(
-        // Measurement Schedule
         <div key="measurementSchedule" className="space-y-4">
           <div
             className="flex items-center justify-between cursor-pointer"
@@ -550,7 +568,6 @@ function OrderContent({ order, onUpdate }) {
 
     if (order?.status !== "Measured") {
       sections.push(
-        // Order Items
         <div key="orderItems" className="space-y-4">
           <div
             className="flex items-center justify-between cursor-pointer"
@@ -570,9 +587,7 @@ function OrderContent({ order, onUpdate }) {
       );
     }
 
-    // Always show these sections last
     sections.push(
-      // Student Information
       <div key="studentInfo" className="space-y-4">
         <div
           className="flex items-center justify-between cursor-pointer"
@@ -589,7 +604,6 @@ function OrderContent({ order, onUpdate }) {
         </div>
         {openSections.studentInfo && renderStudentInfo()}
       </div>,
-      // Order Timeline
       <div key="timeline" className="space-y-4">
         <div
           className="flex items-center justify-between cursor-pointer"
@@ -611,7 +625,6 @@ function OrderContent({ order, onUpdate }) {
     return sections;
   };
 
-  // Add renderHeader function
   const renderHeader = () => (
     <div className="relative">
       <div className="absolute inset-0 h-40 sm:h-44 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50" />
@@ -690,7 +703,6 @@ function OrderContent({ order, onUpdate }) {
     </div>
   );
 
-  // Add renderMeasurementForm function
   const renderMeasurementForm = () => (
     <Card className="mt-4">
       <CardContent className="p-4 space-y-4">
@@ -715,7 +727,6 @@ function OrderContent({ order, onUpdate }) {
     </Card>
   );
 
-  // Add renderStudentInfo function
   const renderStudentInfo = () => (
     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
       <InfoCard icon={User} label="Name" value={order?.name} />
@@ -731,7 +742,6 @@ function OrderContent({ order, onUpdate }) {
     </div>
   );
 
-  // Add renderTimeline function
   const renderTimeline = () => (
     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
       <InfoCard
@@ -747,7 +757,6 @@ function OrderContent({ order, onUpdate }) {
     </div>
   );
 
-  // Add renderMeasurementSchedule function
   const renderMeasurementSchedule = () => (
     <Card className="overflow-hidden">
       <CardContent className="p-4 space-y-4">
@@ -786,7 +795,6 @@ function OrderContent({ order, onUpdate }) {
     </Card>
   );
 
-  // Add renderOrderItems function
   const renderOrderItems = () => (
     <>
       {order?.orderItems?.length > 0 ? (
@@ -854,7 +862,6 @@ function OrderContent({ order, onUpdate }) {
     </>
   );
 
-  // Add renderDialogs function
   const renderDialogs = () => (
     <>
       <ImageViewer
@@ -883,20 +890,43 @@ function OrderContent({ order, onUpdate }) {
       <ConfirmationDialog
         isOpen={confirmDialog.isOpen && confirmDialog.type === "verify"}
         onClose={closeConfirmDialog}
-        onConfirm={() => handleVerifyReceipt(confirmDialog.data)}
+        onConfirm={() => handleVerifyReceipt(confirmDialog.data.id)}
         title="Verify Receipt"
         description={
           <div className="space-y-2">
             <p>Are you sure you want to verify this receipt?</p>
-            <p className="text-sm text-muted-foreground">This will:</p>
-            <ul className="text-sm text-muted-foreground list-disc list-inside">
-              <li>Approve the order automatically</li>
-              <li>Schedule the student for measurement</li>
-              <li>Send notification to the student</li>
-            </ul>
+            {confirmDialog.data?.type === "Down Payment" ? (
+              <>
+                <p className="text-sm text-muted-foreground mt-4">
+                  This is a down payment receipt for ₱{confirmDialog.data.amount?.toFixed(2)}. 
+                  Verifying this receipt will:
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside">
+                  <li>Mark the receipt as verified</li>
+                  <li>Automatically approve the order</li>
+                  <li>Schedule the student for measurement</li>
+                  <li>Send notification to the student about the schedule</li>
+                </ul>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Verifying this receipt will:
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside">
+                  <li>Mark the receipt as verified</li>
+                  <li>Update payment status</li>
+                  <li>Send notification to the student</li>
+                </ul>
+              </>
+            )}
           </div>
         }
-        confirmText="Verify Receipt"
+        confirmText={
+          confirmDialog.data?.type === "Down Payment" 
+            ? "Verify and Approve Order" 
+            : "Verify Receipt"
+        }
         variant="success"
         icon={CheckCircle2}
         isLoading={isUpdating}
@@ -918,16 +948,12 @@ function OrderContent({ order, onUpdate }) {
   return (
     <ScrollArea className="h-full">
       <div className="space-y-6 sm:space-y-8">
-        {/* Header with Order Status Management */}
         {renderHeader()}
 
-        {/* Measurement Form */}
         {showMeasurementForm && renderMeasurementForm()}
 
-        {/* Order Sections */}
         {renderOrderSections()}
 
-        {/* Dialogs */}
         {renderDialogs()}
       </div>
     </ScrollArea>

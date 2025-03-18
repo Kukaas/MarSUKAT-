@@ -25,4 +25,12 @@ export const orderAPI = {
     const response = await api.get(`/student-orders/user/${userId}`);
     return response.data;
   },
+
+  addReceipt: async (orderId, data) => {
+    const response = await api.put(
+      `/student-orders/${orderId}/add-receipt`,
+      data
+    );
+    return response.data;
+  },
 };

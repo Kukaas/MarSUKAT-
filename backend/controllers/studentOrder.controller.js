@@ -462,43 +462,152 @@ export const verifyReceipt = async (req, res) => {
 
     // Verify the receipt
     receipt.isVerified = true;
-    order.status = "Approved"; // Auto-approve order when receipt is verified
 
-    try {
-      // Get next available schedule
-      const schedule = await getNextAvailableSchedule(new Date());
-      order.measurementSchedule = schedule;
+    // Handle different status transitions based on current status
+    if (order.status === "Pending") {
+      order.status = "Approved";
 
-      // Create notification for the student
+      try {
+        // Only get schedule for new orders (Pending status)
+        if (order.status === "Pending") {
+          const schedule = await getNextAvailableSchedule(new Date());
+          order.measurementSchedule = schedule;
+        }
+
+        // Create notification for the student
+        const student = await User.findById(order.userId);
+        if (student) {
+          let notification;
+
+          if (order.status === "Pending") {
+            const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+            notification = {
+              title: "Order Approved and Scheduled",
+              message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+              read: false,
+            };
+          } else {
+            notification = {
+              title: "Payment Verified",
+              message: `Your payment for order ${order.orderId} has been verified.`,
+              read: false,
+            };
+          }
+
+          student.notifications.push(notification);
+          await student.save();
+        }
+      } catch (error) {
+        return res.status(400).json({
+          message: "Could not schedule measurement",
+          error: error.message,
+        });
+      }
+    } else if (order.status === "For Pickup") {
+      // Notify the student about verified payment
       const student = await User.findById(order.userId);
       if (student) {
-        const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
         const notification = {
-          title: "Order Approved and Scheduled",
-          message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+          title: "Payment Verified",
+          message: `Your payment for order ${order.orderId} has been verified.`,
           read: false,
         };
 
         student.notifications.push(notification);
         await student.save();
       }
+    } else if (order.status === "For Verification") {
+      order.status = "Payment Verified";
 
-      const updatedOrder = await order.save();
-      res.status(200).json(updatedOrder);
-    } catch (error) {
-      return res.status(400).json({
-        message: "Could not schedule measurement",
-        error: error.message,
-      });
+      const student = await User.findById(order.userId);
+      if (student) {
+        const notification = {
+          title: "Payment Verified",
+          message: `Your payment for order ${order.orderId} has been verified. Your order is now ready for pickup.`,
+          read: false,
+        };
+
+        student.notifications.push(notification);
+        await student.save();
+      }
     }
+
+    const updatedOrder = await order.save();
+    res.status(200).json(updatedOrder);
   } catch (error) {
     console.error("Receipt verification error:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Add new receipt to order
+// @route   PUT /api/student-orders/:id/add-receipt
+// @access  Private/Student
+export const addReceipt = async (req, res) => {
+  try {
+    const { receipt } = req.body;
+
+    // Validate receipt data
+    if (!receipt || !receipt.orNumber || !receipt.image) {
+      return res.status(400).json({
+        message: "Receipt OR number and image are required",
+      });
+    }
+
+    const order = await StudentOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Add new receipt to the receipts array
+    order.receipts.push({
+      type: receipt.type,
+      orNumber: receipt.orNumber.trim(),
+      datePaid: receipt.datePaid,
+      image: {
+        filename: receipt.image.filename,
+        contentType: receipt.image.contentType,
+        data: receipt.image.data,
+      },
+      amount: receipt.amount,
+      isVerified: false,
+    });
+
+    // Change status to "For Verification" when new receipt is added
+    if (order.status === "Rejected" || order.status === "For Pickup") {
+      order.status = "For Verification";
+      order.rejectionReason = null; // Clear rejection reason if it exists
+    }
+
+    const updatedOrder = await order.save();
+
+    // Notify job order users about new receipt
+    const jobOrderUsers = await User.find({
+      role: "JobOrder",
+      isActive: true,
+    });
+
+    const notification = {
+      title: "Receipt Needs Verification",
+      message: `${order.name} (${order.studentNumber}) added a new payment of ₱${receipt.amount} that needs verification`,
+      read: false,
+    };
+
+    const notificationPromises = jobOrderUsers.map(async (user) => {
+      user.notifications.push(notification);
+      return user.save();
+    });
+
+    await Promise.all(notificationPromises);
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error("Error adding receipt:", error);
     res.status(400).json({ message: error.message });
   }
 };

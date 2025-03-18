@@ -41,6 +41,8 @@ const STATUS_ICONS = {
   Measured: Ruler,
   "For Pickup": PackageCheck,
   Claimed: ShoppingBag,
+  "Payment Verified": CheckCircle2,
+  "For Verification": Clock,
 };
 
 export default function Orders() {
@@ -163,6 +165,10 @@ export default function Orders() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleOrderUpdate = () => {
+    fetchOrders(); // Refresh orders after update
   };
 
   // Define actions for both views
@@ -384,6 +390,7 @@ export default function Orders() {
           isOpen={isViewDialogOpen}
           onClose={() => setIsViewDialogOpen(false)}
           order={selectedOrder}
+          onOrderUpdate={handleOrderUpdate}
         />
       </div>
     </PrivateLayout>

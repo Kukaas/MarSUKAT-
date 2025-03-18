@@ -88,9 +88,6 @@ export function StatusMessage({ type, title, message, steps, reminder }) {
 
               {steps && (
                 <div className="space-y-1.5">
-                  <p className={`text-sm font-medium ${styles.message}`}>
-                    Please bring the following:
-                  </p>
                   <ul
                     className={`text-sm ${styles.message} list-disc pl-4 space-y-1`}
                   >

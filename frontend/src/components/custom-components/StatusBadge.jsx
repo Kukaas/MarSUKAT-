@@ -25,6 +25,21 @@ const StatusBadge = ({
   const defaultStatusMap = {
     // ... keep other existing statuses ...
 
+    // Add For Verification status with orange/amber color scheme
+    "For Verification": {
+      bg: outline ? "bg-transparent" : "bg-orange-50 dark:bg-orange-950/30",
+      text: "text-orange-600 dark:text-orange-400",
+      border: "border border-orange-200 dark:border-orange-800",
+      hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20",
+    },
+
+    "Payment Verified": {
+      bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
+      text: "text-green-600 dark:text-green-400",
+      border: "border border-green-200 dark:border-green-800",
+      hoverBg: "hover:bg-green-50 dark:hover:bg-green-900/20",
+    },
+
     // Student Order specific statuses
     Rejected: {
       bg: outline ? "bg-transparent" : "bg-red-50 dark:bg-red-950/30",

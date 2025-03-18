@@ -22,12 +22,27 @@ import {
   CalendarIcon,
   AlertCircle,
   Shirt,
+  Plus,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageViewer } from "@/components/custom-components/ImageViewer";
 import { StatusMessage } from "@/components/custom-components/StatusMessage";
 import EmptyState from "@/components/custom-components/EmptyState";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import OrderForm from "../forms/OrderForm";
+import { orderAPI } from "../api/orderApi";
+import { toast } from "sonner";
+import ReceiptForm from "../forms/ReceiptForm";
 
 // Add status icons mapping
 const STATUS_ICONS = {
@@ -37,6 +52,8 @@ const STATUS_ICONS = {
   Measured: Ruler,
   "For Pickup": PackageCheck,
   Claimed: ShoppingBag,
+  "For Verification": Clock,
+  "Payment Verified": CheckCircle2,
 };
 
 const InfoCard = ({ icon: Icon, label, value, className }) => (
@@ -73,20 +90,57 @@ const SectionTitle = ({ children }) => (
   </div>
 );
 
-function OrderContent({ order }) {
-  // Update the initial state for openSections
-  const [openSections, setOpenSections] = useState({
-    orderItems: order?.status === "Measured",
-    studentInfo: false,
-    measurement: order?.status === "Approved",
-    timeline: false,
-    receipts: order?.status === "Pending",
-    downPayment: order?.status === "Pending",
-    partialPayment: false,
-    fullPayment: false,
+function OrderContent({ order, onOrderUpdate }) {
+  // Update initial section states based on status
+  const [openSections, setOpenSections] = useState(() => {
+    switch (order?.status) {
+      case "Pending":
+        return {
+          receipts: true,
+          studentInfo: false,
+          measurement: false,
+          orderItems: false,
+          timeline: false,
+        };
+      case "Approved":
+        return {
+          measurement: true,
+          receipts: false,
+          orderItems: false,
+          studentInfo: false,
+          timeline: false,
+        };
+      case "Measured":
+        return {
+          orderItems: true,
+          measurement: false,
+          receipts: false,
+          studentInfo: false,
+          timeline: false,
+        };
+      case "For Verification":
+        return {
+          receipts: true,
+          orderItems: false,
+          measurement: false,
+          studentInfo: false,
+          timeline: false,
+        };
+      default:
+        return {
+          receipts: false,
+          orderItems: false,
+          measurement: false,
+          studentInfo: false,
+          timeline: false,
+        };
+    }
   });
   // Add state for image viewer
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  // Add new state for receipt dialog
+  const [isAddReceiptDialogOpen, setIsAddReceiptDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Toggle section
   const toggleSection = (sectionId) => {
@@ -110,6 +164,23 @@ function OrderContent({ order }) {
 
   // Add helper function to check if order is rejected
   const isRejected = order?.status === "Rejected";
+
+  // Add handler for receipt submission
+  const handleAddReceipt = async (data) => {
+    try {
+      setIsSubmitting(true);
+      await orderAPI.addReceipt(order._id, data);
+      toast.success("Receipt added successfully");
+      setIsAddReceiptDialogOpen(false);
+      // Notify parent component to refresh order data
+      if (onOrderUpdate) onOrderUpdate();
+    } catch (error) {
+      console.error("Error adding receipt:", error);
+      toast.error(error.response?.data?.message || "Failed to add receipt");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const renderReceiptSection = (receipts) => {
     if (!receipts || receipts.length === 0) return null;
@@ -164,7 +235,21 @@ function OrderContent({ order }) {
                   />
                 </div>
 
-                {!receipt.isVerified && (
+                {receipt.isVerified ? (
+                  receipt.type === "Full Payment" ? (
+                    <StatusMessage
+                      type="success"
+                      title="Full Payment Verified"
+                      message="Your full payment has been verified. Thank you for completing your payment!"
+                    />
+                  ) : (
+                    <StatusMessage
+                      type="success"
+                      title="Receipt Verified"
+                      message="Payment has been verified and order has been approved"
+                    />
+                  )
+                ) : (
                   <StatusMessage
                     type="warning"
                     title="Receipt Pending Verification"
@@ -205,9 +290,425 @@ function OrderContent({ order }) {
     });
   };
 
+  // Helper function to get section order based on status
+  const getSectionOrder = () => {
+    switch (order?.status) {
+      case "Pending":
+        return [
+          "receipts",
+          "studentInfo",
+          "measurement",
+          "orderItems",
+          "timeline",
+        ];
+      case "Approved":
+        return [
+          "measurement",
+          "receipts",
+          "orderItems",
+          "studentInfo",
+          "timeline",
+        ];
+      case "Measured":
+        return [
+          "orderItems",
+          "measurement",
+          "receipts",
+          "studentInfo",
+          "timeline",
+        ];
+      case "For Verification":
+        return [
+          "receipts",
+          "orderItems",
+          "measurement",
+          "studentInfo",
+          "timeline",
+        ];
+      default:
+        return [
+          "receipts",
+          "orderItems",
+          "measurement",
+          "studentInfo",
+          "timeline",
+        ];
+    }
+  };
+
+  // Add status message for For Verification
+  const renderStatusMessage = () => {
+    switch (order?.status) {
+      case "Rejected":
+        return (
+          order?.rejectionReason && (
+            <StatusMessage
+              type="rejected"
+              title="Order Rejected"
+              message={order.rejectionReason}
+              reminder="Please contact the office for more information or to submit a new order."
+            />
+          )
+        );
+      case "Pending":
+        return (
+          <StatusMessage
+            type="warning"
+            title="Order Pending"
+            message="Your order is currently being reviewed."
+            steps={[
+              "Verify payment receipt",
+              "Schedule measurement",
+              "Notify you of the schedule",
+            ]}
+          />
+        );
+      case "Approved":
+        return (
+          <StatusMessage
+            type="success"
+            title="Order Approved"
+            message="Your payment has been verified."
+            reminder="Please wait for your measurement schedule."
+          />
+        );
+      case "For Verification":
+        return (
+          <StatusMessage
+            type="warning"
+            title="Receipt Under Verification"
+            message="Your payment receipt is being reviewed."
+            steps={[
+              "Verify payment details",
+              "Update order status",
+              "Send notification once verified",
+            ]}
+          />
+        );
+      case "Payment Verified":
+        return (
+          <StatusMessage
+            type="info"
+            title="Payment Verified"
+            message="Your payment has been verified. Please proceed to the garments section to claim your order."
+            reminder="Remember to bring your down payment and full payment receipts along with your school ID."
+          />
+        );
+      case "Claimed":
+        return (
+          <StatusMessage
+            type="success"
+            title="Order Successfully Claimed"
+            message="Thank you for claiming your order. We hope you enjoy your uniform!"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Add section render functions
+  const renderOrderItemsSection = () => (
+    <div className="space-y-4">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => toggleSection("orderItems")}
+      >
+        <SectionTitle>Order Items</SectionTitle>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          {openSections.orderItems ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {openSections.orderItems && (
+        <>
+          {order?.orderItems?.length > 0 ? (
+            <div className="space-y-3">
+              {order.orderItems.map((item, index) => (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Shirt className="h-5 w-5 text-primary" />
+                        <span className="font-medium">
+                          {item.productType || "N/A"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="text-muted-foreground">Size:</div>
+                        <div className="font-medium">{item.size || "N/A"}</div>
+                        <div className="text-muted-foreground">Quantity:</div>
+                        <div className="font-medium">{item.quantity || 0}</div>
+                        <div className="text-muted-foreground">Unit Price:</div>
+                        <div className="font-medium">
+                          ₱{(item.unitPrice || 0).toFixed(2)}
+                        </div>
+                        <div className="text-muted-foreground">Total:</div>
+                        <div className="font-medium text-primary">
+                          ₱
+                          {(
+                            (item.unitPrice || 0) * (item.quantity || 0)
+                          ).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center text-base font-semibold">
+                    <span>Overall Total:</span>
+                    <span className="text-primary text-lg">
+                      ₱
+                      {order.orderItems
+                        .reduce(
+                          (total, item) =>
+                            total +
+                            (item.unitPrice || 0) * (item.quantity || 0),
+                          0
+                        )
+                        .toFixed(2)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6">
+                <EmptyState
+                  icon={Receipt}
+                  title="No Items"
+                  description="No order items have been added yet."
+                />
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  const renderMeasurementSection = () => (
+    <div className="space-y-4">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => toggleSection("measurement")}
+      >
+        <SectionTitle>Measurement Schedule</SectionTitle>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          {openSections.measurement ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {openSections.measurement && (
+        <Card className="overflow-hidden">
+          <CardContent className="p-4 space-y-4">
+            {order?.measurementSchedule ? (
+              <>
+                <div className="flex items-center gap-2 text-primary">
+                  <CalendarIcon className="h-5 w-5" />
+                  <span className="font-semibold">Scheduled Measurement</span>
+                </div>
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+                  <InfoCard
+                    icon={Calendar}
+                    label="Date"
+                    value={formatDate(order.measurementSchedule.date, "long")}
+                  />
+                  <InfoCard
+                    icon={Clock}
+                    label="Time"
+                    value={order.measurementSchedule.time}
+                  />
+                </div>
+                <StatusMessage
+                  type="warning"
+                  title="Important Reminders"
+                  steps={[
+                    "Bring your valid School ID",
+                    "Bring your payment receipt",
+                    "Arrive on time for your schedule",
+                  ]}
+                  reminder="Please be present during your scheduled measurement."
+                />
+              </>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                No measurement schedule set
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
+  const renderStudentInfoSection = () => (
+    <div className="space-y-4">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => toggleSection("studentInfo")}
+      >
+        <SectionTitle>Student Information</SectionTitle>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          {openSections.studentInfo ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {openSections.studentInfo && (
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+          <InfoCard icon={User} label="Name" value={order?.name} />
+          <InfoCard icon={Mail} label="Email" value={order?.email} />
+          <InfoCard
+            icon={School}
+            label="Student Number"
+            value={order?.studentNumber}
+          />
+          <InfoCard icon={Building2} label="Level" value={order?.level} />
+          <InfoCard
+            icon={Building2}
+            label="Department"
+            value={order?.department}
+          />
+          <InfoCard icon={Users} label="Gender" value={order?.gender} />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTimelineSection = () => (
+    <div className="space-y-4">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => toggleSection("timeline")}
+      >
+        <SectionTitle>Order Timeline</SectionTitle>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          {openSections.timeline ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {openSections.timeline && (
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+          <InfoCard
+            icon={Calendar}
+            label="Created At"
+            value={formatDate(order?.createdAt)}
+          />
+          <InfoCard
+            icon={Calendar}
+            label="Last Updated"
+            value={formatDate(order?.updatedAt)}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderReceiptsSection = () => (
+    <div className="space-y-4">
+      {/* For Pickup Payment Section - Show at top when status is "For Pickup" */}
+      {order?.status === "For Pickup" && (
+        <Card className="overflow-hidden">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Receipt className="h-5 w-5" />
+                <span className="font-semibold">Payment Required</span>
+              </div>
+              <Button
+                onClick={() => setIsAddReceiptDialogOpen(true)}
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Receipt
+              </Button>
+            </div>
+            <StatusMessage
+              type="warning"
+              title="Payment Required"
+              message="Please submit your payment receipt to proceed with the pickup."
+              steps={[
+                "Make the payment at the cashier",
+                "Upload the receipt",
+                "Wait for verification",
+              ]}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Receipts List Section */}
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => toggleSection("receipts")}
+      >
+        <SectionTitle>Receipts</SectionTitle>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          {openSections.receipts ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {openSections.receipts && (
+        <div className="space-y-4 pl-4 border-l border-border/50">
+          {order?.receipts?.length > 0 ? (
+            renderReceiptSection(order.receipts)
+          ) : (
+            <Card>
+              <CardContent className="p-6">
+                <EmptyState
+                  icon={Receipt}
+                  title="No Receipts"
+                  description="No payment receipts have been added yet."
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Update renderSections to use the new consolidated receiptsSection
+  const renderSections = () => {
+    const sections = {
+      receipts: renderReceiptsSection(),
+      orderItems: renderOrderItemsSection(),
+      measurement: renderMeasurementSection(),
+      studentInfo: renderStudentInfoSection(),
+      timeline: renderTimelineSection(),
+    };
+
+    return getSectionOrder().map((sectionKey) => sections[sectionKey]);
+  };
+
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6 sm:space-y-8 p-4">
         {/* Header section */}
         <div className="relative">
           <div className="absolute inset-0 h-32 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50" />
@@ -226,805 +727,60 @@ function OrderContent({ order }) {
                   className="text-xs sm:text-sm"
                 />
               </div>
-
-              {/* Add Status Messages */}
-              {isRejected && order?.rejectionReason && (
-                <StatusMessage
-                  type="rejected"
-                  title="Order Rejected"
-                  message={order.rejectionReason}
-                  reminder="Please contact the office for more information or to submit a new order."
-                />
-              )}
-
-              {order?.status === "Pending" && (
-                <StatusMessage
-                  type="warning"
-                  title="Order Pending"
-                  message="Your order is currently being reviewed."
-                  steps={[
-                    "Verify payment receipt",
-                    "Schedule measurement",
-                    "Notify you of the schedule",
-                  ]}
-                />
-              )}
-
-              {order?.status === "Approved" && (
-                <StatusMessage
-                  type="success"
-                  title="Order Approved"
-                  message="Your payment has been verified."
-                  reminder="Please wait for your measurement schedule."
-                />
-              )}
+              {renderStatusMessage()}
             </div>
           </div>
         </div>
 
-        {/* Pending Status Flow */}
-        {order?.status === "Pending" && (
-          <>
-            {/* Receipts Section */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("receipts")}
-              >
-                <SectionTitle>Receipts</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.receipts ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+        {/* Render sections in order */}
+        {renderSections()}
 
-              {openSections.receipts && (
-                <div className="space-y-4 pl-4 border-l border-border/50">
-                  {renderReceiptSection(order?.receipts)}
-
-                  {(!order?.receipts || order.receipts.length === 0) && (
-                    <Card>
-                      <CardContent className="p-6">
-                        <EmptyState
-                          icon={Receipt}
-                          title="No Receipts"
-                          description="No payment receipts have been added yet."
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
+        {/* Keep the dialogs */}
+        <AlertDialog open={isAddReceiptDialogOpen}>
+          <AlertDialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[90vh] flex flex-col gap-0">
+            <AlertDialogHeader className="flex-none">
+              <AlertDialogTitle>Add New Receipt</AlertDialogTitle>
+              <AlertDialogDescription>
+                Please provide the payment receipt details
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="px-1 py-4">
+                  <ReceiptForm
+                    order={order}
+                    onSubmit={handleAddReceipt}
+                    isSubmitting={isSubmitting}
+                  />
                 </div>
-              )}
+              </ScrollArea>
             </div>
-
-            {/* Student Info */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("studentInfo")}
+            <AlertDialogFooter className="flex-none border-t pt-4">
+              <AlertDialogCancel
+                onClick={() =>
+                  !isSubmitting && setIsAddReceiptDialogOpen(false)
+                }
+                disabled={isSubmitting}
               >
-                <SectionTitle>Student Information</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.studentInfo ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.studentInfo && (
-                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                  <InfoCard icon={User} label="Name" value={order?.name} />
-                  <InfoCard icon={Mail} label="Email" value={order?.email} />
-                  <InfoCard
-                    icon={School}
-                    label="Student Number"
-                    value={order?.studentNumber}
-                  />
-                  <InfoCard
-                    icon={Building2}
-                    label="Level"
-                    value={order?.level}
-                  />
-                  <InfoCard
-                    icon={Building2}
-                    label="Department"
-                    value={order?.department}
-                  />
-                  <InfoCard icon={Users} label="Gender" value={order?.gender} />
-                </div>
-              )}
-            </div>
-
-            {/* Empty Measurement Schedule */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("measurement")}
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                type="submit"
+                form="receiptForm"
+                disabled={isSubmitting}
               >
-                <SectionTitle>Measurement Schedule</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.measurement ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.measurement && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-4 space-y-4">
-                    {order?.measurementSchedule ? (
-                      <>
-                        <div className="flex items-center gap-2 text-primary">
-                          <CalendarIcon className="h-5 w-5" />
-                          <span className="font-semibold">
-                            Scheduled Measurement
-                          </span>
-                        </div>
-                        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                          <InfoCard
-                            icon={Calendar}
-                            label="Date"
-                            value={formatDate(
-                              order.measurementSchedule.date,
-                              "long"
-                            )}
-                          />
-                          <InfoCard
-                            icon={Clock}
-                            label="Time"
-                            value={order.measurementSchedule.time}
-                          />
-                        </div>
-                        {/* Add measurement reminders */}
-                        <StatusMessage
-                          type="warning"
-                          title="Important Reminders"
-                          steps={[
-                            "Bring your valid School ID",
-                            "Bring your payment receipt",
-                            "Arrive on time for your schedule",
-                          ]}
-                          reminder="Please be present during your scheduled measurement."
-                        />
-                      </>
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        No measurement schedule set
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Empty Order Items */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("orderItems")}
-              >
-                <SectionTitle>Order Items</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.orderItems ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.orderItems && (
-                <>
-                  {order?.orderItems?.length > 0 ? (
-                    <div className="space-y-3">
-                      {order.orderItems.map((item, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Shirt className="h-5 w-5 text-primary" />
-                                <span className="font-medium">
-                                  {item.productType || "N/A"}
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className="text-muted-foreground">
-                                  Size:
-                                </div>
-                                <div className="font-medium">
-                                  {item.size || "N/A"}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Quantity:
-                                </div>
-                                <div className="font-medium">
-                                  {item.quantity || 0}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Unit Price:
-                                </div>
-                                <div className="font-medium">
-                                  ₱{(item.unitPrice || 0).toFixed(2)}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Total:
-                                </div>
-                                <div className="font-medium text-primary">
-                                  ₱
-                                  {(
-                                    (item.unitPrice || 0) * (item.quantity || 0)
-                                  ).toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-
-                      {/* Overall Total */}
-                      <Card className="bg-muted/50">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-center text-base font-semibold">
-                            <span>Overall Total:</span>
-                            <span className="text-primary text-lg">
-                              ₱
-                              {order.orderItems
-                                .reduce(
-                                  (total, item) =>
-                                    total +
-                                    (item.unitPrice || 0) *
-                                      (item.quantity || 0),
-                                  0
-                                )
-                                .toFixed(2)}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ) : (
-                    <Card>
-                      <CardContent className="p-6">
-                        <EmptyState
-                          icon={Receipt}
-                          title="No Items"
-                          description="No order items have been added yet."
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Approved Status Flow */}
-        {order?.status === "Approved" && (
-          <>
-            {/* Measurement Schedule */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("measurement")}
-              >
-                <SectionTitle>Measurement Schedule</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.measurement ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.measurement && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-4 space-y-4">
-                    {order?.measurementSchedule ? (
-                      <>
-                        <div className="flex items-center gap-2 text-primary">
-                          <CalendarIcon className="h-5 w-5" />
-                          <span className="font-semibold">
-                            Scheduled Measurement
-                          </span>
-                        </div>
-                        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                          <InfoCard
-                            icon={Calendar}
-                            label="Date"
-                            value={formatDate(
-                              order.measurementSchedule.date,
-                              "long"
-                            )}
-                          />
-                          <InfoCard
-                            icon={Clock}
-                            label="Time"
-                            value={order.measurementSchedule.time}
-                          />
-                        </div>
-                        {/* Add measurement reminders */}
-                        <StatusMessage
-                          type="warning"
-                          title="Important Reminders"
-                          steps={[
-                            "Bring your valid School ID",
-                            "Bring your payment receipt",
-                            "Arrive on time for your schedule",
-                          ]}
-                          reminder="Please be present during your scheduled measurement."
-                        />
-                      </>
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        No measurement schedule set
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Receipts Section */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("receipts")}
-              >
-                <SectionTitle>Receipts</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.receipts ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.receipts && (
-                <div className="space-y-4 pl-4 border-l border-border/50">
-                  {renderReceiptSection(order?.receipts)}
-
-                  {(!order?.receipts || order.receipts.length === 0) && (
-                    <Card>
-                      <CardContent className="p-6">
-                        <EmptyState
-                          icon={Receipt}
-                          title="No Receipts"
-                          description="No payment receipts have been added yet."
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Empty Order Items */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("orderItems")}
-              >
-                <SectionTitle>Order Items</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.orderItems ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.orderItems && (
-                <>
-                  {order?.orderItems?.length > 0 ? (
-                    <div className="space-y-3">
-                      {order.orderItems.map((item, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Shirt className="h-5 w-5 text-primary" />
-                                <span className="font-medium">
-                                  {item.productType || "N/A"}
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className="text-muted-foreground">
-                                  Size:
-                                </div>
-                                <div className="font-medium">
-                                  {item.size || "N/A"}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Quantity:
-                                </div>
-                                <div className="font-medium">
-                                  {item.quantity || 0}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Unit Price:
-                                </div>
-                                <div className="font-medium">
-                                  ₱{(item.unitPrice || 0).toFixed(2)}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Total:
-                                </div>
-                                <div className="font-medium text-primary">
-                                  ₱
-                                  {(
-                                    (item.unitPrice || 0) * (item.quantity || 0)
-                                  ).toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-
-                      {/* Overall Total */}
-                      <Card className="bg-muted/50">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-center text-base font-semibold">
-                            <span>Overall Total:</span>
-                            <span className="text-primary text-lg">
-                              ₱
-                              {order.orderItems
-                                .reduce(
-                                  (total, item) =>
-                                    total +
-                                    (item.unitPrice || 0) *
-                                      (item.quantity || 0),
-                                  0
-                                )
-                                .toFixed(2)}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ) : (
-                    <Card>
-                      <CardContent className="p-6">
-                        <EmptyState
-                          icon={Receipt}
-                          title="No Items"
-                          description="No order items have been added yet."
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Student Info */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("studentInfo")}
-              >
-                <SectionTitle>Student Information</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.studentInfo ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.studentInfo && (
-                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                  <InfoCard icon={User} label="Name" value={order?.name} />
-                  <InfoCard icon={Mail} label="Email" value={order?.email} />
-                  <InfoCard
-                    icon={School}
-                    label="Student Number"
-                    value={order?.studentNumber}
-                  />
-                  <InfoCard
-                    icon={Building2}
-                    label="Level"
-                    value={order?.level}
-                  />
-                  <InfoCard
-                    icon={Building2}
-                    label="Department"
-                    value={order?.department}
-                  />
-                  <InfoCard icon={Users} label="Gender" value={order?.gender} />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Measured Status Flow */}
-        {order?.status === "Measured" && (
-          <>
-            {/* Order Items */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("orderItems")}
-              >
-                <SectionTitle>Order Items</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.orderItems ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.orderItems && (
-                <>
-                  {order?.orderItems?.length > 0 ? (
-                    <div className="space-y-3">
-                      {order.orderItems.map((item, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Shirt className="h-5 w-5 text-primary" />
-                                <span className="font-medium">
-                                  {item.productType || "N/A"}
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className="text-muted-foreground">
-                                  Size:
-                                </div>
-                                <div className="font-medium">
-                                  {item.size || "N/A"}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Quantity:
-                                </div>
-                                <div className="font-medium">
-                                  {item.quantity || 0}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Unit Price:
-                                </div>
-                                <div className="font-medium">
-                                  ₱{(item.unitPrice || 0).toFixed(2)}
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Total:
-                                </div>
-                                <div className="font-medium text-primary">
-                                  ₱
-                                  {(
-                                    (item.unitPrice || 0) * (item.quantity || 0)
-                                  ).toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-
-                      {/* Overall Total */}
-                      <Card className="bg-muted/50">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-center text-base font-semibold">
-                            <span>Overall Total:</span>
-                            <span className="text-primary text-lg">
-                              ₱
-                              {order.orderItems
-                                .reduce(
-                                  (total, item) =>
-                                    total +
-                                    (item.unitPrice || 0) *
-                                      (item.quantity || 0),
-                                  0
-                                )
-                                .toFixed(2)}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ) : (
-                    <Card>
-                      <CardContent className="p-6">
-                        <EmptyState
-                          icon={Receipt}
-                          title="No Items"
-                          description="No order items have been added yet."
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Measurement Schedule */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("measurement")}
-              >
-                <SectionTitle>Measurement Schedule</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.measurement ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.measurement && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-4 space-y-4">
-                    {order?.measurementSchedule ? (
-                      <>
-                        <div className="flex items-center gap-2 text-primary">
-                          <CalendarIcon className="h-5 w-5" />
-                          <span className="font-semibold">
-                            Scheduled Measurement
-                          </span>
-                        </div>
-                        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                          <InfoCard
-                            icon={Calendar}
-                            label="Date"
-                            value={formatDate(
-                              order.measurementSchedule.date,
-                              "long"
-                            )}
-                          />
-                          <InfoCard
-                            icon={Clock}
-                            label="Time"
-                            value={order.measurementSchedule.time}
-                          />
-                        </div>
-                        {/* Add measurement reminders */}
-                        <StatusMessage
-                          type="warning"
-                          title="Important Reminders"
-                          steps={[
-                            "Bring your valid School ID",
-                            "Bring your payment receipt",
-                            "Arrive on time for your schedule",
-                          ]}
-                          reminder="Please be present during your scheduled measurement."
-                        />
-                      </>
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        No measurement schedule set
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Receipts Section */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("receipts")}
-              >
-                <SectionTitle>Receipts</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.receipts ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.receipts && (
-                <div className="space-y-4 pl-4 border-l border-border/50">
-                  {renderReceiptSection(order?.receipts)}
-
-                  {(!order?.receipts || order.receipts.length === 0) && (
-                    <Card>
-                      <CardContent className="p-6">
-                        <EmptyState
-                          icon={Receipt}
-                          title="No Receipts"
-                          description="No payment receipts have been added yet."
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Student Info */}
-            <div className="space-y-4">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleSection("studentInfo")}
-              >
-                <SectionTitle>Student Information</SectionTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {openSections.studentInfo ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {openSections.studentInfo && (
-                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                  <InfoCard icon={User} label="Name" value={order?.name} />
-                  <InfoCard icon={Mail} label="Email" value={order?.email} />
-                  <InfoCard
-                    icon={School}
-                    label="Student Number"
-                    value={order?.studentNumber}
-                  />
-                  <InfoCard
-                    icon={Building2}
-                    label="Level"
-                    value={order?.level}
-                  />
-                  <InfoCard
-                    icon={Building2}
-                    label="Department"
-                    value={order?.department}
-                  />
-                  <InfoCard icon={Users} label="Gender" value={order?.gender} />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Order Timeline */}
-        <div className="space-y-4">
-          <div
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => toggleSection("timeline")}
-          >
-            <SectionTitle>Order Timeline</SectionTitle>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              {openSections.timeline ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
-          {openSections.timeline && (
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-              <InfoCard
-                icon={Calendar}
-                label="Created At"
-                value={formatDate(order?.createdAt)}
-              />
-              <InfoCard
-                icon={Calendar}
-                label="Last Updated"
-                value={formatDate(order?.updatedAt)}
-              />
-            </div>
-          )}
-        </div>
+                {isSubmitting ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                    Adding...
+                  </>
+                ) : (
+                  "Add Receipt"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <ImageViewer
           isOpen={imageViewerOpen}
@@ -1037,12 +793,12 @@ function OrderContent({ order }) {
   );
 }
 
-export function OrderDetailsDialog({ isOpen, onClose, order }) {
+export function OrderDetailsDialog({ isOpen, onClose, order, onOrderUpdate }) {
   if (!order) return null;
 
   return (
     <ViewDetailsDialog open={isOpen} onClose={onClose} title="Order Details">
-      <OrderContent order={order} />
+      <OrderContent order={order} onOrderUpdate={onOrderUpdate} />
     </ViewDetailsDialog>
   );
 }

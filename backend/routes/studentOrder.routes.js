@@ -11,6 +11,7 @@ import {
   getMySchedule,
   addOrderItemsAndMeasure,
   verifyReceipt,
+  addReceipt,
 } from "../controllers/studentOrder.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
 import { isStudent } from "../middleware/student.middleware.js";
@@ -46,5 +47,6 @@ router.put(
   addOrderItemsAndMeasure
 );
 router.put("/:id/verify-receipt", authenticateUser, isJobOrder, verifyReceipt);
+router.put("/:id/add-receipt", authenticateUser, isStudent, addReceipt);
 
 export default router;
