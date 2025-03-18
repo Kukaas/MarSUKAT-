@@ -347,3 +347,53 @@ export const getAllSchedules = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Add order items and mark as measured
+// @route   PUT /api/student-orders/:id/measure
+// @access  Private/JobOrder
+export const addOrderItemsAndMeasure = async (req, res) => {
+  try {
+    const { orderItems } = req.body;
+
+    if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+      return res.status(400).json({ message: "Order items are required" });
+    }
+
+    const order = await StudentOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Validate order status
+    if (order.status !== "Approved") {
+      return res.status(400).json({ 
+        message: "Order must be in 'Approved' status to be measured" 
+      });
+    }
+
+    // Update order items and calculate total price
+    order.orderItems = orderItems;
+    order.calculateTotalPrice();
+    order.status = "Measured";
+
+    const updatedOrder = await order.save();
+
+    // Notify the student
+    const student = await User.findById(order.userId);
+    if (student) {
+      const notification = {
+        title: "Measurement Complete",
+        message: `Your measurements have been recorded for order ${order.orderId}. Total amount: ₱${order.totalPrice}`,
+        read: false,
+      };
+
+      student.notifications.push(notification);
+      await student.save();
+    }
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error("Error updating order items:", error);
+    res.status(400).json({ message: error.message });
+  }
+};

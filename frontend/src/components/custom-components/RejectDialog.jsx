@@ -35,21 +35,18 @@ export function RejectDialog({
 
   return (
     <AlertDialog open={isOpen}>
-      <AlertDialogContent className="dark:border-border/50">
+      <AlertDialogContent className="border-border/50">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-destructive dark:text-red-400" />
-            <span className="text-foreground">{title}</span>
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span>{title}</span>
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-muted-foreground">
-            {description}
-          </AlertDialogDescription>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Rejection Reason{" "}
-            <span className="text-destructive dark:text-red-400">*</span>
+          <label className="text-sm font-medium">
+            Rejection Reason <span className="text-destructive">*</span>
           </label>
           <Textarea
             placeholder="Enter reason for rejection..."
@@ -57,11 +54,14 @@ export function RejectDialog({
             onChange={(e) => setReason(e.target.value)}
             className={cn(
               "resize-none",
-              "bg-background dark:bg-card",
-              "border-input dark:border-border/50",
+              "bg-background",
+              "border-input",
               "placeholder:text-muted-foreground/60",
-              "focus-visible:ring-destructive dark:focus-visible:ring-red-400",
-              "dark:text-foreground"
+              "focus-visible:ring-destructive",
+              "dark:bg-card/50",
+              "dark:border-border/50",
+              "dark:placeholder:text-muted-foreground/50",
+              "dark:focus-visible:ring-destructive"
             )}
             rows={3}
           />
@@ -73,9 +73,13 @@ export function RejectDialog({
             onClick={handleClose}
             disabled={isLoading}
             className={cn(
+              // Light mode styles
               "border-border/50",
+              "bg-background text-foreground",
               "hover:bg-accent hover:text-accent-foreground",
-              "dark:bg-card dark:text-foreground",
+              // Dark mode styles
+              "dark:bg-card/50",
+              "dark:text-foreground",
               "dark:hover:bg-accent/50"
             )}
           >
@@ -86,11 +90,15 @@ export function RejectDialog({
             onClick={handleConfirm}
             disabled={isLoading || !reason.trim()}
             className={cn(
-              "bg-destructive text-destructive-foreground",
+              // Light mode styles
+              "bg-destructive",
+              "text-white",
               "hover:bg-destructive/90",
-              "dark:bg-red-900/90 dark:text-red-50",
-              "dark:hover:bg-red-900/75",
-              "disabled:pointer-events-none disabled:opacity-50"
+              "disabled:pointer-events-none disabled:opacity-50",
+              // Dark mode styles
+              "dark:bg-destructive",
+              "dark:text-white",
+              "dark:hover:bg-destructive/90"
             )}
           >
             {isLoading ? (

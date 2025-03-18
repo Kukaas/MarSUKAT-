@@ -34,4 +34,11 @@ export const jobOrderAPI = {
     });
     return response.data;
   },
+
+  addOrderItemsAndMeasure: async (id, orderItems) => {
+    const response = await api.put(`/student-orders/${id}/measure`, {
+      orderItems,
+    });
+    return response.data;
+  },
 };
