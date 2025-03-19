@@ -269,4 +269,34 @@ export const scheduleAPI = {
   }
 };
 
+// Add this new export for notifications
+export const notificationAPI = {
+  getNotifications: async () => {
+    try {
+      const response = await api.get('/users/notifications');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  markAsRead: async (notificationId) => {
+    try {
+      const response = await api.put(`/users/notifications/${notificationId}/read`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  markAllAsRead: async () => {
+    try {
+      const response = await api.put('/users/notifications/read-all');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+};
+
 export default api;

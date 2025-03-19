@@ -13,6 +13,9 @@ import {
   deleteJobOrder,
   activateJobOrder,
   deactivateJobOrder,
+  getUserNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
 } from "../controllers/user.controller.js";
 import { isSuperAdmin } from "../middleware/superadmin.middleware.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
@@ -52,5 +55,10 @@ router.put(
   isSuperAdmin,
   deactivateJobOrder
 );
+
+// Add these routes after your existing routes
+router.get("/notifications", authenticateUser, getUserNotifications);
+router.put("/notifications/:notificationId/read", authenticateUser, markNotificationAsRead);
+router.put("/notifications/read-all", authenticateUser, markAllNotificationsAsRead);
 
 export default router;

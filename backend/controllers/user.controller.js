@@ -501,3 +501,82 @@ export const deactivateJobOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get user notifications
+export const getUserNotifications = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user.notifications || []);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const notification = user.notifications.id(req.params.notificationId);
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    notification.read = true;
+    await user.save();
+
+    res.status(200).json(notification);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Mark all notifications as read
+export const markAllNotificationsAsRead = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.notifications && user.notifications.length > 0) {
+      user.notifications.forEach(notification => {
+        notification.read = true;
+      });
+      await user.save();
+    }
+
+    res.status(200).json({ message: "All notifications marked as read" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Helper function to create a notification
+export const createNotification = async (userId, title, message) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.notifications.push({
+      title,
+      message,
+      read: false,
+      createdAt: new Date()
+    });
+
+    await user.save();
+    return true;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    return false;
+  }
+};
