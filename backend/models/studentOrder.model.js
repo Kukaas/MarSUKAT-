@@ -142,6 +142,10 @@ const studentOrderSchema = new mongoose.Schema(
       date: Date,
       time: String,
     },
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

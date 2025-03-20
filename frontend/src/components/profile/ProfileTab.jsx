@@ -11,8 +11,12 @@ import {
   UserCircle,
   Shield,
   Briefcase,
+  Info,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
+import { useState } from "react";
 
 const InfoCard = ({ icon: Icon, label, value, className }) => (
   <Card
@@ -166,6 +170,22 @@ const RoleSpecificFields = ({ user }) => {
 
 const ProfileTab = ({ user }) => {
   const basicFields = getBasicFields(user);
+  
+  // Tab configuration for CustomTabs
+  const tabConfig = [
+    { 
+      value: "basic", 
+      label: "Basic Information", 
+      icon: Info,
+      mobileLabel: <span className="sm:hidden">Info</span>
+    },
+    { 
+      value: "details", 
+      label: "Role Details", 
+      icon: FileText,
+      mobileLabel: <span className="sm:hidden">Details</span>
+    },
+  ];
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -196,43 +216,59 @@ const ProfileTab = ({ user }) => {
         </div>
       </div>
 
-      {/* Basic User Details */}
-      <div className="space-y-4 sm:space-y-6">
-        <SectionTitle>Basic Information</SectionTitle>
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-          {basicFields.map((field, index) => (
-            <InfoCard
-              key={index}
-              icon={field.icon}
-              label={field.label}
-              value={field.value}
-            />
-          ))}
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge
-            variant={user?.verified ? "success" : "destructive"}
-            className="text-xs font-medium shadow-sm dark:shadow-none"
-          >
-            {user?.verified ? "Verified" : "Not Verified"}
-          </Badge>
-          {user?.isActive !== undefined && (
-            <Badge
-              variant={user?.isActive ? "success" : "destructive"}
-              className="text-xs font-medium shadow-sm dark:shadow-none"
-            >
-              {user?.isActive ? "Active" : "Inactive"}
-            </Badge>
-          )}
-        </div>
-      </div>
+      <CustomTabs
+        defaultValue="basic"
+        tabs={tabConfig.map(tab => ({
+          ...tab,
+          label: (
+            <>
+              <span className="hidden sm:inline">{tab.label}</span>
+              {tab.mobileLabel}
+            </>
+          )
+        }))}
+        className="w-full"
+      >
+        <TabPanel value="basic" className="pt-6">
+          <div className="space-y-4 sm:space-y-6">
+            <SectionTitle>Basic Information</SectionTitle>
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+              {basicFields.map((field, index) => (
+                <InfoCard
+                  key={index}
+                  icon={field.icon}
+                  label={field.label}
+                  value={field.value}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge
+                variant={user?.verified ? "success" : "destructive"}
+                className="text-xs font-medium shadow-sm dark:shadow-none"
+              >
+                {user?.verified ? "Verified" : "Not Verified"}
+              </Badge>
+              {user?.isActive !== undefined && (
+                <Badge
+                  variant={user?.isActive ? "success" : "destructive"}
+                  className="text-xs font-medium shadow-sm dark:shadow-none"
+                >
+                  {user?.isActive ? "Active" : "Inactive"}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </TabPanel>
 
-      {/* Role-specific fields */}
-      {user && (
-        <div className="space-y-4 sm:space-y-6">
-          <RoleSpecificFields user={user} />
-        </div>
-      )}
+        <TabPanel value="details" className="pt-6">
+          {user && (
+            <div className="space-y-4 sm:space-y-6">
+              <RoleSpecificFields user={user} />
+            </div>
+          )}
+        </TabPanel>
+      </CustomTabs>
     </div>
   );
 };

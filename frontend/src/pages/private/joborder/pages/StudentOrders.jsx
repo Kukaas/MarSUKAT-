@@ -16,6 +16,8 @@ import {
   User,
   X,
   AlertCircle,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderDetailsDialog } from "../components/order-details";
@@ -24,6 +26,8 @@ import { DataTable } from "@/components/custom-components/DataTable";
 import { formatDate } from "@/lib/utils";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { RejectDialog } from "@/components/custom-components/RejectDialog";
+import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
+import { ConfirmationDialog } from "@/components/custom-components/ConfirmationDialog";
 
 // Status icon mapping
 const STATUS_ICONS = {
@@ -39,10 +43,21 @@ const STATUS_ICONS = {
 
 export function StudentOrders() {
   const [orders, setOrders] = useState([]);
+  const [archivedOrders, setArchivedOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isArchiveLoading, setIsArchiveLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [isArchiveActionLoading, setIsArchiveActionLoading] = useState(false);
+
+  // Define tab configuration
+  const tabConfig = [
+    { value: "active", label: "Active Orders", icon: CheckCircle2 },
+    { value: "archived", label: "Archived Orders", icon: Archive },
+  ];
 
   // Fetch all orders
   const fetchOrders = async () => {
@@ -58,8 +73,23 @@ export function StudentOrders() {
     }
   };
 
+  // Fetch archived orders
+  const fetchArchivedOrders = async () => {
+    try {
+      setIsArchiveLoading(true);
+      const data = await jobOrderAPI.getArchivedOrders();
+      setArchivedOrders(data);
+    } catch (error) {
+      toast.error("Failed to fetch archived orders");
+      console.error("Error fetching archived orders:", error);
+    } finally {
+      setIsArchiveLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    fetchArchivedOrders();
   }, []);
 
   // Column definitions for table view
@@ -143,8 +173,31 @@ export function StudentOrders() {
     }
   };
 
-  // Define actions for the table
-  const actionCategories = {
+  const handleArchiveConfirm = async () => {
+    try {
+      setIsArchiveActionLoading(true);
+      const response = await jobOrderAPI.toggleArchive(selectedOrder._id);
+      toast.success(response.message);
+      
+      // Refresh both active and archived orders
+      fetchOrders();
+      fetchArchivedOrders();
+      setArchiveDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to archive order");
+      console.error("Error archiving order:", error);
+    } finally {
+      setIsArchiveActionLoading(false);
+    }
+  };
+
+  const handleArchiveClick = (order) => {
+    setSelectedOrder(order);
+    setArchiveDialogOpen(true);
+  };
+
+  // Define actions for the active orders table
+  const activeOrderActions = {
     view: {
       label: "View Actions",
       actions: [
@@ -152,6 +205,40 @@ export function StudentOrders() {
           label: "View Details",
           icon: Eye,
           onClick: handleView,
+        },
+      ],
+    },
+    archive: {
+      label: "Archive Actions",
+      actions: [
+        {
+          label: "Archive Order",
+          icon: Archive,
+          onClick: handleArchiveClick,
+        },
+      ],
+    },
+  };
+
+  // Define actions for the archived orders table
+  const archivedOrderActions = {
+    view: {
+      label: "View Actions",
+      actions: [
+        {
+          label: "View Details",
+          icon: Eye,
+          onClick: handleView,
+        },
+      ],
+    },
+    restore: {
+      label: "Archive Actions",
+      actions: [
+        {
+          label: "Restore Order",
+          icon: ArchiveRestore,
+          onClick: handleArchiveClick,
         },
       ],
     },
@@ -165,13 +252,33 @@ export function StudentOrders() {
           description="View and manage student uniform orders"
         />
 
-        <DataTable
-          data={orders}
-          columns={columns}
-          isLoading={isLoading}
-          actionCategories={actionCategories}
-          emptyMessage="No orders found."
-        />
+        <CustomTabs
+          defaultValue="active"
+          onValueChange={setActiveTab}
+          tabs={tabConfig}
+        >
+          <TabPanel value="active">
+            <DataTable
+              className="mt-4"
+              data={orders}
+              columns={columns}
+              isLoading={isLoading}
+              actionCategories={activeOrderActions}
+              emptyMessage="No active orders found."
+            />
+          </TabPanel>
+          
+          <TabPanel value="archived">
+            <DataTable
+              className="mt-4"
+              data={archivedOrders}
+              columns={columns}
+              isLoading={isArchiveLoading}
+              actionCategories={archivedOrderActions}
+              emptyMessage="No archived orders found."
+            />
+          </TabPanel>
+        </CustomTabs>
 
         {/* View Order Dialog */}
         <OrderDetailsDialog
@@ -187,6 +294,23 @@ export function StudentOrders() {
           onClose={() => setRejectDialogOpen(false)}
           onConfirm={handleReject}
           title={`Reject Order ${selectedOrder?.orderId}`}
+        />
+
+        {/* Archive Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={archiveDialogOpen}
+          onClose={() => setArchiveDialogOpen(false)}
+          onConfirm={handleArchiveConfirm}
+          title={selectedOrder?.isArchived ? "Restore Order" : "Archive Order"}
+          description={
+            selectedOrder?.isArchived
+              ? `Are you sure you want to restore order ${selectedOrder?.orderId}?`
+              : `Are you sure you want to archive order ${selectedOrder?.orderId}?`
+          }
+          confirmText={selectedOrder?.isArchived ? "Restore" : "Archive"}
+          isLoading={isArchiveActionLoading}
+          variant={selectedOrder?.isArchived ? "success" : "default"}
+          icon={selectedOrder?.isArchived ? ArchiveRestore : Archive}
         />
       </div>
     </PrivateLayout>

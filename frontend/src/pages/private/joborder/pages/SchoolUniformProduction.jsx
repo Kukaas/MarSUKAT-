@@ -39,7 +39,7 @@ import { ProductionOverviewChart } from "../components/charts/ProductionOverview
 import { ProductTypeProductionChart } from "../components/charts/ProductTypeProductionChart";
 import { LevelProductionChart } from "../components/charts/LevelProductionChart";
 import CustomSelect from "@/components/custom-components/CustomSelect";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 
 const MONTHS = [
   "January",
@@ -86,6 +86,13 @@ export const SchoolUniformProduction = () => {
   const [statsData, setStatsData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [activeTab, setActiveTab] = useState("table");
+
+  // Define tab configuration
+  const tabConfig = [
+    { value: "table", label: "Production Table", icon: Table2 },
+    { value: "analytics", label: "Analytics", icon: BarChart3 },
+  ];
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -388,20 +395,14 @@ export const SchoolUniformProduction = () => {
             </Card>
           </div>
 
-          <Tabs defaultValue="table" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="table" className="flex items-center gap-2">
-                <Table2 className="h-4 w-4" />
-                Production Table
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="table" className="mt-4">
+          <CustomTabs 
+            defaultValue="table" 
+            onValueChange={setActiveTab}
+            tabs={tabConfig}
+          >
+            <TabPanel value="table">
               <DataTable
+              className="mt-4"
                 data={productions}
                 columns={columns}
                 isLoading={isLoading}
@@ -427,18 +428,18 @@ export const SchoolUniformProduction = () => {
                   </div>
                 }
               />
-            </TabsContent>
+            </TabPanel>
 
-            <TabsContent value="analytics" className="mt-4">
-              <div className="grid grid-cols-1 gap-8">
+            <TabPanel value="analytics">
+              <div className="grid grid-cols-1 gap-8 mt-4">
                 <ProductionOverviewChart data={statsData} loading={isLoading} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <ProductTypeProductionChart data={statsData} loading={isLoading} />
                   <LevelProductionChart data={statsData} loading={isLoading} />
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </TabPanel>
+          </CustomTabs>
         </div>
 
         {/* Create Dialog */}

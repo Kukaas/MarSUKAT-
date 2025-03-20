@@ -11,7 +11,7 @@ import UniformInventory from "../models/uniformInventory.model.js";
 // @access  Private
 export const getAllStudentOrders = async (req, res) => {
   try {
-    const orders = await StudentOrder.find();
+    const orders = await StudentOrder.find({ isArchived: false });
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -691,5 +691,43 @@ export const addReceipt = async (req, res) => {
   } catch (error) {
     console.error("Error adding receipt:", error);
     res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Archive student order
+// @route   PUT /api/student-orders/:id/archive
+// @access  Private/JobOrder
+export const archiveStudentOrder = async (req, res) => {
+  try {
+    const order = await StudentOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    order.isArchived = !order.isArchived; // Toggle archive status
+    
+    const updatedOrder = await order.save();
+    
+    const archiveAction = order.isArchived ? "archived" : "unarchived";
+    res.status(200).json({ 
+      message: `Order ${updatedOrder.orderId} ${archiveAction} successfully`,
+      order: updatedOrder 
+    });
+  } catch (error) {
+    console.error("Error archiving order:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all archived student orders
+// @route   GET /api/student-orders/archived
+// @access  Private/JobOrder
+export const getArchivedStudentOrders = async (req, res) => {
+  try {
+    const archivedOrders = await StudentOrder.find({ isArchived: true });
+    res.status(200).json(archivedOrders);
+  } catch (error) {
+    console.error("Error fetching archived orders:", error);
+    res.status(500).json({ message: error.message });
   }
 };

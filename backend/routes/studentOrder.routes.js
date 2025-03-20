@@ -12,6 +12,8 @@ import {
   addOrderItemsAndMeasure,
   verifyReceipt,
   addReceipt,
+  archiveStudentOrder,
+  getArchivedStudentOrders,
 } from "../controllers/studentOrder.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
 import { isStudent } from "../middleware/student.middleware.js";
@@ -28,6 +30,10 @@ router.get(
   isStudent,
   getMySchedule
 );
+
+// Archive routes
+router.get("/archived", authenticateUser, isJobOrder, getArchivedStudentOrders);
+router.put("/:id/archive", authenticateUser, isJobOrder, archiveStudentOrder);
 
 router.get("/", authenticateUser, isJobOrder, getAllStudentOrders);
 router.get("/user/:userId", authenticateUser, isStudent, getOrdersByUserId);

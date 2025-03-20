@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "../ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { CheckCircle2, Circle } from "lucide-react";
 import UnreadNotifications from "./tabs/UnreadNotifications";
 import ReadNotifications from "./tabs/ReadNotifications";
 import { notificationAPI } from "../../lib/api";
 import { Button } from "../ui/button";
+import { CustomTabs, TabPanel } from "../custom-components/CustomTabs";
 
-const NotificationsModal = ({ open, onOpenChange }) => {
+function NotificationsModal({ open, onOpenChange }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [markingAsRead, setMarkingAsRead] = useState(new Set()); // Track notifications being marked as read
@@ -72,14 +72,35 @@ const NotificationsModal = ({ open, onOpenChange }) => {
   const unreadNotifications = notifications?.filter(n => !n.read) || [];
   const hasUnreadNotifications = loading || unreadNotifications.length > 0; // Show button while loading
 
+  // Tab configuration for CustomTabs
+  const tabConfig = [
+    { 
+      value: "unread", 
+      label: <>
+        Unread
+        {unreadNotifications.length > 0 && (
+          <span className="ml-0.5 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+            {unreadNotifications.length}
+          </span>
+        )}
+      </>, 
+      icon: Circle 
+    },
+    { 
+      value: "read", 
+      label: "Read", 
+      icon: CheckCircle2 
+    },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] md:max-w-[800px] p-0 h-[90vh] md:h-[600px] flex flex-col">
-        <Tabs defaultValue="unread" className="w-full h-full flex flex-col">
-          <div className="px-3 md:px-6 py-3 md:py-4 border-b">
-            <h2 className="text-lg md:text-2xl font-semibold tracking-tight mb-2">
+        <div className="w-full h-full flex flex-col">
+          <DialogHeader className="px-3 md:px-6 py-3 md:py-4 border-b">
+            <DialogTitle className="text-lg md:text-2xl font-semibold tracking-tight mb-2">
               Notifications
-            </h2>
+            </DialogTitle>
             {hasUnreadNotifications && (
               <Button
                 variant="ghost"
@@ -91,47 +112,36 @@ const NotificationsModal = ({ open, onOpenChange }) => {
                 {markingAllAsRead ? "Marking all as read..." : "Mark all as read"}
               </Button>
             )}
-          </div>
+          </DialogHeader>
 
-          <div className="px-3 md:px-6 py-2 border-b">
-            <TabsList className="w-full justify-start gap-2">
-              <TabsTrigger value="unread" className="flex items-center gap-1.5 text-xs">
-                <Circle className="h-3.5 w-3.5" />
-                Unread
-                {unreadNotifications.length > 0 && (
-                  <span className="ml-0.5 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-                    {unreadNotifications.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="read" className="flex items-center gap-1.5 text-xs">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Read
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <CustomTabs
+              defaultValue="unread"
+              tabs={tabConfig}
+              className="w-full h-full flex flex-col"
+            >
+              <TabPanel value="unread" className="flex-1 overflow-auto p-0">
+                <UnreadNotifications 
+                  notifications={unreadNotifications}
+                  onMarkAsRead={handleMarkAsRead}
+                  loading={loading}
+                  markingAsRead={markingAsRead}
+                />
+              </TabPanel>
 
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="unread" className="h-full m-0">
-              <UnreadNotifications 
-                notifications={unreadNotifications}
-                onMarkAsRead={handleMarkAsRead}
-                loading={loading}
-                markingAsRead={markingAsRead}
-              />
-            </TabsContent>
-
-            <TabsContent value="read" className="h-full m-0">
-              <ReadNotifications 
-                notifications={notifications.filter(n => n.read) || []}
-                loading={loading}
-              />
-            </TabsContent>
+              <TabPanel value="read" className="flex-1 overflow-auto p-0">
+                <ReadNotifications 
+                  notifications={notifications.filter(n => n.read) || []}
+                  loading={loading}
+                />
+              </TabPanel>
+            </CustomTabs>
           </div>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
+}
 
 export default NotificationsModal;
+

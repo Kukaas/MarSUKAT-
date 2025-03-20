@@ -6,6 +6,11 @@ export const jobOrderAPI = {
     return response.data;
   },
 
+  getArchivedOrders: async () => {
+    const response = await api.get("/student-orders/archived");
+    return response.data;
+  },
+
   getOrderById: async (id) => {
     const response = await api.get(`/student-orders/${id}`);
     return response.data;
@@ -42,6 +47,11 @@ export const jobOrderAPI = {
     const response = await api.put(`/student-orders/${id}/measure`, {
       orderItems,
     });
+    return response.data;
+  },
+  
+  toggleArchive: async (id) => {
+    const response = await api.put(`/student-orders/${id}/archive`);
     return response.data;
   },
 };
