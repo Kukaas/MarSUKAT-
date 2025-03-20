@@ -15,6 +15,7 @@ import {
   School,
   User,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderDetailsDialog } from "../components/order-details";
@@ -31,6 +32,9 @@ const STATUS_ICONS = {
   Measured: Ruler,
   "For Pickup": PackageCheck,
   Claimed: ShoppingBag,
+  Rejected: AlertCircle,
+  "For Verification": Clock,
+  "Payment Verified": CheckCircle2,
 };
 
 export function StudentOrders() {

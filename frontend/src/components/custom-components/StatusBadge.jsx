@@ -34,10 +34,10 @@ const StatusBadge = ({
     },
 
     "Payment Verified": {
-      bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
-      text: "text-green-600 dark:text-green-400",
-      border: "border border-green-200 dark:border-green-800",
-      hoverBg: "hover:bg-green-50 dark:hover:bg-green-900/20",
+      bg: outline ? "bg-transparent" : "bg-teal-50 dark:bg-teal-950/30",
+      text: "text-teal-600 dark:text-teal-400",
+      border: "border border-teal-200 dark:border-teal-800",
+      hoverBg: "hover:bg-teal-50 dark:hover:bg-teal-900/20",
     },
 
     // Student Order specific statuses
@@ -78,10 +78,10 @@ const StatusBadge = ({
       hoverBg: "hover:bg-green-50 dark:hover:bg-green-900/20",
     },
     Verified: {
-      bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
-      text: "text-green-600 dark:text-green-400",
-      border: "border border-green-200 dark:border-green-800",
-      hoverBg: "hover:bg-green-50 dark:hover:bg-green-900/20",
+      bg: outline ? "bg-transparent" : "bg-lime-50 dark:bg-lime-950/30",
+      text: "text-lime-600 dark:text-lime-400",
+      border: "border border-lime-200 dark:border-lime-800",
+      hoverBg: "hover:bg-lime-50 dark:hover:bg-lime-900/20",
     },
     // Keep other existing statuses...
     Available: {
