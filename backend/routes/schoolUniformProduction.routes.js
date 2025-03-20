@@ -5,6 +5,7 @@ import {
   createSchoolUniformProduction,
   updateSchoolUniformProduction,
   deleteSchoolUniformProduction,
+  getProductionStats,
 } from "../controllers/schoolUniformProduction.controller.js";
 import { isJobOrder } from "../middleware/jobOrder.middleware.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
@@ -13,6 +14,7 @@ const router = express.Router();
 
 // Public routes
 router.get("/", getAllSchoolUniformProductions);
+router.get("/stats", getProductionStats);
 router.get("/:id", getSchoolUniformProductionById);
 
 // Job Order only routes

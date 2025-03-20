@@ -10,6 +10,10 @@ import {
   GraduationCap,
   Calendar,
   AlertCircle,
+  Package,
+  TrendingUp,
+  Table2,
+  BarChart3,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +35,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SchoolUniformProductionForm } from "../forms/SchoolUniformProductionForm";
 import { SchoolUniformProductionDetailsDialog } from "../components/school-uniform-production-details";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ProductionOverviewChart } from "../components/charts/ProductionOverviewChart";
+import { ProductTypeProductionChart } from "../components/charts/ProductTypeProductionChart";
+import { LevelProductionChart } from "../components/charts/LevelProductionChart";
+import CustomSelect from "@/components/custom-components/CustomSelect";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 export const SchoolUniformProduction = () => {
   const { user } = useAuth();
@@ -59,15 +83,28 @@ export const SchoolUniformProduction = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState(null);
   const [inventoryIssues, setInventoryIssues] = useState(null);
+  const [statsData, setStatsData] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+
+  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: MONTHS[i]
+  }));
 
   const fetchProductions = async () => {
     try {
       setIsLoading(true);
-      const data = await productionAPI.getAllSchoolUniformProductions();
-      setProductions(data);
+      const [productionsData, stats] = await Promise.all([
+        productionAPI.getAllSchoolUniformProductions(),
+        productionAPI.getProductionStats(selectedYear, selectedMonth)
+      ]);
+      setProductions(productionsData);
+      setStatsData(stats);
     } catch (error) {
-      toast.error("Failed to fetch production items");
-      console.error("Error fetching productions:", error);
+      toast.error("Failed to fetch production data");
+      console.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +112,7 @@ export const SchoolUniformProduction = () => {
 
   useEffect(() => {
     fetchProductions();
-  }, []);
+  }, [selectedYear, selectedMonth]);
 
   const columns = [
     {
@@ -298,32 +335,111 @@ export const SchoolUniformProduction = () => {
           description="Manage school uniform production in the system"
         />
 
-        <DataTable
-          data={productions}
-          columns={columns}
-          isLoading={isLoading}
-          actionCategories={actionCategories}
-          onCreateNew={() => {
-            setFormData({
-              level: "",
-              productType: "",
-              size: "",
-              quantity: "",
-              productionDateFrom: "",
-              productionDateTo: "",
-              rawMaterialsUsed: [],
-            });
-            setIsEditing(false);
-            setSelectedId(null);
-            setIsCreateDialogOpen(true);
-          }}
-          createButtonText={
-            <div className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span>Add Production</span>
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="w-full md:w-1/2">
+              <CustomSelect
+                name="year"
+                label="Year"
+                placeholder="Select year"
+                options={years.map(year => ({ value: year, label: year }))}
+                value={selectedYear}
+                onChange={setSelectedYear}
+              />
             </div>
-          }
-        />
+            <div className="w-full md:w-1/2">
+              <CustomSelect
+                name="month"
+                label="Month"
+                placeholder="Select month"
+                options={months}
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Production</CardTitle>
+                <Shirt className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold tracking-tight">
+                  {statsData?.totalProduction || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Units produced</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Average Production</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold tracking-tight">
+                  {statsData?.totalProduction || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total units this period
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="table" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="table" className="flex items-center gap-2">
+                <Table2 className="h-4 w-4" />
+                Production Table
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="table" className="mt-4">
+              <DataTable
+                data={productions}
+                columns={columns}
+                isLoading={isLoading}
+                actionCategories={actionCategories}
+                onCreateNew={() => {
+                  setFormData({
+                    level: "",
+                    productType: "",
+                    size: "",
+                    quantity: "",
+                    productionDateFrom: "",
+                    productionDateTo: "",
+                    rawMaterialsUsed: [],
+                  });
+                  setIsEditing(false);
+                  setSelectedId(null);
+                  setIsCreateDialogOpen(true);
+                }}
+                createButtonText={
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Add Production</span>
+                  </div>
+                }
+              />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-4">
+              <div className="grid grid-cols-1 gap-8">
+                <ProductionOverviewChart data={statsData} loading={isLoading} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <ProductTypeProductionChart data={statsData} loading={isLoading} />
+                  <LevelProductionChart data={statsData} loading={isLoading} />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>

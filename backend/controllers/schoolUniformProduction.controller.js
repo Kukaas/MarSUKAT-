@@ -346,3 +346,79 @@ export const deleteSchoolUniformProduction = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get production statistics
+// @route   GET /api/school-uniform-productions/stats
+// @access  Private
+export const getProductionStats = async (req, res) => {
+  try {
+    const { year, month } = req.query;
+    const query = {};
+
+    if (year) {
+      query.productionDateFrom = {
+        $gte: new Date(year, 0, 1),
+        $lt: new Date(parseInt(year) + 1, 0, 1),
+      };
+    }
+
+    if (month) {
+      query.productionDateFrom = {
+        $gte: new Date(year, parseInt(month) - 1, 1),
+        $lt: new Date(year, parseInt(month), 1),
+      };
+    }
+
+    const productions = await SchoolUniformProduction.find(query);
+
+    // Calculate monthly data
+    const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      quantity: 0,
+    }));
+
+    productions.forEach((production) => {
+      const month = new Date(production.productionDateFrom).getMonth();
+      monthlyData[month].quantity += production.quantity;
+    });
+
+    // Calculate product type breakdown
+    const productTypeMap = new Map();
+    productions.forEach((production) => {
+      const current = productTypeMap.get(production.productType) || {
+        name: production.productType,
+        quantity: 0,
+      };
+      current.quantity += production.quantity;
+      productTypeMap.set(production.productType, current);
+    });
+    const productTypeBreakdown = Array.from(productTypeMap.values());
+
+    // Calculate level breakdown
+    const levelMap = new Map();
+    productions.forEach((production) => {
+      const current = levelMap.get(production.level) || {
+        name: production.level,
+        quantity: 0,
+      };
+      current.quantity += production.quantity;
+      levelMap.set(production.level, current);
+    });
+    const levelBreakdown = Array.from(levelMap.values());
+
+    // Calculate total production
+    const totalProduction = productions.reduce(
+      (sum, production) => sum + production.quantity,
+      0
+    );
+
+    res.status(200).json({
+      monthlyData,
+      productTypeBreakdown,
+      levelBreakdown,
+      totalProduction,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

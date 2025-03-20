@@ -26,4 +26,11 @@ export const productionAPI = {
     const response = await api.delete(`/school-uniform-productions/${id}`);
     return response.data;
   },
+
+  getProductionStats: async (year, month) => {
+    const response = await api.get("/school-uniform-productions/stats", {
+      params: { year, month },
+    });
+    return response.data;
+  },
 };
