@@ -1,4 +1,4 @@
-import { Dashboard } from "@/pages/private/joborder/pages/Dashboard";
+import Dashboard from "@/pages/private/joborder/pages/Dashboard";
 import { StudentOrders } from "@/pages/private/joborder/pages/StudentOrders";
 import { CommercialOrders } from "@/pages/private/joborder/pages/CommercialOrders";
 import { Rentals } from "@/pages/private/joborder/pages/Rentals";

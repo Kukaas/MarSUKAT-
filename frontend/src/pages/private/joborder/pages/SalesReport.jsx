@@ -7,7 +7,7 @@ import { salesReportAPI } from "../api/salesReportApi";
 import { toast } from "sonner";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { Button } from "@/components/ui/button";
-import { FileDown, Package, DollarSign, TrendingUp } from "lucide-react";
+import { FileDown, Package, DollarSign, TrendingUp, CalendarDays, CalendarRange, Clock } from "lucide-react";
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { handlePrint, handleYearlyPrint } from "../components/print/print";
@@ -130,6 +130,7 @@ export const SalesReport = () => {
                 options={years.map(year => ({ value: year, label: year }))}
                 value={selectedYear}
                 onChange={setSelectedYear}
+                icon={CalendarDays}
               />
             </div>
             {timePeriod === "month" && (
@@ -141,6 +142,7 @@ export const SalesReport = () => {
                   options={months}
                   value={selectedMonth}
                   onChange={setSelectedMonth}
+                  icon={CalendarRange}
                 />
               </div>
             )}
@@ -155,6 +157,7 @@ export const SalesReport = () => {
                 ]}
                 value={timePeriod}
                 onChange={setTimePeriod}
+                icon={Clock}
               />
             </div>
           </div>

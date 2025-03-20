@@ -24,6 +24,7 @@ import productRoutes from "./routes/product.routes.js";
 import announcementRoutes from "./routes/announcement.routes.js";
 import studentOrderRoutes from "./routes/studentOrder.routes.js";
 import salesReportRoutes from "./routes/salesReport.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 dotenv.config();
 
@@ -72,6 +73,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/announcements", announcementRoutes);
 app.use("/api/v1/student-orders", studentOrderRoutes);
 app.use("/api/v1/sales-reports", salesReportRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
 
 // Developer routes - only enabled in development mode
 if (process.env.NODE_ENV === "development") {

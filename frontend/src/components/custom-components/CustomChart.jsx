@@ -76,7 +76,8 @@ export function CustomChart({
   nameLabel = "Name",
   height = 400,
   initialChartType = "bar",
-  showChartSelector = true
+  showChartSelector = true,
+  hideXAxisText = false
 }) {
   const [chartType, setChartType] = useState(initialChartType);
   const Icon = icon;
@@ -163,6 +164,7 @@ export function CustomChart({
               tickLine={false}
               axisLine={false}
               tick={{ fill: COLORS.axis }}
+              hide={hideXAxisText}
             />
             <YAxis
               stroke={COLORS.axis}
@@ -200,6 +202,7 @@ export function CustomChart({
               tickLine={false}
               axisLine={false}
               tick={{ fill: COLORS.axis }}
+              hide={hideXAxisText}
             />
             <YAxis
               stroke={COLORS.axis}
@@ -234,6 +237,7 @@ export function CustomChart({
               tickLine={false}
               axisLine={false}
               tick={{ fill: COLORS.axis }}
+              hide={hideXAxisText}
             />
             <YAxis
               stroke={COLORS.axis}
