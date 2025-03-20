@@ -170,7 +170,18 @@ function OrderContent({ order, onUpdate }) {
       toast.success("Order status updated successfully");
       onUpdate && onUpdate(updatedOrder);
     } catch (error) {
-      toast.error("Failed to update order status");
+      // Check if it's an inventory error
+      if (error.response?.data?.error?.includes("Insufficient inventory")) {
+        toast.error(
+          error.response.data.error
+        );
+      } else {
+        toast.error(
+          error.response?.data?.message || "Failed to update order status"
+        );
+      }
+      // Reset selected status on error
+      setSelectedStatus(order?.status);
       console.error("Error updating order status:", error);
     } finally {
       setIsUpdating(false);

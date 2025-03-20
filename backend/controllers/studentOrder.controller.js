@@ -3,6 +3,8 @@ import User from "../models/user.model.js";
 import Announcement from "../models/announcement.model.js";
 import mongoose from "mongoose";
 import { getNextAvailableSchedule } from "../utils/scheduleUtils.js";
+import SalesReport from "../models/salesReport.model.js";
+import UniformInventory from "../models/uniformInventory.model.js";
 
 // @desc    Get all orders
 // @route   GET /api/student-orders
@@ -208,6 +210,86 @@ export const updateStudentOrder = async (req, res) => {
         }
       }
       order.status = newStatus;
+
+      // If order is being claimed, create a sales report and update inventory
+      if (newStatus === "Claimed") {
+        try {
+          // Calculate subtotals and total amount
+          const orderItems = order.orderItems.map(item => ({
+            level: item.level,
+            productType: item.productType,
+            size: item.size,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+            subtotal: Number((item.unitPrice * item.quantity).toFixed(2))
+          }));
+
+          const totalAmount = Number(orderItems.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2));
+
+          // Create sales report
+          const salesReport = new SalesReport({
+            orderId: order.orderId,
+            studentName: order.name,
+            studentNumber: order.studentNumber,
+            department: order.department,
+            orderItems: orderItems,
+            totalAmount: totalAmount,
+            dateClaimed: new Date(),
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear()
+          });
+
+          await salesReport.save();
+
+          // Update inventory for each order item
+          for (const item of order.orderItems) {
+            const inventory = await UniformInventory.findOne({
+              level: item.level,
+              productType: item.productType,
+              size: item.size
+            });
+
+            if (!inventory) {
+              throw new Error(`Inventory not found for ${item.productType} - ${item.size}`);
+            }
+
+            if (inventory.quantity < item.quantity) {
+              throw new Error(`Insufficient inventory for ${item.productType} - ${item.size}`);
+            }
+
+            // Decrease quantity
+            inventory.quantity -= item.quantity;
+
+            // Update status based on new quantity
+            if (inventory.quantity === 0) {
+              inventory.status = "Out of Stock";
+            } else if (inventory.quantity <= 5) { // Assuming 5 is the threshold for low stock
+              inventory.status = "Low Stock";
+            }
+
+            await inventory.save();
+          }
+
+          // Create notification for the student
+          const student = await User.findById(order.userId);
+          if (student) {
+            const notification = {
+              title: "Order Claimed",
+              message: `Your order ${order.orderId} has been claimed. Thank you for your business!`,
+              read: false,
+            };
+
+            student.notifications.push(notification);
+            await student.save();
+          }
+        } catch (error) {
+          console.error("Error processing claimed order:", error);
+          return res.status(400).json({
+            message: "Error processing claimed order",
+            error: error.message
+          });
+        }
+      }
     }
 
     // Apply any other updates from req.body
