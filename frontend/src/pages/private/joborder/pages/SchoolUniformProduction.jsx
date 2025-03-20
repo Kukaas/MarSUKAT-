@@ -39,6 +39,7 @@ import { ProductionOverviewChart } from "../components/charts/ProductionOverview
 import { ProductTypeProductionChart } from "../components/charts/ProductTypeProductionChart";
 import { LevelProductionChart } from "../components/charts/LevelProductionChart";
 import CustomSelect from "@/components/custom-components/CustomSelect";
+import StatsCard from "@/components/custom-components/StatsCard";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 
 const MONTHS = [
@@ -367,32 +368,18 @@ export const SchoolUniformProduction = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Production</CardTitle>
-                <Shirt className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold tracking-tight">
-                  {statsData?.totalProduction || 0}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Units produced</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Production</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold tracking-tight">
-                  {statsData?.totalProduction || 0}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Total units this period
-                </p>
-              </CardContent>
-            </Card>
+            <StatsCard 
+              title="Total Production"
+              value={statsData?.totalProduction || 0}
+              icon={<Shirt className="h-4 w-4 text-muted-foreground" />}
+              description="Units produced"
+            />
+            <StatsCard 
+              title="Average Production"
+              value={statsData?.totalProduction || 0}
+              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+              description="Total units this period"
+            />
           </div>
 
           <CustomTabs 

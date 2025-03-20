@@ -6,10 +6,10 @@ import { ProductTypeSalesChart } from "../components/charts/ProductTypeSalesChar
 import { salesReportAPI } from "../api/salesReportApi";
 import { toast } from "sonner";
 import SectionHeader from "@/components/custom-components/SectionHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, Package, DollarSign, TrendingUp } from "lucide-react";
 import CustomSelect from "@/components/custom-components/CustomSelect";
+import StatsCard from "@/components/custom-components/StatsCard";
 import { handlePrint, handleYearlyPrint } from "../components/print/print";
 
 const MONTHS = [
@@ -160,44 +160,24 @@ export const SalesReport = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold tracking-tight">
-                  {salesData?.totalOrders || 0}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Orders this period</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold tracking-tight">
-                  {formatCurrency(salesData?.averageOrderValue)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Per order average</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold tracking-tight">
-                  {formatCurrency(salesData?.totalSales)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Total sales this {timePeriod}
-                </p>
-              </CardContent>
-            </Card>
+            <StatsCard 
+              title="Total Orders"
+              value={salesData?.totalOrders || 0}
+              icon={<Package className="h-4 w-4 text-muted-foreground" />}
+              description="Orders this period"
+            />
+            <StatsCard 
+              title="Average Order Value"
+              value={formatCurrency(salesData?.averageOrderValue)}
+              icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+              description="Per order average"
+            />
+            <StatsCard 
+              title="Total Revenue"
+              value={formatCurrency(salesData?.totalSales)}
+              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+              description={`Total sales this ${timePeriod}`}
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-8">
