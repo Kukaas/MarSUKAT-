@@ -214,6 +214,7 @@ export const updateStudentOrder = async (req, res) => {
       // If order is being claimed, create a sales report and update inventory
       if (newStatus === "Claimed") {
         try {
+          order.isArchived = true;
           // Calculate subtotals and total amount
           const orderItems = order.orderItems.map(item => ({
             level: item.level,
@@ -547,39 +548,27 @@ export const verifyReceipt = async (req, res) => {
 
     // Handle different status transitions based on current status
     if (order.status === "Pending") {
-      order.status = "Approved";
-
       try {
-        // Only get schedule for new orders (Pending status)
-        if (order.status === "Pending") {
-          const schedule = await getNextAvailableSchedule(new Date());
-          order.measurementSchedule = schedule;
-        }
+        // Get schedule for new orders (Pending status)
+        const schedule = await getNextAvailableSchedule(new Date());
+        order.measurementSchedule = schedule;
+        order.status = "Approved";
 
         // Create notification for the student
         const student = await User.findById(order.userId);
         if (student) {
-          let notification;
-
-          if (order.status === "Pending") {
-            const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            });
-            notification = {
-              title: "Order Approved and Scheduled",
-              message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
-              read: false,
-            };
-          } else {
-            notification = {
-              title: "Payment Verified",
-              message: `Your payment for order ${order.orderId} has been verified.`,
-              read: false,
-            };
-          }
+          const scheduleDateStr = schedule.date.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+          
+          const notification = {
+            title: "Order Approved and Scheduled",
+            message: `Your order ${order.orderId} has been approved. Your measurement is scheduled for ${scheduleDateStr} at ${schedule.time}.`,
+            read: false,
+          };
 
           student.notifications.push(notification);
           await student.save();

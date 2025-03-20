@@ -100,7 +100,7 @@ const getAvailableStatuses = (currentStatus) => {
     case "For Pickup":
       return ["For Pickup", "Claimed"];
     case "For Verification":
-      return ["For Verification", "Verify"];
+      return ["For Verification"];
     case "Payment Verified":
       return ["Payment Verified", "Claimed"];
     case "Claimed":
