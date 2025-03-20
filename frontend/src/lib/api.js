@@ -1,8 +1,16 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+// Determine which API URL to use based on the current hostname
+const getApiUrl = () => {
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return isLocalhost ? 
+    import.meta.env.VITE_API_URL : 
+    import.meta.env.VITE_API_URL_NETWORK;
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1",
+  baseURL: getApiUrl(),
   withCredentials: true, // Important for cookies
   headers: {
     "Content-Type": "application/json",

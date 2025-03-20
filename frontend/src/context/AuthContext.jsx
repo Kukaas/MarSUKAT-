@@ -131,19 +131,19 @@ export function AuthProvider({ children }) {
         setUser(response.data.user);
       } catch (error) {
         if (error.response?.status === 401) {
-          // If unauthorized, try to refresh token
           try {
+            // Try to refresh token
             await api.post("/auth/refresh-token");
-            // If refresh successful, try getting user data again
-            const retryResponse = await api.get("/auth/me");
-            setUser(retryResponse.data.user);
+            // After successful refresh, try getting user data again
+            const userResponse = await api.get("/auth/me");
+            setUser(userResponse.data.user);
           } catch (refreshError) {
-            // If refresh fails, clear user state
+            // Only clear user and redirect if not on a public route
             setUser(null);
+            if (!isPublicRoute(location.pathname)) {
+              navigate("/login", { state: { from: location.pathname }, replace: true });
+            }
           }
-        } else {
-          console.error("Auth initialization error:", error);
-          setUser(null);
         }
       } finally {
         setLoading(false);
@@ -154,10 +154,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (userData) => {
-    const user = userData.user;
-    setUser(user);
-    // Use the utility function for navigation
-    navigateToRoleDashboard(navigate, user);
+    try {
+      setUser(userData.user);
+      // Navigate to appropriate dashboard
+      navigateToRoleDashboard(navigate, userData.user);
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
   };
 
   const updateUserInfo = useCallback((updatedUserData) => {

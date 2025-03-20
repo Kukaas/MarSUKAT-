@@ -307,14 +307,7 @@ export const login = async (req, res) => {
     // Reset login attempts on successful login
     loginAttempts.delete(email);
 
-    // Generate refresh token
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Create access token
+    // Generate tokens
     const accessToken = jwt.sign(
       {
         id: user._id,
@@ -325,25 +318,37 @@ export const login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    // Set cookie options
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Get the origin of the request
+    const origin = req.get('origin');
+    
+    // Set cookie options based on the origin
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
-      domain: process.env.COOKIE_DOMAIN || undefined,
     };
 
-    // Set refresh token cookie
-    res.cookie("refresh_token", refreshToken, {
-      ...cookieOptions,
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    });
+    // If accessing via network IP, set the specific domain
+    if (origin && origin.includes('192.168.100.39')) {
+      cookieOptions.domain = '192.168.100.39';
+    }
 
-    // Set access token cookie
+    // Set tokens in cookies
     res.cookie("access_token", accessToken, {
       ...cookieOptions,
       expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+    });
+
+    res.cookie("refresh_token", refreshToken, {
+      ...cookieOptions,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
 
     // Send user data (excluding sensitive information)
