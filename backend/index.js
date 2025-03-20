@@ -32,8 +32,17 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true, // Allow credentials (cookies)
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://192.168.100.39:5173",
+      "http://192.168.100.39:3000",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000"
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Headers']
   })
 );
 // Increase payload size limit to 10MB
@@ -73,7 +82,7 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
-    app.listen(port, () => {
+    app.listen(port, "0.0.0.0", () => {
       console.log(`Server is running on port ${port}`);
     });
   })
