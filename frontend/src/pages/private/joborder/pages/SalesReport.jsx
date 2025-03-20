@@ -42,6 +42,7 @@ export const SalesReport = () => {
   const [salesData, setSalesData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [timePeriod, setTimePeriod] = useState("month");
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -49,11 +50,16 @@ export const SalesReport = () => {
     label: MONTHS[i]
   }));
 
-  const fetchSalesData = async (year, month) => {
+  const fetchSalesData = async () => {
     try {
       setLoading(true);
-      const data = await salesReportAPI.getMonthlySalesSummary(year, month);
-      
+      let data;
+      if (timePeriod === "month") {
+        data = await salesReportAPI.getMonthlySalesSummary(selectedYear, selectedMonth);
+      } else {
+        data = await salesReportAPI.getYearlySalesSummary(selectedYear);
+      }
+
       if (!data) {
         toast.error("No data available for the selected period");
         return;
@@ -61,7 +67,7 @@ export const SalesReport = () => {
 
       const transformedData = {
         ...data,
-        monthlyData: data.monthlyData.map(item => ({
+        monthlyData: data.monthlyData?.map(item => ({
           month: item.month,
           totalSales: item.sales
         })),
@@ -86,8 +92,8 @@ export const SalesReport = () => {
   };
 
   useEffect(() => {
-    fetchSalesData(selectedYear, selectedMonth);
-  }, [selectedYear, selectedMonth]);
+    fetchSalesData();
+  }, [selectedYear, selectedMonth, timePeriod]);
 
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
@@ -371,14 +377,29 @@ export const SalesReport = () => {
                 onChange={setSelectedYear}
               />
             </div>
+            {timePeriod === "month" && (
+              <div className="w-full md:w-1/3">
+                <CustomSelect
+                  name="month"
+                  label="Month"
+                  placeholder="Select month"
+                  options={months}
+                  value={selectedMonth}
+                  onChange={setSelectedMonth}
+                />
+              </div>
+            )}
             <div className="w-full md:w-1/3">
               <CustomSelect
-                name="month"
-                label="Month"
-                placeholder="Select month"
-                options={months}
-                value={selectedMonth}
-                onChange={setSelectedMonth}
+                name="timePeriod"
+                label="Time Period"
+                placeholder="Select time period"
+                options={[
+                  { value: "month", label: "Monthly" },
+                  { value: "year", label: "Yearly" }
+                ]}
+                value={timePeriod}
+                onChange={setTimePeriod}
               />
             </div>
           </div>
@@ -417,7 +438,9 @@ export const SalesReport = () => {
                 <div className="text-3xl font-bold tracking-tight">
                   {formatCurrency(salesData?.totalSales)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Total sales this period</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total sales this {timePeriod}
+                </p>
               </CardContent>
             </Card>
           </div>
