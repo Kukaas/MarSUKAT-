@@ -16,5 +16,12 @@ export const salesReportAPI = {
       params: { year, month },
     });
     return response.data;
+  },
+
+  getYearlySalesSummary: async (year) => {
+    const response = await api.get("/sales-reports/summary/yearly", {
+      params: { year },
+    });
+    return response.data;
   }
 }; 

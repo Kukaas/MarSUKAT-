@@ -156,4 +156,69 @@ export const getMonthlySalesSummary = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+// @desc    Get yearly sales summary
+// @route   GET /api/sales-reports/summary/yearly
+// @access  Private/JobOrder
+export const getYearlySalesSummary = async (req, res) => {
+  try {
+    const { year } = req.query;
+    
+    const reports = await SalesReport.find({ year: parseInt(year) });
+
+    const summary = {
+      totalSales: reports.reduce((sum, report) => sum + report.totalAmount, 0),
+      totalOrders: reports.length,
+      averageOrderValue: reports.length > 0 
+        ? reports.reduce((sum, report) => sum + report.totalAmount, 0) / reports.length 
+        : 0,
+      departmentBreakdown: {},
+      productTypeBreakdown: {}
+    };
+
+    // Calculate department breakdown
+    reports.forEach(report => {
+      if (!summary.departmentBreakdown[report.department]) {
+        summary.departmentBreakdown[report.department] = {
+          totalSales: 0,
+          orderCount: 0
+        };
+      }
+      summary.departmentBreakdown[report.department].totalSales += report.totalAmount;
+      summary.departmentBreakdown[report.department].orderCount += 1;
+    });
+
+    // Transform department breakdown for the chart
+    summary.department = Object.entries(summary.departmentBreakdown).map(([name, data]) => ({
+      name,
+      totalSales: data.totalSales,
+      orderCount: data.orderCount
+    }));
+
+    // Calculate product type breakdown
+    reports.forEach(report => {
+      report.orderItems.forEach(item => {
+        if (!summary.productTypeBreakdown[item.productType]) {
+          summary.productTypeBreakdown[item.productType] = {
+            totalSales: 0,
+            quantity: 0
+          };
+        }
+        summary.productTypeBreakdown[item.productType].totalSales += item.subtotal;
+        summary.productTypeBreakdown[item.productType].quantity += item.quantity;
+      });
+    });
+
+    // Transform product type breakdown for the chart
+    summary.productType = Object.entries(summary.productTypeBreakdown).map(([name, data]) => ({
+      name,
+      totalSales: data.totalSales,
+      quantity: data.quantity
+    }));
+
+    res.status(200).json(summary);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }; 

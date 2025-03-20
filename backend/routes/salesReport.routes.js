@@ -4,6 +4,7 @@ import {
   getAllSalesReports,
   getSalesReportById,
   getMonthlySalesSummary,
+  getYearlySalesSummary,
 } from "../controllers/salesReport.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
 import { isJobOrder } from "../middleware/jobOrder.middleware.js";
@@ -24,5 +25,8 @@ router.get("/:id", getSalesReportById);
 
 // Get monthly sales summary
 router.get("/summary/monthly", getMonthlySalesSummary);
+
+// Get yearly sales summary
+router.get("/summary/yearly", getYearlySalesSummary);
 
 export default router; 
