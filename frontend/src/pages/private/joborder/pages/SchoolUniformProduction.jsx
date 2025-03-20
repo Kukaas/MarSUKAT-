@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SchoolUniformProductionForm } from "../forms/SchoolUniformProductionForm";
-import { SchoolUniformProductionDetailsDialog } from "../components/school-uniform-production-details";
+import { SchoolUniformProductionDetailsDialog } from "../components/details/school-uniform-production-details";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ProductionOverviewChart } from "../components/charts/ProductionOverviewChart";
 import { ProductTypeProductionChart } from "../components/charts/ProductTypeProductionChart";

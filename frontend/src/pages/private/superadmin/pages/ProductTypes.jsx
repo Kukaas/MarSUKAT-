@@ -16,12 +16,12 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ProductTypeDetails } from "../components/product-type-details";
+import { ProductTypeDetails } from "../components/details/product-type-details";
 import { ProductTypeForm } from "../forms/ProductTypeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ProductTypeDetailsDialog } from "../components/product-type-details";
+import { ProductTypeDetailsDialog } from "../components/details/product-type-details";
 
 export default function ProductTypes() {
   const { user } = useAuth();

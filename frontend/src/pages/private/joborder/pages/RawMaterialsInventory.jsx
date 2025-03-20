@@ -33,7 +33,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { RawMaterialInventoryDetails } from "../components/raw-material-inventory-details";
+import { RawMaterialInventoryDetails } from "../components/details/raw-material-inventory-details";
 import { RawMaterialInventoryForm } from "../forms/RawMaterialInventoryForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
@@ -41,7 +41,7 @@ import StatusBadge from "@/components/custom-components/StatusBadge";
 import { inventoryAPI } from "../api/inventoryApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { RawMaterialInventoryDetailsDialog } from "../components/raw-material-inventory-details";
+import { RawMaterialInventoryDetailsDialog } from "../components/details/raw-material-inventory-details";
 
 export default function RawMaterialsInventory() {
   const { user } = useAuth();

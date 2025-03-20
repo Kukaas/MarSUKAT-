@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnnouncementForm } from "../forms/AnnouncementForm";
-import { AnnouncementDetailsDialog } from "../components/announcement-details";
+import { AnnouncementDetailsDialog } from "../components/details/announcement-details";
 
 export function StudentAnnouncement() {
   const { user } = useAuth();

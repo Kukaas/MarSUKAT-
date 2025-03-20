@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, Package, DollarSign, TrendingUp } from "lucide-react";
 import CustomSelect from "@/components/custom-components/CustomSelect";
-import { cn } from "@/lib/utils";
 import { handlePrint, handleYearlyPrint } from "../components/print/print";
 
 const MONTHS = [

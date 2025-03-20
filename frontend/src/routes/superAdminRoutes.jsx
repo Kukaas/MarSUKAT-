@@ -11,7 +11,7 @@ import ProductTypes from "../pages/private/superadmin/pages/ProductTypes";
 import JobOrders from "../pages/private/superadmin/pages/JobOrders";
 import { StudentAnnouncement } from "../pages/private/superadmin/pages/StudentAnnouncement";
 import { StudentUser } from "../pages/private/superadmin/pages/StudentUser";
-import { ProductManagement } from "../pages/private/superadmin/pages/ProductManagement";
+import ProductManagement from "../pages/private/superadmin/pages/ProductManagement";
 
 export const superAdminRoutes = [
   {

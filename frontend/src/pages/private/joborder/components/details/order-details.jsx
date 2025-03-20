@@ -28,7 +28,7 @@ import {
 import { useState } from "react";
 import { ImageViewer } from "@/components/custom-components/ImageViewer";
 import { toast } from "sonner";
-import { jobOrderAPI } from "../api/orderApi";
+import { jobOrderAPI } from "../../api/orderApi";
 import {
   Select,
   SelectContent,
@@ -41,7 +41,7 @@ import { ConfirmationDialog } from "@/components/custom-components/ConfirmationD
 import { Textarea } from "@/components/ui/textarea";
 import { RejectDialog } from "@/components/custom-components/RejectDialog";
 import { StatusMessage } from "@/components/custom-components/StatusMessage";
-import { OrderMeasurementForm } from "../forms/OrderMeasurementForm";
+import { OrderMeasurementForm } from "../../forms/OrderMeasurementForm";
 import EmptyState from "@/components/custom-components/EmptyState";
 
 const STATUS_ICONS = {

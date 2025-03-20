@@ -24,7 +24,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CategoryDetailsDialog } from "../components/category-details";
+import { CategoryDetailsDialog } from "../components/details/category-details";
 import { CategoryForm } from "../forms/CategoryForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UniformInventoryDetailsDialog } from "../components/uniform-inventory-details";
+import { UniformInventoryDetailsDialog } from "../components/details/uniform-inventory-details";
 import { UniformInventoryForm } from "../forms/UniformInventoryForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";

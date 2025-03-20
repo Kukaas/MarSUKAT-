@@ -20,7 +20,7 @@ import {
   ArchiveRestore,
 } from "lucide-react";
 import { toast } from "sonner";
-import { OrderDetailsDialog } from "../components/order-details";
+import { OrderDetailsDialog } from "../components/details/order-details";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { formatDate } from "@/lib/utils";

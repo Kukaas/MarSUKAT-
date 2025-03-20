@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { DepartmentLevelForm } from "../forms/DepartmentLevelForm";
-import { DepartmentLevelDetailsDialog } from "../components/department-level-details";
+import { DepartmentLevelDetailsDialog } from "../components/details/department-level-details";
 
 export default function DepartmentLevelOptions() {
   const { user } = useAuth();

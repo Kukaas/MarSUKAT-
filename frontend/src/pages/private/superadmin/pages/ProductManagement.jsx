@@ -28,10 +28,10 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { ProductDetailsDialog } from "../components/product-details";
+import { ProductDetailsDialog } from "../components/details/product-details";
 import { StatusConfirmation } from "@/components/custom-components/StatusConfirmation";
 
-export function ProductManagement() {
+export default function ProductManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);

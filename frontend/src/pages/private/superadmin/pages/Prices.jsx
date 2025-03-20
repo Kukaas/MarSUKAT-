@@ -16,7 +16,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { PriceDetailsDialog } from "../components/price-details";
+import { PriceDetailsDialog } from "../components/details/price-details";
 import { PriceForm } from "../forms/PriceForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";

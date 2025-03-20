@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { JobOrderDetailsDialog } from "../components/job-order-details";
+import { JobOrderDetailsDialog } from "../components/details/job-order-details";
 import { JobOrderForm } from "../forms/JobOrderForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";

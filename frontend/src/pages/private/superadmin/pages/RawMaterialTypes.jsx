@@ -25,11 +25,11 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { RawMaterialTypeDetails } from "../components/raw-material-type-details";
+import { RawMaterialTypeDetails } from "../components/details/raw-material-type-details";
 import { RawMaterialTypeForm } from "../forms/RawMaterialTypeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
-import { RawMaterialTypeDetailsDialog } from "../components/raw-material-type-details";
+import { RawMaterialTypeDetailsDialog } from "../components/details/raw-material-type-details";
 
 export default function RawMaterialTypes() {
   const { user } = useAuth();

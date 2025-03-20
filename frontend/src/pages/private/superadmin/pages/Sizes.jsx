@@ -16,7 +16,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { SizeDetailsDialog } from "../components/size-details";
+import { SizeDetailsDialog } from "../components/details/size-details";
 import { SizeForm } from "../forms/SizeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
