@@ -67,7 +67,7 @@ function ChartTypeSelector({ type, onTypeChange }) {
 export function CustomChart({ 
   data, 
   loading, 
-  title = "Chart", 
+  title = "", 
   icon, 
   dataKey = "value", 
   nameKey = "name", 
@@ -122,7 +122,7 @@ export function CustomChart({
   const renderChart = () => {
     const commonProps = {
       data: data,
-      margin: { top: 20, right: 20, bottom: 20, left: 0 },
+      margin: { top: 20, right: 25, bottom: 20, left: 0 },
     };
 
     const customTooltip = ({ active, payload }) => {

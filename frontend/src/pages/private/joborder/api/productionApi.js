@@ -33,4 +33,18 @@ export const productionAPI = {
     });
     return response.data;
   },
+
+  getRawMaterialsUsageStats: async (year, month, category, type) => {
+    const response = await api.get("/school-uniform-productions/raw-materials-usage", {
+      params: { year, month, category, type },
+    });
+    return response.data;
+  },
+
+  getMaterialUsageReport: async (startDate, endDate, category, type) => {
+    const response = await api.get("/school-uniform-productions/material-usage-report", {
+      params: { startDate, endDate, category, type },
+    });
+    return response.data;
+  }
 };

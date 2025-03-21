@@ -55,7 +55,7 @@ const formatCurrency = (value) => {
   }).format(value || 0);
 };
 
-export default function Dashboard() {
+export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -388,3 +388,5 @@ export default function Dashboard() {
     </PrivateLayout>
   );
 }
+
+export default Dashboard;

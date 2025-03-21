@@ -12,6 +12,9 @@ import {
   Ruler,
   Package,
   AlertCircle,
+  TrendingUp,
+  BarChart3,
+  Calendar
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -42,6 +45,32 @@ import { inventoryAPI } from "../api/inventoryApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { RawMaterialInventoryDetailsDialog } from "../components/details/raw-material-inventory-details";
+import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
+import { Link } from "react-router-dom";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import CustomSelect from "@/components/custom-components/CustomSelect";
+import { format } from "date-fns";
+import { productionAPI } from "../api/productionApi";
+import StatsCard from "@/components/custom-components/StatsCard";
+import MaterialUsageOverviewChart from "../components/charts/MaterialUsageOverviewChart"; 
+import { MaterialForecastChart } from "../components/charts/MaterialForecastChart";
+import { MaterialUsageTable } from "../components/tables/MaterialUsageTable";
+import DateRangeSelector from "@/components/custom-components/DateRangeSelector";
+
+const MONTHS = [
+  "January",
+  "February",
+  "March", 
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 export default function RawMaterialsInventory() {
   const { user } = useAuth();
@@ -66,6 +95,73 @@ export default function RawMaterialsInventory() {
     itemToDelete: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState("inventory");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
+
+  // Material usage monitoring states
+  const [isUsageLoading, setIsUsageLoading] = useState(true);
+  const [isReportLoading, setIsReportLoading] = useState(true);
+  const [usageStats, setUsageStats] = useState(null);
+  const [usageReport, setUsageReport] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [materialTypes, setMaterialTypes] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [selectedMaterial, setSelectedMaterial] = useState("");
+  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)));
+  const [endDate, setEndDate] = useState(new Date());
+
+  // Define tab configuration
+  const tabConfig = [
+    { value: "inventory", label: "Inventory Items", icon: Package },
+    { value: "usage", label: "Material Usage", icon: BarChart3 },
+  ];
+
+  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: MONTHS[i]
+  }));
+
+  // Helper functions for usage statistics
+  const calculateTotalUsage = () => {
+    if (!usageStats || !usageStats.monthlyData || usageStats.monthlyData.length === 0) {
+      return 0;
+    }
+
+    const monthData = usageStats.monthlyData.find(m => m.month === parseInt(selectedMonth));
+    if (!monthData) return 0;
+
+    return monthData.materials.reduce((total, material) => total + material.quantity, 0);
+  };
+
+  const getMaterialsCount = () => {
+    if (!usageStats || !usageStats.currentInventory) return 0;
+    return usageStats.currentInventory.length;
+  };
+
+  const getLowStockCount = () => {
+    if (!usageStats || !usageStats.currentInventory) return 0;
+    return usageStats.currentInventory.filter(material => 
+      material.status === "Low Stock" || material.status === "Out of Stock"
+    ).length;
+  };
+
+  const getMostUsedMaterial = () => {
+    if (!usageStats || !usageStats.yearlyData || usageStats.yearlyData.length === 0) {
+      return { type: "None", quantity: 0, unit: "" };
+    }
+    
+    const yearData = usageStats.yearlyData.find(y => y.year === parseInt(selectedYear));
+    if (!yearData || !yearData.materials || yearData.materials.length === 0) {
+      return { type: "None", quantity: 0, unit: "" };
+    }
+    
+    return yearData.materials.reduce((prev, current) => 
+      (prev.quantity > current.quantity) ? prev : current
+    );
+  };
 
   // Fetch inventory data
   const fetchInventory = async () => {
@@ -73,6 +169,32 @@ export default function RawMaterialsInventory() {
       setIsLoading(true);
       const data = await inventoryAPI.getAllRawMaterialInventory();
       setInventory(data);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(data.map(item => item.category))];
+      setCategories(uniqueCategories.map(category => ({
+        value: category,
+        label: category
+      })));
+      
+      // Extract unique material types with their categories
+      const materials = data.map(item => ({
+        category: item.category,
+        type: item.rawMaterialType.name,
+        id: `${item.category}-${item.rawMaterialType.name}`
+      }));
+      
+      const uniqueMaterials = materials.filter((material, index, self) => 
+        index === self.findIndex(m => m.id === material.id)
+      );
+      
+      setMaterialTypes(uniqueMaterials.map(material => ({
+        value: material.id,
+        label: `${material.category} - ${material.type}`,
+        category: material.category,
+        type: material.type
+      })));
+      
     } catch (error) {
       toast.error("Failed to fetch inventory items");
       console.error("Error fetching inventory:", error);
@@ -84,6 +206,25 @@ export default function RawMaterialsInventory() {
   useEffect(() => {
     fetchInventory();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "usage") {
+      fetchUsageStats();
+      fetchUsageReport();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "usage") {
+      fetchUsageStats();
+    }
+  }, [selectedYear, selectedMonth, selectedCategory, selectedType, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "usage") {
+      fetchUsageReport();
+    }
+  }, [startDate, endDate, selectedCategory, selectedType, activeTab]);
 
   // Column definitions
   const columns = [
@@ -283,6 +424,42 @@ export default function RawMaterialsInventory() {
     },
   };
 
+  const fetchUsageStats = async () => {
+    try {
+      setIsUsageLoading(true);
+      const stats = await productionAPI.getRawMaterialsUsageStats(
+        selectedYear, 
+        selectedMonth,
+        selectedCategory === "all" ? "" : selectedCategory,
+        selectedType === "all" ? "" : selectedType
+      );
+      setUsageStats(stats);
+    } catch (error) {
+      console.error("Error fetching usage stats:", error);
+      toast.error("Failed to fetch material usage statistics");
+    } finally {
+      setIsUsageLoading(false);
+    }
+  };
+
+  const fetchUsageReport = async () => {
+    try {
+      setIsReportLoading(true);
+      const report = await productionAPI.getMaterialUsageReport(
+        format(startDate, 'yyyy-MM-dd'),
+        format(endDate, 'yyyy-MM-dd'),
+        selectedCategory === "all" ? "" : selectedCategory,
+        selectedType === "all" ? "" : selectedType
+      );
+      setUsageReport(report);
+    } catch (error) {
+      console.error("Error fetching usage report:", error);
+      toast.error("Failed to fetch material usage report");
+    } finally {
+      setIsReportLoading(false);
+    }
+  };
+
   return (
     <PrivateLayout>
       <div className="space-y-6">
@@ -291,28 +468,124 @@ export default function RawMaterialsInventory() {
           description="Manage raw material inventory in the system"
         />
 
-        <DataTable
-          data={inventory}
-          columns={columns}
-          isLoading={isLoading}
-          actionCategories={actionCategories}
-          onCreateNew={() => {
-            setFormData({
-              category: "",
-              rawMaterialType: "",
-              unit: "",
-              quantity: "",
-              status: "Available",
-            });
-            setIsCreateDialogOpen(true);
-          }}
-          createButtonText={
-            <div className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span>Add Inventory Item</span>
+        <CustomTabs
+          defaultValue="inventory"
+          onValueChange={setActiveTab}
+          tabs={tabConfig}
+        >
+          <TabPanel value="inventory">
+            <div className="mt-4">
+              <DataTable
+                data={inventory}
+                columns={columns}
+                isLoading={isLoading}
+                actionCategories={actionCategories}
+                onCreateNew={() => {
+                  setFormData({
+                    category: "",
+                    rawMaterialType: "",
+                    unit: "",
+                    quantity: "",
+                    status: "Available",
+                  });
+                  setIsCreateDialogOpen(true);
+                }}
+                createButtonText={
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Add Inventory Item</span>
+                  </div>
+                }
+              />
             </div>
-          }
-        />
+          </TabPanel>
+
+          <TabPanel value="usage">
+            <div className="space-y-6 mt-4">
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="w-full md:w-1/4">
+                  <CustomSelect
+                    name="year"
+                    label="Year"
+                    placeholder="Select year"
+                    options={years.map(year => ({ value: year, label: year }))}
+                    value={selectedYear}
+                    onChange={setSelectedYear}
+                  />
+                </div>
+                <div className="w-full md:w-1/4">
+                  <CustomSelect
+                    name="month"
+                    label="Month"
+                    placeholder="Select month"
+                    options={months}
+                    value={selectedMonth}
+                    onChange={setSelectedMonth}
+                  />
+                </div>
+                <div className="w-full md:w-1/4">
+                  <CustomSelect
+                    name="category"
+                    label="Material Category"
+                    placeholder="All Categories"
+                    options={[{ value: "all", label: "All Categories" }, ...categories]}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                  />
+                    </div>
+                <div className="w-full md:w-1/4">
+                  <CustomSelect
+                    name="type"
+                    label="Material Type"
+                    placeholder="All Types"
+                    options={[
+                      { value: "all", label: "All Types" },
+                      ...materialTypes.filter(material => 
+                        selectedCategory === "all" || material.category === selectedCategory
+                      )
+                    ]}
+                    value={selectedType}
+                    onChange={setSelectedType}
+                  />
+                    </div>
+                  </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatsCard 
+                  title="Total Materials Used"
+                  value={calculateTotalUsage().toFixed(2)}
+                  icon={<Package className="h-4 w-4 text-muted-foreground" />}
+                  description="Units used this period"
+                />
+                <StatsCard 
+                  title="Materials Tracked"
+                  value={getMaterialsCount()}
+                  icon={<Package className="h-4 w-4 text-muted-foreground" />}
+                  description="Distinct materials in use"
+                />
+                <StatsCard 
+                  title="Low Stock Materials"
+                  value={getLowStockCount()}
+                  icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+                  description="Materials needing restock"
+                  variant={getLowStockCount() > 0 ? "destructive" : "default"}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-8">
+                <MaterialUsageOverviewChart 
+                  data={usageStats} 
+                  loading={isUsageLoading} 
+                  selectedMaterial={selectedMaterial}
+                />
+
+                <MaterialForecastChart data={usageReport} loading={isReportLoading} />
+                
+                <MaterialUsageTable data={usageReport} loading={isReportLoading} />
+              </div>
+            </div>
+          </TabPanel>
+        </CustomTabs>
 
         {/* View Dialog */}
         <RawMaterialInventoryDetailsDialog

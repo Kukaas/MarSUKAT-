@@ -422,3 +422,268 @@ export const getProductionStats = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get raw materials usage statistics
+// @route   GET /api/school-uniform-productions/raw-materials-usage
+// @access  Private
+export const getRawMaterialsUsageStats = async (req, res) => {
+  try {
+    const { year, month, category, type, material } = req.query;
+    const query = {};
+
+    // Build date filter
+    if (year) {
+      query.productionDateFrom = {
+        $gte: new Date(year, 0, 1),
+        $lt: new Date(parseInt(year) + 1, 0, 1),
+      };
+    }
+
+    if (month) {
+      query.productionDateFrom = {
+        $gte: new Date(year, parseInt(month) - 1, 1),
+        $lt: new Date(year, parseInt(month), 1),
+      };
+    }
+
+    // Filter by material category, type, or specific material if specified
+    if (category || type || material) {
+      query["rawMaterialsUsed"] = {};
+      
+      if (category) {
+        query["rawMaterialsUsed.category"] = category;
+      }
+      
+      if (type) {
+        query["rawMaterialsUsed.type"] = type;
+      }
+      
+      // Handle specific material filter (format: category-type)
+      if (material) {
+        const [materialCategory, materialType] = material.split('-');
+        if (materialCategory && materialType) {
+          query["rawMaterialsUsed.category"] = materialCategory;
+          query["rawMaterialsUsed.type"] = materialType;
+        }
+      }
+    }
+
+    const productions = await SchoolUniformProduction.find(query);
+
+    // Track monthly usage by material
+    const monthlyUsageByMaterial = {};
+    const yearlyUsageByMaterial = {};
+    const materialList = new Set();
+
+    productions.forEach(production => {
+      const productionMonth = new Date(production.productionDateFrom).getMonth() + 1;
+      const productionYear = new Date(production.productionDateFrom).getFullYear();
+      
+      production.rawMaterialsUsed.forEach(material => {
+        // Skip if not matching the specified material filter
+        if (req.query.material) {
+          const materialId = `${material.category}-${material.type}`;
+          if (materialId !== req.query.material) {
+            return;
+          }
+        }
+        
+        const materialKey = `${material.category}-${material.type}`;
+        materialList.add(materialKey);
+        
+        // Calculate total quantity used for this production
+        const totalUsed = parseFloat(material.quantity) * production.quantity;
+        
+        // Monthly tracking
+        const monthKey = `${productionYear}-${productionMonth}`;
+        if (!monthlyUsageByMaterial[monthKey]) {
+          monthlyUsageByMaterial[monthKey] = {};
+        }
+        
+        if (!monthlyUsageByMaterial[monthKey][materialKey]) {
+          monthlyUsageByMaterial[monthKey][materialKey] = {
+            category: material.category,
+            type: material.type,
+            quantity: 0,
+            unit: material.unit,
+            name: material.name || `${material.category} ${material.type}`
+          };
+        }
+        
+        monthlyUsageByMaterial[monthKey][materialKey].quantity += totalUsed;
+        
+        // Yearly tracking
+        if (!yearlyUsageByMaterial[productionYear]) {
+          yearlyUsageByMaterial[productionYear] = {};
+        }
+        
+        if (!yearlyUsageByMaterial[productionYear][materialKey]) {
+          yearlyUsageByMaterial[productionYear][materialKey] = {
+            category: material.category,
+            type: material.type,
+            quantity: 0,
+            unit: material.unit,
+            name: material.name || `${material.category} ${material.type}`
+          };
+        }
+        
+        yearlyUsageByMaterial[productionYear][materialKey].quantity += totalUsed;
+      });
+    });
+
+    // Convert to arrays for easier consumption by frontend
+    const monthlyData = Object.keys(monthlyUsageByMaterial).map(monthKey => {
+      const [year, month] = monthKey.split('-');
+      return {
+        year: parseInt(year),
+        month: parseInt(month),
+        materials: Object.values(monthlyUsageByMaterial[monthKey])
+      };
+    });
+
+    const yearlyData = Object.keys(yearlyUsageByMaterial).map(year => {
+      return {
+        year: parseInt(year),
+        materials: Object.values(yearlyUsageByMaterial[year])
+      };
+    });
+
+    // Get current inventory levels for comparison
+    const materialInventory = [];
+    for (const materialKey of materialList) {
+      const [category, type] = materialKey.split('-');
+      const materialType = await RawMaterialType.findOne({ name: type });
+      
+      if (materialType) {
+        const inventory = await RawMaterialInventory.findOne({
+          category,
+          rawMaterialType: materialType._id
+        }).populate('rawMaterialType', 'name');
+        
+        if (inventory) {
+          materialInventory.push({
+            category,
+            type,
+            name: inventory.name || `${category} ${type}`,
+            currentQuantity: inventory.quantity,
+            unit: inventory.unit,
+            status: inventory.status
+          });
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      monthlyData,
+      yearlyData,
+      currentInventory: materialInventory
+    });
+  } catch (error) {
+    console.error("Error fetching raw materials usage stats:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to fetch raw materials usage statistics",
+      error: error.message 
+    });
+  }
+};
+
+// @desc    Generate detailed raw material usage report
+// @route   GET /api/school-uniform-productions/material-usage-report
+// @access  Private
+export const getMaterialUsageReport = async (req, res) => {
+  try {
+    let { startDate, endDate, category, type } = req.query;
+    
+    // Set default date range if not provided (last 30 days)
+    if (!startDate) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      startDate = thirtyDaysAgo;
+    } else {
+      startDate = new Date(startDate);
+    }
+    
+    if (!endDate) {
+      endDate = new Date();
+    } else {
+      endDate = new Date(endDate);
+    }
+    
+    // Validate dates
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Please use YYYY-MM-DD format."
+      });
+    }
+    
+    // Generate the report using the static method
+    const report = await SchoolUniformProduction.generateMaterialUsageReport(
+      startDate,
+      endDate,
+      category,
+      type
+    );
+    
+    // Get current inventory levels for comparison
+    const materialInventory = [];
+    for (const material of report) {
+      const materialType = await RawMaterialType.findOne({ name: material.type });
+      
+      if (materialType) {
+        const inventory = await RawMaterialInventory.findOne({
+          category: material.category,
+          rawMaterialType: materialType._id
+        });
+        
+        if (inventory) {
+          materialInventory.push({
+            category: material.category,
+            type: material.type,
+            currentQuantity: inventory.quantity,
+            unit: inventory.unit,
+            status: inventory.status
+          });
+        }
+      }
+    }
+    
+    // Calculate consumption rate (average per day)
+    const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    
+    const reportWithRates = report.map(material => {
+      const matchingInventory = materialInventory.find(
+        inv => inv.category === material.category && inv.type === material.type
+      );
+      
+      return {
+        ...material,
+        currentInventory: matchingInventory ? matchingInventory.currentQuantity : 0,
+        inventoryStatus: matchingInventory ? matchingInventory.status : 'Unknown',
+        dailyConsumptionRate: parseFloat((material.totalQuantity / daysDiff).toFixed(2)),
+        estimatedDaysRemaining: matchingInventory 
+          ? Math.floor(matchingInventory.currentQuantity / (material.totalQuantity / daysDiff))
+          : 0
+      };
+    });
+    
+    res.status(200).json({
+      success: true,
+      dateRange: {
+        startDate,
+        endDate,
+        daysCovered: daysDiff
+      },
+      materialUsage: reportWithRates
+    });
+  } catch (error) {
+    console.error("Error generating material usage report:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate material usage report",
+      error: error.message
+    });
+  }
+};

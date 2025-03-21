@@ -9,13 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  * @param {Array} props.tabs - Array of tab objects with { value, label, icon: IconComponent }
  * @param {React.ReactNode} props.children - Content for each tab, should be TabsContent components
  * @param {string} props.className - Optional additional class names
+ * @param {string} props.tabsListClassName - Optional class names for the tabs list container
  */
 export function CustomTabs({ 
   defaultValue, 
   onValueChange, 
   tabs = [], 
   children,
-  className = "" 
+  className = "",
+  tabsListClassName = ""
 }) {
   return (
     <Tabs 
@@ -24,7 +26,7 @@ export function CustomTabs({
       className={`w-full ${className}`}
     >
       <div className="border-b">
-        <TabsList className="h-12 w-full justify-start rounded-none bg-transparent p-0">
+        <TabsList className={`h-12 w-full justify-start rounded-none bg-transparent p-0 ${tabsListClassName}`}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             
@@ -32,7 +34,7 @@ export function CustomTabs({
               <TabsTrigger 
                 key={tab.value}
                 value={tab.value} 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent relative rounded-none border-b-2 border-transparent px-6 pb-3 pt-2 font-medium text-muted-foreground transition-none data-[state=active]:text-foreground"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent relative rounded-none border-b-2 border-transparent px-4 pb-3 pt-2 font-medium text-muted-foreground transition-none data-[state=active]:text-foreground whitespace-nowrap"
               >
                 <div className="flex items-center gap-2">
                   {Icon && <Icon className="h-4 w-4" />}

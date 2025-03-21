@@ -130,6 +130,87 @@ schoolUniformProductionSchema.pre("save", async function (next) {
   }
 });
 
+// Static method to generate material usage report
+schoolUniformProductionSchema.statics.generateMaterialUsageReport = async function(startDate, endDate, category, type) {
+  const query = {
+    productionDateFrom: {
+      $gte: startDate,
+      $lte: endDate
+    }
+  };
+  
+  // Add material filters if provided
+  if (category || type) {
+    if (category) {
+      query['rawMaterialsUsed.category'] = category;
+    }
+    if (type) {
+      query['rawMaterialsUsed.type'] = type;
+    }
+  }
+  
+  const productions = await this.find(query);
+  
+  // Track usage by material
+  const materialUsage = {};
+  
+  // Process each production record
+  productions.forEach(production => {
+    production.rawMaterialsUsed.forEach(material => {
+      const materialKey = `${material.category}-${material.type}`;
+      
+      if (!materialUsage[materialKey]) {
+        materialUsage[materialKey] = {
+          category: material.category,
+          type: material.type,
+          totalQuantity: 0,
+          unit: material.unit,
+          usageByProduct: {},
+          monthlyUsage: {}
+        };
+      }
+      
+      // Calculate total used in this production
+      const quantityUsed = parseFloat(material.quantity) * production.quantity;
+      materialUsage[materialKey].totalQuantity += quantityUsed;
+      
+      // Track usage by product type
+      const productKey = `${production.level}-${production.productType}-${production.size}`;
+      if (!materialUsage[materialKey].usageByProduct[productKey]) {
+        materialUsage[materialKey].usageByProduct[productKey] = 0;
+      }
+      materialUsage[materialKey].usageByProduct[productKey] += quantityUsed;
+      
+      // Track usage by month
+      const month = new Date(production.productionDateFrom).getMonth() + 1;
+      const year = new Date(production.productionDateFrom).getFullYear();
+      const monthKey = `${year}-${month}`;
+      
+      if (!materialUsage[materialKey].monthlyUsage[monthKey]) {
+        materialUsage[materialKey].monthlyUsage[monthKey] = 0;
+      }
+      materialUsage[materialKey].monthlyUsage[monthKey] += quantityUsed;
+    });
+  });
+  
+  // Convert to array and format for easier consumption
+  const result = Object.values(materialUsage).map(item => {
+    return {
+      ...item,
+      usageByProduct: Object.entries(item.usageByProduct).map(([key, value]) => {
+        const [level, type, size] = key.split('-');
+        return { level, type, size, quantity: value };
+      }),
+      monthlyUsage: Object.entries(item.monthlyUsage).map(([key, value]) => {
+        const [year, month] = key.split('-');
+        return { year: parseInt(year), month: parseInt(month), quantity: value };
+      })
+    };
+  });
+  
+  return result;
+};
+
 const SchoolUniformProduction = mongoose.model(
   "SchoolUniformProduction",
   schoolUniformProductionSchema

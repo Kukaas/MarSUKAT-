@@ -33,6 +33,60 @@ export const inventoryAPI = {
     return response.data;
   },
 
+  getMaterialUsageStats: async (materialId, year, month) => {
+    // First, get the material details
+    const material = await inventoryAPI.getRawMaterialInventoryById(materialId);
+    
+    // Then fetch usage stats with the category and type
+    if (material && material.rawMaterialType) {
+      const response = await api.get("/school-uniform-productions/raw-materials-usage", {
+        params: {
+          year,
+          month,
+          category: material.category,
+          type: material.rawMaterialType.name
+        }
+      });
+      return {
+        material,
+        usageStats: response.data
+      };
+    }
+    throw new Error("Could not retrieve material details");
+  },
+  
+  getMaterialForecast: async (materialId, days = 30) => {
+    // Get the material details
+    const material = await inventoryAPI.getRawMaterialInventoryById(materialId);
+    
+    if (material && material.rawMaterialType) {
+      // Calculate date range
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      
+      // Format dates
+      const formattedStartDate = startDate.toISOString().split('T')[0];
+      const formattedEndDate = endDate.toISOString().split('T')[0];
+      
+      // Fetch usage report with the specific material
+      const response = await api.get("/school-uniform-productions/material-usage-report", {
+        params: {
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          category: material.category,
+          type: material.rawMaterialType.name
+        }
+      });
+      
+      return {
+        material,
+        forecastData: response.data
+      };
+    }
+    throw new Error("Could not retrieve material details");
+  },
+
   getAllUniformInventory: async () => {
     const response = await api.get("/uniform-inventory");
     return response.data;

@@ -6,6 +6,8 @@ import {
   updateSchoolUniformProduction,
   deleteSchoolUniformProduction,
   getProductionStats,
+  getRawMaterialsUsageStats,
+  getMaterialUsageReport
 } from "../controllers/schoolUniformProduction.controller.js";
 import { isJobOrder } from "../middleware/jobOrder.middleware.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
@@ -15,6 +17,8 @@ const router = express.Router();
 // Public routes
 router.get("/", getAllSchoolUniformProductions);
 router.get("/stats", getProductionStats);
+router.get("/raw-materials-usage", getRawMaterialsUsageStats);
+router.get("/material-usage-report", getMaterialUsageReport);
 router.get("/:id", getSchoolUniformProductionById);
 
 // Job Order only routes

@@ -8,11 +8,20 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
+  TrendingUp,
+  Clock,
+  BarChart
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { ViewDetailsDialog } from "@/components/custom-components/ViewDetailsDialog";
+import { useEffect, useState } from "react";
+import { inventoryAPI } from "../../api/inventoryApi";
+import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const InfoCard = ({ icon: Icon, label, value, className }) => (
   <Card
@@ -49,6 +58,55 @@ const SectionTitle = ({ children }) => (
 );
 
 function RawMaterialInventoryContent({ item }) {
+  const [usageData, setUsageData] = useState(null);
+  const [forecastData, setForecastData] = useState(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
+
+  useEffect(() => {
+    if (item?._id) {
+      fetchUsageData();
+    }
+  }, [item]);
+
+  const fetchUsageData = async () => {
+    try {
+      setIsLoadingUsage(true);
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth() + 1;
+      
+      // Fetch usage stats for current month
+      const usageStats = await inventoryAPI.getMaterialUsageStats(item._id, year, month);
+      setUsageData(usageStats);
+      
+      // Fetch forecast data for next 30 days
+      const forecast = await inventoryAPI.getMaterialForecast(item._id, 30);
+      setForecastData(forecast);
+    } catch (error) {
+      console.error("Error fetching usage data:", error);
+    } finally {
+      setIsLoadingUsage(false);
+    }
+  };
+
+  // Calculate usage rate from forecast data
+  const getUsageRate = () => {
+    if (!forecastData || !forecastData.forecastData || !forecastData.forecastData.materialUsage) {
+      return { daily: 0, monthly: 0, daysRemaining: 0 };
+    }
+    
+    const material = forecastData.forecastData.materialUsage.find(
+      m => m.category === item.category && m.type === item.rawMaterialType.name
+    );
+    
+    if (!material) return { daily: 0, monthly: 0, daysRemaining: 0 };
+    
+    return {
+      daily: material.dailyConsumptionRate || 0,
+      monthly: (material.dailyConsumptionRate || 0) * 30,
+      daysRemaining: material.estimatedDaysRemaining || 0
+    };
+  };
+
   // Status message mapping
   const statusMessages = {
     "Low Stock": "This item is running low. Consider restocking soon.",
@@ -59,6 +117,8 @@ function RawMaterialInventoryContent({ item }) {
   // Check if we need to show the status alert
   const showStatusAlert =
     item?.status === "Low Stock" || item?.status === "Out of Stock";
+
+  const usageRates = getUsageRate();
 
   return (
     <ScrollArea className="h-full">
@@ -169,6 +229,80 @@ function RawMaterialInventoryContent({ item }) {
               value={`${item?.quantity || "-"} ${item?.unit || ""}`}
             />
           </div>
+        </div>
+
+        {/* Usage Information */}
+        <div className="space-y-4 sm:space-y-6">
+          <SectionTitle>Usage Analysis</SectionTitle>
+          {isLoadingUsage ? (
+            <Card>
+              <CardContent className="p-4 flex justify-center items-center py-8">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <p className="text-sm text-muted-foreground">Loading usage data...</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+                <InfoCard
+                  icon={TrendingUp}
+                  label="Daily Consumption"
+                  value={`${usageRates.daily.toFixed(2)} ${item?.unit || ""}/day`}
+                />
+                <InfoCard
+                  icon={TrendingUp}
+                  label="Monthly Consumption"
+                  value={`${usageRates.monthly.toFixed(2)} ${item?.unit || ""}/month`}
+                />
+              </div>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    Inventory Forecast
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Estimated days remaining:</span>
+                        <span className="font-medium">{usageRates.daysRemaining} days</span>
+                      </div>
+                      <Progress 
+                        value={Math.min(usageRates.daysRemaining / 60 * 100, 100)} 
+                        className={cn(
+                          usageRates.daysRemaining <= 7 ? "bg-red-200" : 
+                          usageRates.daysRemaining <= 30 ? "bg-amber-200" : "bg-green-200"
+                        )}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Critical</span>
+                        <span>Low</span>
+                        <span>Good</span>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-2">
+                      <Link to="/joborder/material-usage-monitoring">
+                        <Button 
+                          variant="outline" 
+                          className="w-full flex items-center gap-2" 
+                          size="sm"
+                        >
+                          <BarChart className="h-4 w-4" />
+                          View Detailed Usage Analytics
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         {/* Material Image */}
