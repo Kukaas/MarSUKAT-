@@ -122,7 +122,7 @@ export function CustomChart({
   const renderChart = () => {
     const commonProps = {
       data: data,
-      margin: { top: 20, right: 20, bottom: 20, left: 60 },
+      margin: { top: 20, right: 20, bottom: 20, left: 0 },
     };
 
     const customTooltip = ({ active, payload }) => {
@@ -173,6 +173,7 @@ export function CustomChart({
               axisLine={false}
               tickFormatter={(value) => `${valuePrefix}${value}`}
               tick={{ fill: COLORS.axis }}
+              width={50}
             />
             <Tooltip content={customTooltip} />
             <Line
@@ -211,6 +212,7 @@ export function CustomChart({
               axisLine={false}
               tickFormatter={(value) => `${valuePrefix}${value}`}
               tick={{ fill: COLORS.axis }}
+              width={50}
             />
             <Tooltip content={customTooltip} />
             <Scatter
@@ -246,6 +248,7 @@ export function CustomChart({
               axisLine={false}
               tickFormatter={(value) => `${valuePrefix}${value}`}
               tick={{ fill: COLORS.axis }}
+              width={50}
             />
             <Tooltip content={customTooltip} />
             <Bar
