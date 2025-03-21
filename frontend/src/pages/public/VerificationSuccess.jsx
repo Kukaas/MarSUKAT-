@@ -34,7 +34,7 @@ const VerificationSuccess = () => {
                   className="w-full bg-gray-900 hover:bg-gray-800 shadow transition-all group"
                   size="lg"
                 >
-                  <span className="flex items-center justify-center gap-2">
+                  <span className="flex items-center justify-center gap-2 text-white">
                     Continue to Login
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </span>
@@ -44,7 +44,7 @@ const VerificationSuccess = () => {
               <Link to="/" className="block">
                 <Button
                   variant="outline"
-                  className="w-full border-gray-200 hover:bg-gray-50 transition-all"
+                  className="w-full border-gray-200 transition-all"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Home className="w-4 h-4" />
