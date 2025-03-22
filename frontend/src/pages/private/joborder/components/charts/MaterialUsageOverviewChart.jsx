@@ -290,13 +290,13 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
       setSelectedChartMaterial("all");
     } else if (availableMaterials.length === 1) {
       setSelectedChartMaterial(availableMaterials[0].key);
-    } else if (selectedMaterial !== "all") {
-      setSelectedChartMaterial(selectedMaterial);
     } else {
-      // Try to find the "All Materials" entry
+      // Always try to find the "All Materials" entry first
       const allMaterialsEntry = availableMaterials.find(m => m.key === 'all-materials');
       if (allMaterialsEntry) {
         setSelectedChartMaterial(allMaterialsEntry.key);
+      } else if (selectedMaterial !== "all") {
+        setSelectedChartMaterial(selectedMaterial);
       } else {
         setSelectedChartMaterial(availableMaterials[0].key);
       }
