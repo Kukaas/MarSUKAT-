@@ -126,6 +126,19 @@ const StatusBadge = ({
       border: "border border-red-200 dark:border-red-800",
       hoverBg: "hover:bg-red-50 dark:hover:bg-red-900/20",
     },
+    // Material Inventory specific statuses
+    "Critical": {
+      bg: outline ? "bg-transparent" : "bg-red-50 dark:bg-red-950/30",
+      text: "text-red-600 dark:text-red-400",
+      border: "border border-red-200 dark:border-red-800",
+      hoverBg: "hover:bg-red-50 dark:hover:bg-red-900/20",
+    },
+    "In Stock": {
+      bg: outline ? "bg-transparent" : "bg-green-50 dark:bg-green-950/30",
+      text: "text-green-600 dark:text-green-400",
+      border: "border border-green-200 dark:border-green-800",
+      hoverBg: "hover:bg-green-50 dark:hover:bg-green-900/20",
+    },
   };
 
   // Use provided status map or default

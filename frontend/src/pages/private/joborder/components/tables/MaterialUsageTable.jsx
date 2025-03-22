@@ -5,6 +5,7 @@ import { DataTable } from "@/components/custom-components/DataTable";
 import { useState } from "react";
 import { RawMaterialInventoryDetailsDialog } from "../details/raw-material-inventory-details";
 import SectionHeader from "@/components/custom-components/SectionHeader";
+import StatusBadge from "@/components/custom-components/StatusBadge";
 
 const MONTHS = [
   "January",
@@ -68,7 +69,7 @@ export function MaterialUsageTable({ data, loading }) {
     {
       key: "status",
       header: "Status",
-      render: (_, row) => <StatusBadge material={row} />,
+      render: (_, row) => <MaterialStatusBadge material={row} />,
     },
   ];
 
@@ -83,7 +84,13 @@ export function MaterialUsageTable({ data, loading }) {
       inventoryId: `MAT-${material.type.substring(0, 3).toUpperCase()}-${Math.floor(Math.random() * 10000)}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      _id: material.id || `material-${Math.random().toString(36).substr(2, 9)}`
+      _id: material.id || `material-${Math.random().toString(36).substr(2, 9)}`,
+      // Add usage data
+      usageData: {
+        dailyConsumptionRate: material.dailyConsumptionRate,
+        monthlyConsumptionRate: material.dailyConsumptionRate * 30,
+        estimatedDaysRemaining: material.estimatedDaysRemaining
+      }
     };
     
     setSelectedMaterial(formattedMaterial);
@@ -141,17 +148,23 @@ export function MaterialUsageTable({ data, loading }) {
   );
 }
 
-function StatusBadge({ material }) {
-  if (material.estimatedDaysRemaining <= 7) {
-    return (
-      <Badge variant="destructive" className="flex items-center gap-1">
-        <AlertTriangle className="h-3 w-3" />
-        Critical
-      </Badge>
-    );
-  } else if (material.estimatedDaysRemaining <= 30) {
-    return <Badge variant="warning">Low Stock</Badge>;
-  } else {
-    return <Badge variant="outline">Good</Badge>;
-  }
+function MaterialStatusBadge({ material }) {
+  const getStatus = () => {
+    if (material.estimatedDaysRemaining <= 0) {
+      return "Out of Stock";
+    } else if (material.estimatedDaysRemaining <= 7) {
+      return "Critical";
+    } else if (material.estimatedDaysRemaining <= 30) {
+      return "Low Stock";
+    }
+    return "In Stock";
+  };
+
+  return (
+    <StatusBadge
+      status={getStatus()}
+      icon={AlertTriangle}
+      className="text-xs"
+    />
+  );
 } 

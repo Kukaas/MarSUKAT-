@@ -58,52 +58,18 @@ const SectionTitle = ({ children }) => (
 );
 
 function RawMaterialInventoryContent({ item }) {
-  const [usageData, setUsageData] = useState(null);
-  const [forecastData, setForecastData] = useState(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
 
-  useEffect(() => {
-    if (item?._id) {
-      fetchUsageData();
-    }
-  }, [item]);
-
-  const fetchUsageData = async () => {
-    try {
-      setIsLoadingUsage(true);
-      const year = new Date().getFullYear();
-      const month = new Date().getMonth() + 1;
-      
-      // Fetch usage stats for current month
-      const usageStats = await inventoryAPI.getMaterialUsageStats(item._id, year, month);
-      setUsageData(usageStats);
-      
-      // Fetch forecast data for next 30 days
-      const forecast = await inventoryAPI.getMaterialForecast(item._id, 30);
-      setForecastData(forecast);
-    } catch (error) {
-      console.error("Error fetching usage data:", error);
-    } finally {
-      setIsLoadingUsage(false);
-    }
-  };
-
-  // Calculate usage rate from forecast data
+  // Calculate usage rate from item data
   const getUsageRate = () => {
-    if (!forecastData || !forecastData.forecastData || !forecastData.forecastData.materialUsage) {
+    if (!item?.usageData) {
       return { daily: 0, monthly: 0, daysRemaining: 0 };
     }
     
-    const material = forecastData.forecastData.materialUsage.find(
-      m => m.category === item.category && m.type === item.rawMaterialType.name
-    );
-    
-    if (!material) return { daily: 0, monthly: 0, daysRemaining: 0 };
-    
     return {
-      daily: material.dailyConsumptionRate || 0,
-      monthly: (material.dailyConsumptionRate || 0) * 30,
-      daysRemaining: material.estimatedDaysRemaining || 0
+      daily: item.usageData.dailyConsumptionRate || 0,
+      monthly: item.usageData.monthlyConsumptionRate || 0,
+      daysRemaining: item.usageData.estimatedDaysRemaining || 0
     };
   };
 
@@ -284,19 +250,6 @@ function RawMaterialInventoryContent({ item }) {
                         <span>Low</span>
                         <span>Good</span>
                       </div>
-                    </div>
-                    
-                    <div className="pt-2">
-                      <Link to="/joborder/material-usage-monitoring">
-                        <Button 
-                          variant="outline" 
-                          className="w-full flex items-center gap-2" 
-                          size="sm"
-                        >
-                          <BarChart className="h-4 w-4" />
-                          View Detailed Usage Analytics
-                        </Button>
-                      </Link>
                     </div>
                   </div>
                 </CardContent>
