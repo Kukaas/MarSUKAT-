@@ -76,7 +76,7 @@ export const sendVerificationEmail = async (
                           <h2 style="color: #1a1a1a; font-size: 24px; font-weight: 600; text-align: center; margin: 0 0 20px;">Welcome to MarSUKAT!</h2>
                           
                           ${
-                            role === "JobOrder" || role === "SuperAdmin"
+                            role === "JobOrder" || role === "SuperAdmin" || role === "BAO"
                               ? `
                           <!-- Account Information Card -->
                           <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; margin: 30px 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">

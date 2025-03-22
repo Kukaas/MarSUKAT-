@@ -60,7 +60,7 @@ export function DeleteConfirmation({
             <AlertDialogAction
               type="button"
               disabled={isDeleting}
-              className="flex-1 sm:flex-none bg-destructive hover:bg-destructive/90"
+              className="flex-1 sm:flex-none bg-destructive hover:bg-destructive/90 text-white"
               onClick={(e) => {
                 e.preventDefault();
                 if (!isDeleting) {
