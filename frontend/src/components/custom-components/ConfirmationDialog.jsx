@@ -49,11 +49,11 @@ export function ConfirmationDialog({
   const getButtonStyle = () => {
     switch (variant) {
       case "success":
-        return "bg-green-600 hover:bg-green-700";
+        return "bg-green-600 hover:bg-green-700 text-white";
       case "destructive":
-        return "bg-destructive hover:bg-destructive/90";
+        return "bg-destructive hover:bg-destructive/90 text-white";
       default:
-        return "bg-primary hover:bg-primary/90";
+        return "bg-primary hover:bg-primary/90 text-white";
     }
   };
 

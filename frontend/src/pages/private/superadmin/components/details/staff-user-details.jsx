@@ -7,13 +7,11 @@ import StatusBadge from "@/components/custom-components/StatusBadge";
 import {
   User,
   Calendar,
-  CheckCircle2,
-  Ban,
   Pencil,
   Mail,
-  Users,
   Briefcase,
   Activity,
+  Shield,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -52,7 +50,7 @@ const SectionTitle = ({ children }) => (
   </div>
 );
 
-const JobOrderContent = ({ data, onEdit, onApprove, onReject }) => {
+const StaffUserContent = ({ data, onEdit }) => {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header with Status */}
@@ -70,12 +68,12 @@ const JobOrderContent = ({ data, onEdit, onApprove, onReject }) => {
           </Avatar>
           <div className="text-center pb-3 sm:pb-4">
             <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">
-              {data.name || "Job Order"}
+              {data.name || "Staff User"}
             </h3>
             <div className="flex items-center gap-2 justify-center flex-wrap">
               <StatusBadge
-                status={data.jobType}
-                icon={Briefcase}
+                status={data.role}
+                icon={Shield}
                 className="text-xs sm:text-sm"
               />
               <StatusBadge
@@ -116,7 +114,7 @@ const JobOrderContent = ({ data, onEdit, onApprove, onReject }) => {
               </a>
             }
           />
-          <InfoCard icon={Users} label="Gender" value={data.gender} />
+          <InfoCard icon={Briefcase} label="Position" value={data.position} />
           <InfoCard
             icon={Calendar}
             label="Created At"
@@ -125,71 +123,47 @@ const JobOrderContent = ({ data, onEdit, onApprove, onReject }) => {
         </div>
       </div>
 
-      {/* Job Description */}
+      {/* Role Information */}
       <div className="space-y-4 sm:space-y-6">
-        <SectionTitle>Job Description</SectionTitle>
+        <SectionTitle>Role Information</SectionTitle>
         <Card className="group border-border/50 shadow-sm bg-card dark:bg-card/95">
           <CardContent className="p-4 sm:p-6">
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {data.jobDescription || "No description provided"}
-            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <span className="font-medium">Role:</span>
+                <span className="capitalize">{data.role}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                <span className="font-medium">Status:</span>
+                <span className={data.isActive ? "text-green-600" : "text-red-600"}>
+                  {data.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Action Buttons */}
-      {(onApprove || onReject) && (
-        <div className="flex items-center justify-end gap-3">
-          {onReject && (
-            <Button
-              variant="outline"
-              onClick={onReject}
-              className="rounded-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-            >
-              <Ban className="h-4 w-4 mr-2" />
-              Reject
-            </Button>
-          )}
-          {onApprove && (
-            <Button
-              variant="outline"
-              onClick={onApprove}
-              className="rounded-full border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Approve
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   );
 };
 
-const JobOrderDetailsDialog = ({
-  isOpen,
-  onClose,
-  data,
-  onEdit,
-  onApprove,
-  onReject,
-}) => {
+const StaffUserDetailsDialog = ({ isOpen, onClose, data, onEdit }) => {
   if (!data) return null;
 
   return (
     <ViewDetailsDialog
       open={isOpen}
       onClose={onClose}
-      title="Job Order Details"
+      title="Staff User Details"
     >
-      <JobOrderContent
+      <StaffUserContent
         data={data}
         onEdit={onEdit}
-        onApprove={onApprove}
-        onReject={onReject}
       />
     </ViewDetailsDialog>
   );
 };
 
-export { JobOrderDetailsDialog };
+export { StaffUserDetailsDialog }; 

@@ -8,19 +8,18 @@ import Sizes from "../pages/private/superadmin/pages/Sizes";
 import Prices from "../pages/private/superadmin/pages/Prices";
 import RawMaterialTypes from "../pages/private/superadmin/pages/RawMaterialTypes";
 import ProductTypes from "../pages/private/superadmin/pages/ProductTypes";
-import JobOrders from "../pages/private/superadmin/pages/JobOrders";
 import { StudentAnnouncement } from "../pages/private/superadmin/pages/StudentAnnouncement";
 import { StudentUser } from "../pages/private/superadmin/pages/StudentUser";
 import ProductManagement from "../pages/private/superadmin/pages/ProductManagement";
-
+import StaffUsers from "@/pages/private/superadmin/pages/StaffUsers";
 export const superAdminRoutes = [
   {
     path: "/superadmin/dashboard/:id",
     element: <SuperAdminDashboard />,
   },
   {
-    path: "/superadmin/create-job-order",
-    element: <JobOrders />,
+    path: "/superadmin/staff-users",
+    element: <StaffUsers />,
   },
   {
     path: "/superadmin/maintenance/levels",

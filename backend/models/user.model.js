@@ -140,21 +140,27 @@ const jobOrderSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  gender: {
+  position: {
     type: String,
     required: true,
-  },
-  jobType: {
-    type: String,
-    required: true,
-  },
-  jobDescription: {
-    type: String,
-    required: true,
-  },
+  }
 });
 
 const JobOrder = User.discriminator("JobOrder", jobOrderSchema);
 
+// BAO Schema
+const baoSchema = new mongoose.Schema({
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  position: {
+    type: String,
+    required: true,
+  }
+});
+
+const BAO = User.discriminator("BAO", baoSchema);
+
 export default User;
-export { Student, CommercialJob, Coordinator, SuperAdmin, JobOrder };
+export { Student, CommercialJob, Coordinator, SuperAdmin, JobOrder, BAO };

@@ -94,10 +94,10 @@ export const menuItems = {
       description: "Overview of system",
     },
     {
-      title: "Create Job Order",
+      title: "Staff Users",
       icon: <FileSpreadsheet />,
-      path: () => "/superadmin/create-job-order",
-      description: "Create a new job order",
+      path: () => "/superadmin/staff-users",
+      description: "Create a new staff user",
     },
     {
       title: "Maintenance",

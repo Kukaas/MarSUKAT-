@@ -88,10 +88,15 @@ export const register = async (req, res) => {
   }
 };
 
-// Create JobOrder (SuperAdmin only)
-export const createJobOrder = async (req, res) => {
+// Create Staff User (JobOrder or BAO) (SuperAdmin only)
+export const createStaffUser = async (req, res) => {
   try {
-    const { name, email, gender, jobType, jobDescription } = req.body;
+    const { name, email, position, role } = req.body;
+
+    // Validate role
+    if (!['JobOrder', 'BAO'].includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Must be either JobOrder or BAO" });
+    }
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -118,32 +123,30 @@ export const createJobOrder = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create JobOrder user
-    const jobOrder = await User.create({
+    // Create staff user
+    const staffUser = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: "JobOrder",
-      gender,
-      jobType,
-      jobDescription,
+      role,
+      position,
       isActive: true,
       verified: false,
     });
 
-    if (jobOrder) {
+    if (staffUser) {
       // Update and save verification record with user ID
-      verificationRecord.userId = jobOrder._id;
+      verificationRecord.userId = staffUser._id;
       await verificationRecord.save();
 
       // Send verification email with account details
       try {
         await sendVerificationEmail(
           {
-            _id: jobOrder._id,
+            _id: staffUser._id,
             email,
             name,
-            role: "JobOrder",
+            role,
             password,
           },
           uniqueString
@@ -151,27 +154,185 @@ export const createJobOrder = async (req, res) => {
       } catch (emailError) {
         console.error("Failed to send verification email:", emailError);
         // Delete the created user and verification record if email fails
-        await UserVerification.deleteOne({ userId: jobOrder._id });
-        await User.findByIdAndDelete(jobOrder._id);
+        await UserVerification.deleteOne({ userId: staffUser._id });
+        await User.findByIdAndDelete(staffUser._id);
         return res
           .status(500)
           .json({ message: "Failed to send verification email" });
       }
 
       res.status(201).json({
-        _id: jobOrder._id,
-        name: jobOrder.name,
-        email: jobOrder.email,
-        role: jobOrder.role,
-        gender: jobOrder.gender,
-        jobType: jobOrder.jobType,
-        jobDescription: jobOrder.jobDescription,
-        isActive: jobOrder.isActive,
-        verified: jobOrder.verified,
+        _id: staffUser._id,
+        name: staffUser.name,
+        email: staffUser.email,
+        role: staffUser.role,
+        position: staffUser.position,
+        isActive: staffUser.isActive,
+        verified: staffUser.verified,
         message:
-          "Job order account created. Please verify your email to activate the account.",
+          `${role} account created. Please verify your email to activate the account.`,
       });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all staff users (JobOrder and BAO)
+export const getAllStaffUsers = async (req, res) => {
+  try {
+    const staffUsers = await User.find({ role: { $in: ['JobOrder', 'BAO'] } }).select("-password");
+    res.status(200).json(staffUsers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get staff user by ID
+export const getStaffUserById = async (req, res) => {
+  try {
+    const staffUser = await User.findOne({
+      _id: req.params.id,
+      role: { $in: ['JobOrder', 'BAO'] }
+    }).select("-password");
+
+    if (!staffUser) {
+      return res.status(404).json({ message: "Staff user not found" });
+    }
+
+    res.status(200).json(staffUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update staff user
+export const updateStaffUser = async (req, res) => {
+  try {
+    const staffUser = await User.findOne({
+      _id: req.params.id,
+      role: { $in: ['JobOrder', 'BAO'] }
+    });
+
+    if (!staffUser) {
+      return res.status(404).json({ message: "Staff user not found" });
+    }
+
+    const { name, email, password, position } = req.body;
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== staffUser.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
+
+    // Update fields
+    staffUser.name = name || staffUser.name;
+    staffUser.email = email || staffUser.email;
+    staffUser.position = position || staffUser.position;
+
+    // Update password if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      staffUser.password = await bcrypt.hash(password, salt);
+    }
+
+    const updatedStaffUser = await staffUser.save();
+
+    res.status(200).json({
+      _id: updatedStaffUser._id,
+      name: updatedStaffUser.name,
+      email: updatedStaffUser.email,
+      role: updatedStaffUser.role,
+      position: updatedStaffUser.position,
+      isActive: updatedStaffUser.isActive,
+      message: "Staff user updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete staff user
+export const deleteStaffUser = async (req, res) => {
+  try {
+    const staffUser = await User.findOne({
+      _id: req.params.id,
+      role: { $in: ['JobOrder', 'BAO'] }
+    });
+
+    if (!staffUser) {
+      return res.status(404).json({ message: "Staff user not found" });
+    }
+
+    await staffUser.deleteOne();
+    res.status(200).json({ message: "Staff user deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Activate staff user
+export const activateStaffUser = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      _id: req.params.id,
+      role: { $in: ['JobOrder', 'BAO'] }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if email is verified
+    if (!user.verified) {
+      return res.status(400).json({
+        message: "Email must be verified before activating the account",
+      });
+    }
+
+    user.isActive = true;
+    await user.save();
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      verified: user.verified,
+      message: `${user.role} account activated successfully`,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Deactivate staff user
+export const deactivateStaffUser = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      _id: req.params.id,
+      role: { $in: ['JobOrder', 'BAO'] }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      message: `${user.role} account deactivated successfully`,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -427,76 +588,6 @@ export const deleteJobOrder = async (req, res) => {
 
     await jobOrder.deleteOne();
     res.status(200).json({ message: "Job order deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Activate JobOrder
-export const activateJobOrder = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.role !== "JobOrder") {
-      return res
-        .status(400)
-        .json({ message: "User is not a JobOrder account" });
-    }
-
-    // Check if email is verified
-    if (!user.verified) {
-      return res.status(400).json({
-        message: "Email must be verified before activating the account",
-      });
-    }
-
-    user.isActive = true;
-    await user.save();
-
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isActive: user.isActive,
-      verified: user.verified,
-      message: "JobOrder account activated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Deactivate JobOrder
-export const deactivateJobOrder = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.role !== "JobOrder") {
-      return res
-        .status(400)
-        .json({ message: "User is not a JobOrder account" });
-    }
-
-    user.isActive = false;
-    await user.save();
-
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isActive: user.isActive,
-      message: "JobOrder account deactivated successfully",
-    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

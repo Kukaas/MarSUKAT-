@@ -166,6 +166,70 @@ export const authAPI = {
 
 // User API calls
 export const userAPI = {
+  // Staff User management (JobOrder and BAO)
+  getAllStaffUsers: async () => {
+    try {
+      const response = await api.get("/users/staff");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getStaffUserById: async (id) => {
+    try {
+      const response = await api.get(`/users/staff/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createStaffUser: async (staffUserData) => {
+    try {
+      const response = await api.post("/users/staff", staffUserData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateStaffUser: async (id, staffUserData) => {
+    try {
+      const response = await api.put(`/users/staff/${id}`, staffUserData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  activateStaffUser: async (staffUserId) => {
+    try {
+      const response = await api.put(`/users/staff/${staffUserId}/activate`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deactivateStaffUser: async (staffUserId) => {
+    try {
+      const response = await api.put(`/users/staff/${staffUserId}/deactivate`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteStaffUser: async (staffUserId) => {
+    try {
+      const response = await api.delete(`/users/staff/${staffUserId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // JobOrder management
   getAllJobOrders: async () => {
     try {

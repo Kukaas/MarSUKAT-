@@ -6,13 +6,13 @@ import {
   updateProfile,
   getAllUsers,
   deleteUser,
-  getAllJobOrders,
-  getJobOrderById,
-  createJobOrder,
-  updateJobOrder,
-  deleteJobOrder,
-  activateJobOrder,
-  deactivateJobOrder,
+  getAllStaffUsers,
+  getStaffUserById,
+  createStaffUser,
+  updateStaffUser,
+  deleteStaffUser,
+  activateStaffUser,
+  deactivateStaffUser,
   getUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
@@ -32,31 +32,16 @@ router.put("/:userId/profile", authenticateUser, updateProfile);
 router.get("/", authenticateUser, isSuperAdmin, getAllUsers);
 router.delete("/:id", authenticateUser, isSuperAdmin, deleteUser);
 
-// Job Order routes
-router.get("/job-orders", authenticateUser, isSuperAdmin, getAllJobOrders);
-router.get("/job-orders/:id", authenticateUser, isSuperAdmin, getJobOrderById);
-router.post("/job-orders", authenticateUser, isSuperAdmin, createJobOrder);
-router.put("/job-orders/:id", authenticateUser, isSuperAdmin, updateJobOrder);
-router.delete(
-  "/job-orders/:id",
-  authenticateUser,
-  isSuperAdmin,
-  deleteJobOrder
-);
-router.put(
-  "/job-orders/:id/activate",
-  authenticateUser,
-  isSuperAdmin,
-  activateJobOrder
-);
-router.put(
-  "/job-orders/:id/deactivate",
-  authenticateUser,
-  isSuperAdmin,
-  deactivateJobOrder
-);
+// Staff User routes (JobOrder and BAO)
+router.get("/staff", authenticateUser, isSuperAdmin, getAllStaffUsers);
+router.get("/staff/:id", authenticateUser, isSuperAdmin, getStaffUserById);
+router.post("/staff", authenticateUser, isSuperAdmin, createStaffUser);
+router.put("/staff/:id", authenticateUser, isSuperAdmin, updateStaffUser);
+router.delete("/staff/:id", authenticateUser, isSuperAdmin, deleteStaffUser);
+router.put("/staff/:id/activate", authenticateUser, isSuperAdmin, activateStaffUser);
+router.put("/staff/:id/deactivate", authenticateUser, isSuperAdmin, deactivateStaffUser);
 
-// Add these routes after your existing routes
+// Notification routes
 router.get("/notifications", authenticateUser, getUserNotifications);
 router.put("/notifications/:notificationId/read", authenticateUser, markNotificationAsRead);
 router.put("/notifications/read-all", authenticateUser, markAllNotificationsAsRead);

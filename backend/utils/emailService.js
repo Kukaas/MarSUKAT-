@@ -36,7 +36,7 @@ export const sendVerificationEmail = async (
       },
       to: email,
       subject:
-        role === "JobOrder" || role === "SuperAdmin"
+        role === "JobOrder" || role === "SuperAdmin" || role === "BAO"
           ? "Verify Your Email and Account Information"
           : "Verify Your Email",
       html: `
