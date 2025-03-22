@@ -145,7 +145,17 @@ const Header = () => {
 
     const getCurrentPath = (pathFn) => {
       try {
-        return typeof pathFn === "function" ? pathFn(userId) : pathFn;
+        if (
+          role === "Student" ||
+          role === "SuperAdmin" ||
+          role === "CommercialJob" ||
+          role === "Coordinator" ||
+          role === "JobOrder" ||
+          role === "BAO"
+        ) {
+          return typeof pathFn === "function" ? pathFn(userId) : pathFn;
+        }
+        return typeof pathFn === "function" ? pathFn() : pathFn;
       } catch (error) {
         console.error("Error generating path:", error);
         return "/";

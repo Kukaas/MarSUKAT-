@@ -41,7 +41,8 @@ export default function AppSidebar() {
       role === "SuperAdmin" ||
       role === "CommercialJob" ||
       role === "Coordinator" ||
-      role === "JobOrder"
+      role === "JobOrder" ||
+      role === "BAO"
     ) {
       return pathFn(userId);
     }

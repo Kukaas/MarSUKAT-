@@ -1,17 +1,21 @@
 // Helper function to get dashboard path based on role and userId
 export const getDashboardPath = (role, userId) => {
   const roleLower = role?.toLowerCase();
+  
+  // If no userId is provided, return the base dashboard path
+  const id = userId || '';
+  
   switch (roleLower) {
     case "student":
-      return `/student/dashboard/${userId}`;
+      return `/student/dashboard/${id}`;
     case "bao":
-      return `/bao/dashboard/${userId}`;
+      return `/bao/dashboard/${id}`;
     case "joborder":
-      return `/job-order/dashboard/${userId}`;
+      return `/job-order/dashboard/${id}`;
     case "staff":
       return "/staff/dashboard";
     case "superadmin":
-      return `/superadmin/dashboard/${userId}`;
+      return `/superadmin/dashboard/${id}`;
     default:
       return "/login";
   }
@@ -29,6 +33,7 @@ export const rolePathMap = {
 // Navigate to role-specific dashboard
 export const navigateToRoleDashboard = (navigate, user) => {
   if (!user?.role) return navigate("/login", { replace: true });
-  const path = getDashboardPath(user.role, user._id);
+  const userId = user._id || user.id; // Try both common ID property names
+  const path = getDashboardPath(user.role, userId);
   navigate(path, { replace: true });
 };
