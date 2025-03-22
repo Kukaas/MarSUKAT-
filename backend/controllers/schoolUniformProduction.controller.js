@@ -3,6 +3,11 @@ import UniformInventory from "../models/uniformInventory.model.js";
 import RawMaterialInventory from "../models/rawMaterialInventory.model.js";
 import RawMaterialType from "../models/rawMaterialType.model.js";
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 // @desc    Get all school uniform productions
 // @route   GET /api/school-uniform-productions
 // @access  Private
@@ -355,51 +360,74 @@ export const getProductionStats = async (req, res) => {
     const { year, month } = req.query;
     const query = {};
 
+    // Validate year and month
+    if (year && isNaN(parseInt(year))) {
+      return res.status(400).json({ message: "Invalid year format" });
+    }
+
+    if (month && (isNaN(parseInt(month)) || parseInt(month) < 1 || parseInt(month) > 12)) {
+      return res.status(400).json({ message: "Invalid month format. Month must be between 1 and 12" });
+    }
+
+    // Build date query
     if (year) {
       query.productionDateFrom = {
-        $gte: new Date(year, 0, 1),
+        $gte: new Date(parseInt(year), 0, 1),
         $lt: new Date(parseInt(year) + 1, 0, 1),
       };
     }
 
     if (month) {
       query.productionDateFrom = {
-        $gte: new Date(year, parseInt(month) - 1, 1),
-        $lt: new Date(year, parseInt(month), 1),
+        $gte: new Date(parseInt(year), parseInt(month) - 1, 1),
+        $lt: new Date(parseInt(year), parseInt(month), 1),
       };
     }
 
     const productions = await SchoolUniformProduction.find(query);
 
-    // Calculate monthly data
+    // Initialize monthly data structure
     const monthlyData = Array.from({ length: 12 }, (_, i) => ({
       month: i + 1,
-      quantity: 0,
+      name: MONTHS[i],
+      data: {}
     }));
 
+    // Process each production record
     productions.forEach((production) => {
       const month = new Date(production.productionDateFrom).getMonth();
-      monthlyData[month].quantity += production.quantity;
+      const productType = production.productType;
+
+      // Initialize product type data if not exists
+      if (!monthlyData[month].data[productType]) {
+        monthlyData[month].data[productType] = 0;
+      }
+
+      // Add quantity to the product type
+      monthlyData[month].data[productType] += production.quantity;
     });
 
-    // Calculate product type breakdown
-    const productTypeMap = new Map();
+    // Calculate product type and size breakdown
+    const productTypeSizeMap = new Map();
     productions.forEach((production) => {
-      const current = productTypeMap.get(production.productType) || {
-        name: production.productType,
+      const key = `${production.productType}-${production.size}`;
+      const current = productTypeSizeMap.get(key) || {
+        name: `${production.productType} (${production.size})`,
         quantity: 0,
+        productType: production.productType,
+        size: production.size
       };
       current.quantity += production.quantity;
-      productTypeMap.set(production.productType, current);
+      productTypeSizeMap.set(key, current);
     });
-    const productTypeBreakdown = Array.from(productTypeMap.values());
+    const productTypeSizeBreakdown = Array.from(productTypeSizeMap.values());
 
     // Calculate level breakdown
     const levelMap = new Map();
     productions.forEach((production) => {
       const current = levelMap.get(production.level) || {
         name: production.level,
-        quantity: 0,
+        quantity: 0
       };
       current.quantity += production.quantity;
       levelMap.set(production.level, current);
@@ -414,12 +442,16 @@ export const getProductionStats = async (req, res) => {
 
     res.status(200).json({
       monthlyData,
-      productTypeBreakdown,
+      productTypeSizeBreakdown,
       levelBreakdown,
       totalProduction,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error in getProductionStats:", error);
+    res.status(500).json({ 
+      message: "Failed to fetch production statistics",
+      error: error.message 
+    });
   }
 };
 

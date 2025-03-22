@@ -2,20 +2,20 @@ import { Shirt } from "lucide-react";
 import { CustomChart } from "@/components/custom-components/CustomChart";
 
 export function ProductTypeProductionChart({ data, loading }) {
-  // Get the data in the correct format
-  const chartData = data?.productTypeBreakdown || [];
+  // Transform the data to show production by product type and size
+  const chartData = data?.productTypeSizeBreakdown || [];
 
   return (
     <CustomChart
       data={chartData}
       loading={loading}
-      title="Production by Product Type"
+      title="Production by Product Type and Size"
       icon={Shirt}
       dataKey="quantity"
       nameKey="name"
       valuePrefix=""
       valueLabel="Units"
-      nameLabel="Product Type"
+      nameLabel="Product Type-Size"
       initialChartType="bar"
     />
   );
