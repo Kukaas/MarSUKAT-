@@ -2,7 +2,7 @@ import FormInput from "@/components/custom-components/FormInput";
 import FormSelect from "@/components/custom-components/FormSelect";
 import FormDateInput from "@/components/custom-components/FormDateInput";
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Form } from "@/components/ui/form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,11 +14,11 @@ import {
   Package,
   Box,
   Scale,
-  AlertCircle,
 } from "lucide-react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import EmptyState from "@/components/custom-components/EmptyState";
+import { StatusMessage } from "@/components/custom-components/StatusMessage";
 
 const formSchema = z.object({
   level: z.string().min(1, "Level is required"),
@@ -55,6 +55,14 @@ export function SchoolUniformProductionForm({
     sizes: [],
   });
   const [selectedProductType, setSelectedProductType] = useState(null);
+  const formRef = useRef(null);
+
+  // Scroll to top when inventory issues appear
+  useEffect(() => {
+    if (inventoryIssues && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [inventoryIssues]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -175,64 +183,41 @@ export function SchoolUniformProductionForm({
   return (
     <Form {...form}>
       <form
+        ref={formRef}
         id="schoolUniformProductionForm"
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8"
       >
         {/* Add Inventory Issues Display at the top */}
         {inventoryIssues && (
-          <Card className="border-red-200 bg-red-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
-                <AlertCircle className="h-5 w-5" />
-                Raw Material Inventory Issues
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {inventoryIssues.missingMaterials.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-red-600">
-                    Missing Materials:
-                  </h4>
-                  <ul className="list-inside list-disc space-y-1">
-                    {inventoryIssues.missingMaterials.map((material, index) => (
-                      <li key={index} className="text-sm text-red-600">
-                        {material.type} ({material.category}) - {material.error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {inventoryIssues.insufficientMaterials.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-red-600">
-                    Insufficient Quantities:
-                  </h4>
-                  <ul className="list-inside list-disc space-y-1">
-                    {inventoryIssues.insufficientMaterials.map(
-                      (material, index) => (
-                        <li key={index} className="text-sm text-red-600">
-                          {material.type} ({material.category}):
-                          <ul className="ml-4 list-inside list-none">
-                            <li>
-                              Available: {material.available} {material.unit}
-                            </li>
-                            <li>
-                              Needed: {material.needed} {material.unit}
-                            </li>
-                            <li>
-                              Shortage: {material.shortageAmount}{" "}
-                              {material.unit}
-                            </li>
-                          </ul>
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <StatusMessage
+            type="warning"
+            title="Raw Material Inventory Issues"
+            message={
+              inventoryIssues.missingMaterials.length > 0
+                ? "Some materials are missing from inventory."
+                : "Some materials have insufficient quantities."
+            }
+            steps={[
+              ...(inventoryIssues.missingMaterials.length > 0
+                ? inventoryIssues.missingMaterials.map(
+                    (material) =>
+                      `${material.type} (${material.category}) - ${material.error}`
+                  )
+                : []),
+              ...(inventoryIssues.insufficientMaterials.length > 0
+                ? inventoryIssues.insufficientMaterials.map(
+                    (material) =>
+                      `${material.type} (${material.category}): Available: ${
+                        material.available
+                      } ${material.unit}, Needed: ${material.needed} ${
+                        material.unit
+                      }, Shortage: ${material.shortageAmount} ${material.unit}`
+                  )
+                : []),
+            ]}
+            reminder="Please ensure all required materials are available in sufficient quantities before proceeding."
+          />
         )}
 
         <div className="space-y-8">

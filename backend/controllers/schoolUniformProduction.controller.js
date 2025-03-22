@@ -2,6 +2,8 @@ import SchoolUniformProduction from "../models/schoolUniformProduction.model.js"
 import UniformInventory from "../models/uniformInventory.model.js";
 import RawMaterialInventory from "../models/rawMaterialInventory.model.js";
 import RawMaterialType from "../models/rawMaterialType.model.js";
+import User from "../models/user.model.js";
+import { createNotification } from "./user.controller.js";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -157,8 +159,10 @@ export const createSchoolUniformProduction = async (req, res) => {
       await uniformInventory.save();
     }
 
-    // Update raw materials inventory
+    // Update raw materials inventory and check for low stock
     const updatedMaterials = [];
+    const lowStockMaterials = [];
+    
     for (const material of rawMaterialsUsed) {
       const materialType = await RawMaterialType.findOne({
         name: material.type,
@@ -183,6 +187,38 @@ export const createSchoolUniformProduction = async (req, res) => {
 
       await rawMaterialInventory.save();
       updatedMaterials.push(rawMaterialInventory);
+
+      // Check if material needs restock notification
+      const unit = material.unit.toLowerCase();
+      const threshold = unit === 'roll' ? 10 : 50; // 10 for Roll, 50 for Piece and Yard
+      
+      if (rawMaterialInventory.quantity <= threshold) {
+        lowStockMaterials.push({
+          type: material.type,
+          category: material.category,
+          quantity: rawMaterialInventory.quantity,
+          unit: material.unit,
+          threshold
+        });
+      }
+    }
+
+    // Send notifications to BAO users for low stock materials
+    if (lowStockMaterials.length > 0) {
+      const baoUsers = await User.find({ role: 'BAO', isActive: true });
+      
+      for (const material of lowStockMaterials) {
+        const notificationMessage = `Low stock alert: ${material.type} (${material.category}) is running low. Current quantity: ${material.quantity} ${material.unit}. Please restock soon.`;
+        
+        // Send notification to each BAO user
+        for (const baoUser of baoUsers) {
+          await createNotification(
+            baoUser._id,
+            "Raw Material Low Stock Alert",
+            notificationMessage
+          );
+        }
+      }
     }
 
     res.status(201).json({
