@@ -7,12 +7,11 @@ import {
   getYearlySalesSummary,
 } from "../controllers/salesReport.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
-import { isJobOrder } from "../middleware/jobOrder.middleware.js";
 
 const router = express.Router();
 
 // All routes require authentication and JobOrder role
-router.use(authenticateUser, isJobOrder);
+router.use(authenticateUser);
 
 // Create sales report from claimed order
 router.post("/", createSalesReport);
