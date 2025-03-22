@@ -27,6 +27,8 @@ import { CoordinatorProfileForm } from "./forms/CoordinatorProfileForm";
 import { JobOrderProfileForm } from "./forms/JobOrderProfileForm";
 import { CommercialJobProfileForm } from "./forms/CommercialJobProfileForm";
 import { SuperAdminProfileForm } from "./forms/SuperAdminProfileForm";
+import { BAOProfileForm } from "./forms/BAOProfileForm";
+import { ImageUpload } from "./forms/ImageUpload";
 
 // Create a schema for profile validation
 const createProfileSchema = (role) => {
@@ -62,8 +64,12 @@ const createProfileSchema = (role) => {
       return z.object({
         ...baseSchema,
         gender: z.string().min(1, "Gender is required"),
-        jobType: z.string().min(1, "Job type is required"),
-        jobDescription: z.string().min(1, "Job description is required"),
+        position: z.string().min(1, "Position is required"),
+      });
+    case "BAO":
+      return z.object({
+        ...baseSchema,
+        position: z.string().min(1, "Position is required"),
       });
     default:
       return z.object({
@@ -118,11 +124,13 @@ const UpdateProfileTab = ({
       }),
       ...(user?.role === "JobOrder" && {
         gender: user?.gender || "",
-        jobType: user?.jobType || "",
-        jobDescription: user?.jobDescription || "",
+        position: user?.position || "",
       }),
       ...(user?.role === "SuperAdmin" && {
         accessLevel: user?.accessLevel || "full",
+      }),
+      ...(user?.role === "BAO" && {
+        position: user?.position || "",
       }),
     },
     resolver: zodResolver(profileSchema),
@@ -215,8 +223,13 @@ const UpdateProfileTab = ({
         }),
         ...(user.role === "JobOrder" && {
           gender: user.gender || "",
-          jobType: user.jobType || "",
-          jobDescription: user.jobDescription || "",
+          position: user.position || "",
+        }),
+        ...(user.role === "SuperAdmin" && {
+          accessLevel: user.accessLevel || "full",
+        }),
+        ...(user.role === "BAO" && {
+          position: user.position || "",
         }),
       };
 
@@ -262,6 +275,8 @@ const UpdateProfileTab = ({
         return <CommercialJobProfileForm form={form} />;
       case "SuperAdmin":
         return <SuperAdminProfileForm form={form} />;
+      case "BAO":
+        return <BAOProfileForm form={form} />;
       default:
         return null;
     }
@@ -269,8 +284,16 @@ const UpdateProfileTab = ({
 
   return (
     <Form {...form}>
-      <form id="updateProfileForm" onSubmit={form.handleSubmit(onSubmit)}>
-        {getProfileForm()}
+      <form id="updateProfileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Role-specific Information */}
+        <div className="space-y-4">
+          {user?.role === "Student" && <StudentProfileForm form={form} />}
+          {user?.role === "CommercialJob" && <CommercialJobProfileForm form={form} />}
+          {user?.role === "Coordinator" && <CoordinatorProfileForm form={form} />}
+          {user?.role === "JobOrder" && <JobOrderProfileForm form={form} />}
+          {user?.role === "SuperAdmin" && <SuperAdminProfileForm form={form} />}
+          {user?.role === "BAO" && <BAOProfileForm form={form} />}
+        </div>
       </form>
     </Form>
   );

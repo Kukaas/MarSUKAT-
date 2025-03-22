@@ -143,6 +143,10 @@ const jobOrderSchema = new mongoose.Schema({
   position: {
     type: String,
     required: true,
+  },
+  gender: {
+    type: String,
+    required: true,
   }
 });
 

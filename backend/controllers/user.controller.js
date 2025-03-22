@@ -441,9 +441,9 @@ export const updateProfile = async (req, res) => {
       if (req.body.gender) user.gender = req.body.gender;
     } else if (user.role === "JobOrder") {
       if (req.body.gender) user.gender = req.body.gender;
-      if (req.body.jobType) user.jobType = req.body.jobType;
-      if (req.body.jobDescription)
-        user.jobDescription = req.body.jobDescription;
+      if (req.body.position) user.position = req.body.position;
+    } else if (user.role === "BAO") {
+      // BAO specific updates
     }
 
     const updatedUser = await user.save();

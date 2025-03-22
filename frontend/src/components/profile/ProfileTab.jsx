@@ -135,6 +135,13 @@ const RoleSpecificFields = ({ user }) => {
         value: user.accessLevel || "full",
       },
     ],
+    BAO: [
+      {
+        icon: Briefcase,
+        label: "Position",
+        value: user.position,
+      },
+    ],
   };
 
   const fields = roleFields[user.role] || [];
@@ -154,7 +161,7 @@ const RoleSpecificFields = ({ user }) => {
   return (
     <div className="space-y-6">
       <SectionTitle>{getSectionTitle(user.role)}</SectionTitle>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1">
         {fields.map((field, index) => (
           <InfoCard
             key={index}
@@ -171,7 +178,73 @@ const RoleSpecificFields = ({ user }) => {
 const ProfileTab = ({ user }) => {
   const basicFields = getBasicFields(user);
   
-  // Tab configuration for CustomTabs
+  // If user is BAO or JobOrder, show only role-specific information without tabs
+  if (user?.role === "BAO" || user?.role === "JobOrder") {
+    return (
+      <div className="space-y-6 sm:space-y-8">
+        {/* Profile Avatar and Name */}
+        <div className="relative">
+          <div className="absolute inset-0 h-32 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-background rounded-xl border border-border/50 dark:from-primary/10 dark:via-primary/5" />
+          <div className="relative pt-6 sm:pt-8 px-4 flex flex-col items-center space-y-3 sm:space-y-4">
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 ring-4 ring-background shadow-xl">
+              <AvatarImage
+                src={user?.photo?.data || undefined}
+                alt={user?.name}
+              />
+              <AvatarFallback className="text-base sm:text-lg bg-muted text-foreground">
+                {user?.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="text-center pb-3 sm:pb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">
+                {user?.name}
+              </h3>
+              <Badge
+                variant="outline"
+                className="bg-card/80 backdrop-blur-sm border-border/50 dark:bg-card/40 dark:border-border/30 font-medium text-xs sm:text-sm"
+              >
+                {user?.role}
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Role Information */}
+        <div className="sm:space-y-6">
+          <SectionTitle>Role Information</SectionTitle>
+          <div className="grid gap-3 sm:gap-4 grid-cols-1">
+            {basicFields.map((field, index) => (
+              <InfoCard
+                key={index}
+                icon={field.icon}
+                label={field.label}
+                value={field.value}
+              />
+            ))}
+            <RoleSpecificFields user={user} />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge
+              variant={user?.verified ? "success" : "destructive"}
+              className="text-xs font-medium shadow-sm dark:shadow-none"
+            >
+              {user?.verified ? "Verified" : "Not Verified"}
+            </Badge>
+            {user?.isActive !== undefined && (
+              <Badge
+                variant={user?.isActive ? "success" : "destructive"}
+                className="text-xs font-medium shadow-sm dark:shadow-none"
+              >
+                {user?.isActive ? "Active" : "Inactive"}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Tab configuration for other roles
   const tabConfig = [
     { 
       value: "basic", 
