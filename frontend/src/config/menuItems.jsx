@@ -312,4 +312,99 @@ export const menuItems = {
       ],
     },
   ],
+  BAO: [
+    {
+      title: "Dashboard",
+      icon: <LayoutDashboard />,
+      path: (id) => `/bao/dashboard/${id}`,
+      description: "Overview of system",
+    },
+    {
+      title: "Productions",
+      icon: <Factory />,
+      type: "accordion",
+      items: [
+        {
+          title: "Uniform Production",
+          icon: <Scissors />,
+          path: () => "/bao/productions/school-uniforms",
+          description: "Manage uniform production",
+        },
+        {
+          title: "Academic Gowns Production",
+          icon: <GownIcon />,
+          path: () => "/bao/productions/academic-gowns",
+          description: "Manage academic gowns production",
+        },
+        {
+          title: "Commercial Job Production",
+          icon: <FactoryProduction />,
+          path: () => "/bao/productions/commercial-jobs",
+          description: "Manage commercial job production",
+        },
+        {
+          title: "Other Productions",
+          icon: <Package />,
+          path: () => "/bao/productions/others",
+          description: "Manage other productions",
+        },
+      ],
+    },
+    {
+      title: "Inventory",
+      icon: <Boxes />,
+      type: "accordion",
+      items: [
+        {
+          title: "Raw Materials Inventory",
+          icon: <Box />,
+          path: () => "/bao/inventory/raw-materials",
+          description: "Manage raw materials inventory",
+        },
+        {
+          title: "School Uniform Inventory",
+          icon: <Shirt />,
+          path: () => "/bao/inventory/school-uniforms",
+          description: "Manage school uniform inventory",
+        },
+        {
+          title: "Academic Gown Inventory",
+          icon: <GownIcon />,
+          path: () => "/bao/inventory/academic-gowns",
+          description: "Manage academic gown inventory",
+        },
+        {
+          title: "Commercial Job Inventory",
+          icon: <Package />,
+          path: () => "/bao/inventory/commercial-jobs",
+          description: "Manage commercial job inventory",
+        },
+        {
+          title: "Others Inventory",
+          icon: <Warehouse />,
+          path: () => "/bao/inventory/others",
+          description: "Manage other inventory items",
+        },
+      ],
+    },
+    {
+      title: "Reports",
+      icon: <FileText />,
+      type: "accordion",
+      items: [
+        {
+          title: "Sales Report",
+          icon: <BarChart3 />,
+          path: () => "/bao/reports/sales",
+          description: "View sales reports",
+        },
+        {
+          title: "Accomplishment Reports",
+          icon: <BookOpenCheck />,
+          path: () => "/bao/reports/accomplishments",
+          description: "View accomplishment reports",
+        },
+      ],
+    },
+  ],
 };

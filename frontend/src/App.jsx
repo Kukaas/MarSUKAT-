@@ -8,7 +8,7 @@ import { jobOrderRoutes } from "./routes/jobOrderRoutes";
 import DevModeWrapper from "./components/dev/DevModeWrapper";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
-import { Toaster } from "sonner";
+import { baoRoutes } from "./routes/baoRoutes";
 
 export default function App() {
   const { user } = useAuth();
@@ -56,8 +56,16 @@ export default function App() {
             element={<PrivateRoute>{route.element}</PrivateRoute>}
           />
         ))}
+
+        {/* BAO Routes */}
+        {baoRoutes.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<PrivateRoute>{route.element}</PrivateRoute>}
+          />
+        ))}
       </Routes>
-      <Toaster richColors position="top-center" />
     </DevModeWrapper>
   );
 }

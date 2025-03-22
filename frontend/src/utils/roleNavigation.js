@@ -4,8 +4,8 @@ export const getDashboardPath = (role, userId) => {
   switch (roleLower) {
     case "student":
       return `/student/dashboard/${userId}`;
-    case "admin":
-      return "/admin/dashboard";
+    case "bao":
+      return `/bao/dashboard/${userId}`;
     case "joborder":
       return `/job-order/dashboard/${userId}`;
     case "staff":
@@ -20,7 +20,7 @@ export const getDashboardPath = (role, userId) => {
 // Role path prefix mapping
 export const rolePathMap = {
   student: "/student",
-  admin: "/admin",
+  bao: "/bao",
   joborder: "/job-order",
   staff: "/staff",
   superadmin: "/superadmin",

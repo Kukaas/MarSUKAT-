@@ -51,6 +51,14 @@ const roleBasedRoutes = {
       "product-types": "Product Types",
     },
   },
+  bao: {
+    dashboard: "BAO Dashboard",
+    "productions": "Productions Management",
+    "inventory": "Inventory Management",
+    "reports": "Reports",
+    "sales": "Sales Management",
+    "accomplishments": "Accomplishments Management",
+  },
 };
 
 // Helper function to normalize paths for comparison
