@@ -785,8 +785,12 @@ function OrderContent({ order, onOrderUpdate }) {
         <ImageViewer
           isOpen={imageViewerOpen}
           onClose={() => setImageViewerOpen(false)}
-          imageUrl={order?.receipt?.image?.data}
-          title={`Receipt ${order?.receipt?.orNumber}`}
+          imageUrl={order?.receipts?.length > 0
+            ? order.receipts[order.receipts.length - 1]?.image?.data
+            : null}
+          title={`Receipt ${order?.receipts?.length > 0
+            ? order.receipts[order.receipts.length - 1]?.orNumber
+            : ""}`}
         />
       </div>
     </ScrollArea>
