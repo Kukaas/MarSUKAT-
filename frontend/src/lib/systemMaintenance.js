@@ -566,6 +566,52 @@ export const systemMaintenanceAPI = {
       throw error;
     }
   },
+
+  // Academic Gown Type Management API functions
+  getAllAcademicGownTypes: async () => {
+    try {
+      const response = await api.get("/academic-gown-types");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getAcademicGownTypeById: async (id) => {
+    try {
+      const response = await api.get(`/academic-gown-types/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createAcademicGownType: async (gownTypeData) => {
+    try {
+      const response = await api.post("/academic-gown-types", gownTypeData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateAcademicGownType: async (id, gownTypeData) => {
+    try {
+      const response = await api.put(`/academic-gown-types/${id}`, gownTypeData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteAcademicGownType: async (id) => {
+    try {
+      const response = await api.delete(`/academic-gown-types/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default systemMaintenanceAPI;

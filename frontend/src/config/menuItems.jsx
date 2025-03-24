@@ -158,6 +158,12 @@ export const menuItems = {
           path: () => "/superadmin/maintenance/product-types",
           description: "Manage product types",
         },
+        {
+          title: "Academic Gown Types",
+          icon: <GownIcon />,
+          path: () => "/superadmin/maintenance/academic-gown-types",
+          description: "Manage academic gown types",
+        },
       ],
     },
     {
