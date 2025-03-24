@@ -16,6 +16,13 @@ import {
   getUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  getAllStudents,
+  getStudentById,
+  updateStudent,
+  deleteStudent,
+  verifyStudent,
+  activateStudent,
+  deactivateStudent,
 } from "../controllers/user.controller.js";
 import { isSuperAdmin } from "../middleware/superadmin.middleware.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
@@ -45,5 +52,14 @@ router.put("/staff/:id/deactivate", authenticateUser, isSuperAdmin, deactivateSt
 router.get("/notifications", authenticateUser, getUserNotifications);
 router.put("/notifications/:notificationId/read", authenticateUser, markNotificationAsRead);
 router.put("/notifications/read-all", authenticateUser, markAllNotificationsAsRead);
+
+// Student User Management Routes
+router.get("/students", authenticateUser, isSuperAdmin, getAllStudents);
+router.get("/students/:id", authenticateUser, isSuperAdmin, getStudentById);
+router.put("/students/:id", authenticateUser, isSuperAdmin, updateStudent);
+router.delete("/students/:id", authenticateUser, isSuperAdmin, deleteStudent);
+router.put("/students/:id/verify", authenticateUser, isSuperAdmin, verifyStudent);
+router.put("/students/:id/activate", authenticateUser, isSuperAdmin, activateStudent);
+router.put("/students/:id/deactivate", authenticateUser, isSuperAdmin, deactivateStudent);
 
 export default router;

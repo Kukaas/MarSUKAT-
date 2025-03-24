@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
-import { sendVerificationEmail } from "../utils/emailService.js";
+import { sendVerificationEmail, sendDeactivationEmail } from "../utils/emailService.js";
 import UserVerification from "../models/user.verification.js";
 import { generateSecurePassword } from "../utils/passwordGenerator.js";
 
@@ -322,8 +322,27 @@ export const deactivateStaffUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const { reason } = req.body;
+    if (!reason) {
+      return res.status(400).json({ message: "Deactivation reason is required" });
+    }
+
     user.isActive = false;
     await user.save();
+
+    // Send deactivation email
+    try {
+      await sendDeactivationEmail(user.email, user.name, reason);
+    } catch (emailError) {
+      console.error("Failed to send deactivation email:", emailError);
+    }
+
+    // Create a notification for the user
+    await createNotification(
+      user._id,
+      "Account Deactivated",
+      `Your account has been deactivated. Reason: ${reason}`
+    );
 
     res.status(200).json({
       _id: user._id,
@@ -669,5 +688,228 @@ export const createNotification = async (userId, title, message) => {
   } catch (error) {
     console.error("Error creating notification:", error);
     return false;
+  }
+};
+
+// Get all Student users
+export const getAllStudents = async (req, res) => {
+  try {
+    const students = await User.find({ role: "Student" }).select("-password");
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get Student by ID
+export const getStudentById = async (req, res) => {
+  try {
+    const student = await User.findOne({
+      _id: req.params.id,
+      role: "Student",
+    }).select("-password");
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.status(200).json(student);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update Student
+export const updateStudent = async (req, res) => {
+  try {
+    const student = await User.findOne({
+      _id: req.params.id,
+      role: "Student",
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const { name, email, studentNumber, studentGender, department, level } = req.body;
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== student.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
+
+    // Update fields
+    student.name = name || student.name;
+    student.email = email || student.email;
+    student.studentNumber = studentNumber || student.studentNumber;
+    student.studentGender = studentGender || student.studentGender;
+    student.department = department || student.department;
+    student.level = level || student.level;
+
+    const updatedStudent = await student.save();
+
+    res.status(200).json({
+      _id: updatedStudent._id,
+      name: updatedStudent.name,
+      email: updatedStudent.email,
+      role: updatedStudent.role,
+      studentNumber: updatedStudent.studentNumber,
+      studentGender: updatedStudent.studentGender,
+      department: updatedStudent.department,
+      level: updatedStudent.level,
+      isActive: updatedStudent.isActive,
+      verified: updatedStudent.verified,
+      message: "Student updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete Student
+export const deleteStudent = async (req, res) => {
+  try {
+    const student = await User.findOne({
+      _id: req.params.id,
+      role: "Student",
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await student.deleteOne();
+    res.status(200).json({ message: "Student deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Verify Student Account
+export const verifyStudent = async (req, res) => {
+  try {
+    const student = await User.findOne({
+      _id: req.params.id,
+      role: "Student",
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    student.verified = true;
+    await student.save();
+
+    // Create a notification for the student
+    await createNotification(
+      student._id,
+      "Account Verified",
+      "Your student account has been verified successfully."
+    );
+
+    res.status(200).json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      role: student.role,
+      verified: student.verified,
+      message: "Student account verified successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Activate Student Account
+export const activateStudent = async (req, res) => {
+  try {
+    const student = await User.findOne({
+      _id: req.params.id,
+      role: "Student",
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Check if account is verified before activation
+    if (!student.verified) {
+      return res.status(400).json({
+        message: "Account must be verified before activation",
+      });
+    }
+
+    student.isActive = true;
+    await student.save();
+
+    // Create a notification for the student
+    await createNotification(
+      student._id,
+      "Account Activated",
+      "Your student account has been activated successfully."
+    );
+
+    res.status(200).json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      role: student.role,
+      isActive: student.isActive,
+      verified: student.verified,
+      message: "Student account activated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Deactivate Student Account
+export const deactivateStudent = async (req, res) => {
+  try {
+    const student = await User.findOne({
+      _id: req.params.id,
+      role: "Student",
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const { reason } = req.body;
+    if (!reason) {
+      return res.status(400).json({ message: "Deactivation reason is required" });
+    }
+
+    student.isActive = false;
+    await student.save();
+
+    // Send deactivation email
+    try {
+      await sendDeactivationEmail(student.email, student.name, reason);
+    } catch (emailError) {
+      console.error("Failed to send deactivation email:", emailError);
+    }
+
+    // Create a notification for the student
+    await createNotification(
+      student._id,
+      "Account Deactivated",
+      `Your student account has been deactivated. Reason: ${reason}`
+    );
+
+    res.status(200).json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      role: student.role,
+      isActive: student.isActive,
+      verified: student.verified,
+      message: "Student account deactivated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

@@ -98,6 +98,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const Student = User.discriminator("Student", studentSchema);
@@ -111,6 +115,10 @@ const commercialJobSchema = new mongoose.Schema({
   gender: {
     type: String,
     required: true,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
   },
 });
 

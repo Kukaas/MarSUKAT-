@@ -230,6 +230,70 @@ export const userAPI = {
     }
   },
 
+  // Student User management
+  getAllStudents: async () => {
+    try {
+      const response = await api.get("/users/students");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getStudentById: async (id) => {
+    try {
+      const response = await api.get(`/users/students/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateStudent: async (id, studentData) => {
+    try {
+      const response = await api.put(`/users/students/${id}`, studentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  verifyStudent: async (id) => {
+    try {
+      const response = await api.put(`/users/students/${id}/verify`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  activateStudent: async (id) => {
+    try {
+      const response = await api.put(`/users/students/${id}/activate`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deactivateStudent: async (id, reason) => {
+    try {
+      const response = await api.put(`/users/students/${id}/deactivate`, { reason });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteStudent: async (id) => {
+    try {
+      const response = await api.delete(`/users/students/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // JobOrder management
   getAllJobOrders: async () => {
     try {
