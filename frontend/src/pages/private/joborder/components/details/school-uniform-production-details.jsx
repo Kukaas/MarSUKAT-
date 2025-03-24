@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { ViewDetailsDialog } from "@/components/custom-components/ViewDetailsDialog";
+import EmptyState from "@/components/custom-components/EmptyState";
 
 const InfoCard = ({ icon: Icon, label, value, className }) => (
   <Card
@@ -117,28 +118,44 @@ function SchoolUniformProductionContent({ item }) {
 
         {/* Raw Materials */}
         <div className="space-y-4 sm:space-y-6">
-          <SectionTitle>Raw Materials Required</SectionTitle>
+          <SectionTitle>Total Raw Materials Used</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-2">
-            {item?.rawMaterialsUsed?.map((material, index) => (
-              <Card key={material._id || index} className="bg-muted/50">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{material.category}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Box className="h-4 w-4 text-muted-foreground" />
-                      <span>{material.type}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Ruler className="h-4 w-4 text-muted-foreground" />
-                      <span>{`${material.quantity} ${material.unit}`}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {item?.rawMaterialsUsed?.length > 0 ? (
+              item.rawMaterialsUsed.map((material, index) => {
+                // Calculate total quantity based on production quantity
+                const totalQuantity = material.quantity * (item?.quantity || 0);
+                
+                return (
+                  <Card key={material._id || index} className="bg-muted/50">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{material.category}</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Box className="h-4 w-4 text-muted-foreground" />
+                          <span>{material.type}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Scale className="h-4 w-4 text-muted-foreground" />
+                          <div className="space-y-1">
+                            <p>{`Total: ${totalQuantity} ${material.unit}`}</p>
+                            <p className="text-xs text-muted-foreground">
+                              ({material.quantity} {material.unit} per piece × {item?.quantity || 0} pieces)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              <EmptyState 
+                message="No raw materials have been used for this production."
+              />
+            )}
           </div>
         </div>
 

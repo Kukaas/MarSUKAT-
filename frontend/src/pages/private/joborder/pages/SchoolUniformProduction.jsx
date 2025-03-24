@@ -239,30 +239,6 @@ export const SchoolUniformProduction = () => {
         },
       ],
     },
-    edit: {
-      label: "Edit Actions",
-      actions: [
-        {
-          label: "Edit",
-          icon: Edit2,
-          onClick: (row) => {
-            const formattedData = {
-              ...row,
-              productionDateFrom: new Date(row.productionDateFrom)
-                .toISOString()
-                .split("T")[0],
-              productionDateTo: new Date(row.productionDateTo)
-                .toISOString()
-                .split("T")[0],
-            };
-            setFormData(formattedData);
-            setSelectedId(row._id);
-            setIsEditing(true);
-            setIsEditDialogOpen(true);
-          },
-        },
-      ],
-    },
     delete: {
       label: "Delete Actions",
       actions: [
