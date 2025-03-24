@@ -116,4 +116,40 @@ export const inventoryAPI = {
     const response = await api.delete(`/uniform-inventory/${id}`);
     return response.data;
   },
+
+  // Academic Gown Inventory API functions
+  getAllAcademicGownInventory: async () => {
+    const response = await api.get("/academic-gown-inventory");
+    return response.data;
+  },
+
+  getAcademicGownInventoryById: async (id) => {
+    const response = await api.get(`/academic-gown-inventory/${id}`);
+    return response.data;
+  },
+
+  createAcademicGownInventory: async (data) => {
+    const response = await api.post("/academic-gown-inventory", data);
+    return response.data;
+  },
+
+  updateAcademicGownInventory: async (id, data) => {
+    const response = await api.put(`/academic-gown-inventory/${id}`, data);
+    return response.data;
+  },
+
+  deleteAcademicGownInventory: async (id) => {
+    const response = await api.delete(`/academic-gown-inventory/${id}`);
+    return response.data;
+  },
+
+  updateAcademicGownInventoryQuantity: async (id, data) => {
+    const response = await api.patch(`/academic-gown-inventory/${id}/quantity`, data);
+    return response.data;
+  },
+
+  getAcademicGownInventoryStats: async (params) => {
+    const response = await api.get("/academic-gown-inventory/stats", { params });
+    return response.data;
+  },
 };
