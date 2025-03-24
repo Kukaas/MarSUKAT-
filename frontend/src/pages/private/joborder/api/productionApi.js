@@ -46,5 +46,166 @@ export const productionAPI = {
       params: { startDate, endDate, category, type },
     });
     return response.data;
+  },
+
+  getAllAcademicGownProductions: async () => {
+    try {
+      const response = await api.get("/academic-gown-productions");
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        // Try to refresh the token first
+        try {
+          await api.post("/auth/refresh-token");
+          // Retry the original request
+          const retryResponse = await api.get("/academic-gown-productions");
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  getAcademicGownProductionById: async (id) => {
+    try {
+      const response = await api.get(`/academic-gown-productions/${id}`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.get(`/academic-gown-productions/${id}`);
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  createAcademicGownProduction: async (data) => {
+    try {
+      const response = await api.post("/academic-gown-productions", data);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.post("/academic-gown-productions", data);
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      if (error.response?.data?.inventoryIssues) {
+        return error.response.data;
+      }
+      throw error;
+    }
+  },
+
+  updateAcademicGownProduction: async (id, data) => {
+    try {
+      const response = await api.put(`/academic-gown-productions/${id}`, data);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.put(`/academic-gown-productions/${id}`, data);
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  deleteAcademicGownProduction: async (id) => {
+    try {
+      const response = await api.delete(`/academic-gown-productions/${id}`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.delete(`/academic-gown-productions/${id}`);
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  getAcademicGownProductionStats: async (year, month) => {
+    try {
+      const response = await api.get("/academic-gown-productions/stats", {
+        params: { year, month }
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.get("/academic-gown-productions/stats", {
+            params: { year, month }
+          });
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  getAcademicGownMaterialsUsageStats: async (year, month, category, type) => {
+    try {
+      const response = await api.get("/academic-gown-productions/raw-materials-usage", {
+        params: { year, month, category, type }
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.get("/academic-gown-productions/raw-materials-usage", {
+            params: { year, month, category, type }
+          });
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  getAcademicGownMaterialUsageReport: async (startDate, endDate, category, type) => {
+    try {
+      const response = await api.get("/academic-gown-productions/material-usage-report", {
+        params: { startDate, endDate, category, type }
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.get("/academic-gown-productions/material-usage-report", {
+            params: { startDate, endDate, category, type }
+          });
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
   }
 };

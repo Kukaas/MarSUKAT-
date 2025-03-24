@@ -27,6 +27,7 @@ import salesReportRoutes from "./routes/salesReport.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import academicGownTypeRoutes from "./routes/academicGownType.routes.js";
 import academicGownInventoryRoutes from "./routes/academicGownInventory.routes.js";
+import academicGownProductionRoutes from "./routes/academicGownProduction.routes.js";
 
 dotenv.config();
 
@@ -78,6 +79,7 @@ app.use("/api/v1/sales-reports", salesReportRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/academic-gown-types", academicGownTypeRoutes);
 app.use("/api/v1/academic-gown-inventory", academicGownInventoryRoutes);
+app.use("/api/v1/academic-gown-productions", academicGownProductionRoutes);
 
 // Developer routes - only enabled in development mode
 if (process.env.NODE_ENV === "development") {
