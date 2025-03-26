@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import { SalesOverviewChart } from "../components/charts/SalesOverviewChart.jsx";
 import { DepartmentSalesChart } from "../components/charts/DepartmentSalesChart.jsx";
@@ -11,6 +11,7 @@ import { FileDown, Package, DollarSign, TrendingUp, CalendarDays, CalendarRange,
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { handlePrint, handleYearlyPrint } from "../components/print/print";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January",
@@ -37,8 +38,6 @@ const formatCurrency = (value) => {
 };
 
 export const SalesReport = () => {
-  const [loading, setLoading] = useState(true);
-  const [salesData, setSalesData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [timePeriod, setTimePeriod] = useState("month");
@@ -49,9 +48,10 @@ export const SalesReport = () => {
     label: MONTHS[i]
   }));
 
-  const fetchSalesData = async () => {
-    try {
-      setLoading(true);
+  // Fetch sales data with caching
+  const { data: salesData, isLoading } = useDataFetching(
+    ['salesData', selectedYear, selectedMonth, timePeriod],
+    async () => {
       let data;
       if (timePeriod === "month") {
         data = await salesReportAPI.getMonthlySalesSummary(selectedYear, selectedMonth);
@@ -61,10 +61,10 @@ export const SalesReport = () => {
 
       if (!data) {
         toast.error("No data available for the selected period");
-        return;
+        return null;
       }
 
-      const transformedData = {
+      return {
         ...data,
         monthlyData: data.monthlyData?.map(item => ({
           month: item.month,
@@ -81,18 +81,12 @@ export const SalesReport = () => {
           quantity: product.quantity
         }))
       };
-
-      setSalesData(transformedData);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to fetch sales data");
-    } finally {
-      setLoading(false);
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
-
-  useEffect(() => {
-    fetchSalesData();
-  }, [selectedYear, selectedMonth, timePeriod]);
+  );
 
   return (
     <PrivateLayout>
@@ -106,6 +100,7 @@ export const SalesReport = () => {
             <Button
               className="w-full md:w-auto flex items-center justify-center"
               onClick={() => handlePrint(salesData, selectedMonth, selectedYear, MONTHS, formatCurrency)}
+              disabled={isLoading}
             >
               <FileDown className="w-4 h-4 mr-2" />
               Print Monthly Report
@@ -113,6 +108,7 @@ export const SalesReport = () => {
             <Button
               className="w-full md:w-auto flex items-center justify-center"
               onClick={() => handleYearlyPrint(selectedYear, salesReportAPI, formatCurrency)}
+              disabled={isLoading}
             >
               <FileDown className="w-4 h-4 mr-2" />
               Print Yearly Report
@@ -168,26 +164,29 @@ export const SalesReport = () => {
               value={salesData?.totalOrders || 0}
               icon={<Package className="h-4 w-4 text-muted-foreground" />}
               description="Orders this period"
+              isLoading={isLoading}
             />
             <StatsCard 
               title="Average Order Value"
               value={formatCurrency(salesData?.averageOrderValue)}
               icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
               description="Per order average"
+              isLoading={isLoading}
             />
             <StatsCard 
               title="Total Revenue"
               value={formatCurrency(salesData?.totalSales)}
               icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
               description={`Total sales this ${timePeriod}`}
+              isLoading={isLoading}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-8">
-            <SalesOverviewChart data={salesData} loading={loading} />
+            <SalesOverviewChart data={salesData} loading={isLoading} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <DepartmentSalesChart data={salesData?.departmentBreakdown} loading={loading} />
-              <ProductTypeSalesChart data={salesData?.productTypeBreakdown} loading={loading} />
+              <DepartmentSalesChart data={salesData?.departmentBreakdown} loading={isLoading} />
+              <ProductTypeSalesChart data={salesData?.productTypeBreakdown} loading={isLoading} />
             </div>
           </div>
         </div>

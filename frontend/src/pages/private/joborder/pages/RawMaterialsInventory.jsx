@@ -335,20 +335,6 @@ export default function RawMaterialsInventory() {
       header: "Status",
       render: (value) => <StatusBadge status={value} icon={AlertCircle} />,
     },
-    {
-      key: "createdAt",
-      header: "Created At",
-      render: (value) => (
-        <span>
-          {new Date(value).toLocaleDateString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      ),
-    },
   ];
 
   // Action handlers
