@@ -8,8 +8,6 @@ import { RawMaterialInventoryDetailsDialog } from "../../joborder/components/det
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { inventoryAPI } from "../../joborder/api/inventoryApi";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import MaterialUsageOverviewChart from "../../joborder/components/charts/MaterialUsageOverviewChart";
 import { MaterialForecastChart } from "../../joborder/components/charts/MaterialForecastChart";
@@ -263,11 +261,6 @@ export default function RawMaterialsInventory() {
         >
           <TabPanel value="inventory">
             <div className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inventory Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
                   <DataTable
                     data={inventory}
                     columns={columns}
@@ -275,8 +268,6 @@ export default function RawMaterialsInventory() {
                     actionCategories={actionCategories}
                     hideCreateButton={true}
                   />
-                </CardContent>
-              </Card>
             </div>
           </TabPanel>
 
