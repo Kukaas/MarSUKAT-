@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Plus, Eye, Edit2, Trash2, GraduationCap, Ruler, AlertCircle } from "lucide-react";
@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import PrivateLayout from "../../PrivateLayout";
 import SectionHeader from "@/components/custom-components/SectionHeader";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 import { AcademicGownInventoryForm } from "../forms/AcademicGownInventoryForm";
 import { AcademicGownInventoryDetailsDialog } from "../components/details/academic-gown-inventory-details";
@@ -25,13 +26,10 @@ import StatusBadge from "@/components/custom-components/StatusBadge";
 
 export const AcademicGownInventory = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [inventoryItems, setInventoryItems] = useState([]);
   const [selectedInventory, setSelectedInventory] = useState(null);
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     level: "",
     productType: "",
@@ -46,24 +44,79 @@ export const AcademicGownInventory = () => {
     isOpen: false,
     itemToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchInventory = async () => {
-    try {
-      setLoading(true);
-      const data = await inventoryAPI.getAllAcademicGownInventory();
-      setInventoryItems(data);
-    } catch (error) {
-      toast.error("Failed to fetch inventory items");
-      console.error(error);
-    } finally {
-      setLoading(false);
+  // Fetch inventory data with caching
+  const { data: inventoryItems, isLoading, refetch } = useDataFetching(
+    ['academicGownInventory'],
+    () => inventoryAPI.getAllAcademicGownInventory(),
+    {
+      staleTime: 5 * 60 * 1000, // Data is considered fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      onError: (error) => {
+        toast.error("Failed to fetch inventory items");
+        console.error(error);
+      },
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchInventory();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['academicGownInventory'],
+    async (data) => {
+      const result = await inventoryAPI.createAcademicGownInventory(data);
+      await refetch(); // Refetch data after successful creation
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Inventory item created successfully");
+        setCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create inventory item");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['academicGownInventory'],
+    async (data) => {
+      const result = await inventoryAPI.updateAcademicGownInventory(selectedId, data);
+      await refetch(); // Refetch data after successful update
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Inventory item updated successfully");
+        setEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update inventory item");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['academicGownInventory'],
+    async (id) => {
+      const result = await inventoryAPI.deleteAcademicGownInventory(id);
+      await refetch(); // Refetch data after successful deletion
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Inventory item deleted successfully");
+        setDeleteDialog({ isOpen: false, itemToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete inventory item");
+      },
+    }
+  );
 
   const handleView = (row) => {
     setSelectedInventory(row);
@@ -92,52 +145,26 @@ export const AcademicGownInventory = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await inventoryAPI.deleteAcademicGownInventory(deleteDialog.itemToDelete._id);
-      await fetchInventory();
-      toast.success("Inventory item deleted successfully");
-      setDeleteDialog({ isOpen: false, itemToDelete: null });
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete inventory item");
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.itemToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.itemToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, itemToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing) {
-        await inventoryAPI.updateAcademicGownInventory(selectedId, data);
-        toast.success("Inventory item updated successfully");
-        setEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await inventoryAPI.createAcademicGownInventory(data);
-        toast.success("Inventory item created successfully");
-        setCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
-      setIsEditing(false);
-      setFormData({
-        level: "",
-        productType: "",
-        size: "",
-        quantity: "",
-        status: "Available",
-        image: null,
-      });
-      setSelectedId(null);
-      fetchInventory();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Operation failed:", error);
     }
   };
 
@@ -272,9 +299,9 @@ export const AcademicGownInventory = () => {
         />
 
         <DataTable
-          data={inventoryItems}
+          data={inventoryItems || []}
           columns={columns}
-          isLoading={loading}
+          isLoading={isLoading}
           actionCategories={actionCategories}
           onCreateNew={onCreateNew}
           createButtonText={
@@ -309,24 +336,24 @@ export const AcademicGownInventory = () => {
                   formData={formData}
                   setFormData={setFormData}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={createMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="academicGownInventoryForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -357,24 +384,24 @@ export const AcademicGownInventory = () => {
                   setFormData={setFormData}
                   isEdit={true}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={updateMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="academicGownInventoryForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -398,7 +425,7 @@ export const AcademicGownInventory = () => {
               ? `Are you sure you want to delete the gown item "${deleteDialog.itemToDelete.productType} (${deleteDialog.itemToDelete.size})"? This action cannot be undone.`
               : "Are you sure you want to delete this gown item? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>
