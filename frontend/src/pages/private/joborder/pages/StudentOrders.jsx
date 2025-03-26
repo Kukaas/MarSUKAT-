@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import { jobOrderAPI } from "../api/orderApi";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import SectionHeader from "@/components/custom-components/SectionHeader";
 import { RejectDialog } from "@/components/custom-components/RejectDialog";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 import { ConfirmationDialog } from "@/components/custom-components/ConfirmationDialog";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 // Status icon mapping
 const STATUS_ICONS = {
@@ -42,16 +43,11 @@ const STATUS_ICONS = {
 };
 
 export function StudentOrders() {
-  const [orders, setOrders] = useState([]);
-  const [archivedOrders, setArchivedOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isArchiveLoading, setIsArchiveLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [isArchiveActionLoading, setIsArchiveActionLoading] = useState(false);
 
   // Define tab configuration
   const tabConfig = [
@@ -59,38 +55,69 @@ export function StudentOrders() {
     { value: "archived", label: "Archived Orders", icon: Archive },
   ];
 
-  // Fetch all orders
-  const fetchOrders = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch active orders with caching
+  const { data: orders, isLoading, refetch: refetchOrders } = useDataFetching(
+    ['activeOrders'],
+    async () => {
       const data = await jobOrderAPI.getAllOrders();
-      setOrders(data);
-    } catch (error) {
-      toast.error("Failed to fetch orders");
-      console.error("Error fetching orders:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  // Fetch archived orders
-  const fetchArchivedOrders = async () => {
-    try {
-      setIsArchiveLoading(true);
+  // Fetch archived orders with caching
+  const { data: archivedOrders, isLoading: isArchiveLoading, refetch: refetchArchivedOrders } = useDataFetching(
+    ['archivedOrders'],
+    async () => {
       const data = await jobOrderAPI.getArchivedOrders();
-      setArchivedOrders(data);
-    } catch (error) {
-      toast.error("Failed to fetch archived orders");
-      console.error("Error fetching archived orders:", error);
-    } finally {
-      setIsArchiveLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchOrders();
-    fetchArchivedOrders();
-  }, []);
+  // Reject mutation
+  const rejectMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async ({ orderId, reason }) => {
+      const result = await jobOrderAPI.rejectOrder(orderId, reason);
+      await Promise.all([refetchOrders(), refetchArchivedOrders()]);
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Order rejected successfully");
+        setRejectDialogOpen(false);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to reject order");
+      },
+    }
+  );
+
+  // Archive/Restore mutation
+  const archiveMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async (orderId) => {
+      const result = await jobOrderAPI.toggleArchive(orderId);
+      await Promise.all([refetchOrders(), refetchArchivedOrders()]);
+      return result;
+    },
+    {
+      onSuccess: (response) => {
+        toast.success(response.message);
+        setArchiveDialogOpen(false);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to archive order");
+      },
+    }
+  );
 
   // Column definitions for table view
   const columns = [
@@ -110,16 +137,6 @@ export function StudentOrders() {
       render: (value) => (
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-gray-500" />
-          <span>{value}</span>
-        </div>
-      ),
-    },
-    {
-      key: "studentNumber",
-      header: "Student Number",
-      render: (value) => (
-        <div className="flex items-center gap-2">
-          <School className="h-4 w-4 text-gray-500" />
           <span>{value}</span>
         </div>
       ),
@@ -153,41 +170,19 @@ export function StudentOrders() {
   const handleOrderUpdate = (updatedOrder) => {
     // Update the selected order
     setSelectedOrder(updatedOrder);
-    // Update the orders list
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order._id === updatedOrder._id ? updatedOrder : order
-      )
-    );
+    // Refetch orders to get the latest data
+    refetchOrders();
   };
 
   const handleReject = async (reason) => {
-    try {
-      await jobOrderAPI.rejectOrder(selectedOrder._id, reason);
-      toast.success("Order rejected successfully");
-      setRejectDialogOpen(false);
-      fetchOrders();
-    } catch (error) {
-      toast.error("Failed to reject order");
-      console.error("Error rejecting order:", error);
+    if (selectedOrder) {
+      await rejectMutation.mutateAsync({ orderId: selectedOrder._id, reason });
     }
   };
 
   const handleArchiveConfirm = async () => {
-    try {
-      setIsArchiveActionLoading(true);
-      const response = await jobOrderAPI.toggleArchive(selectedOrder._id);
-      toast.success(response.message);
-      
-      // Refresh both active and archived orders
-      fetchOrders();
-      fetchArchivedOrders();
-      setArchiveDialogOpen(false);
-    } catch (error) {
-      toast.error("Failed to archive order");
-      console.error("Error archiving order:", error);
-    } finally {
-      setIsArchiveActionLoading(false);
+    if (selectedOrder) {
+      await archiveMutation.mutateAsync(selectedOrder._id);
     }
   };
 
@@ -260,7 +255,7 @@ export function StudentOrders() {
           <TabPanel value="active">
             <DataTable
               className="mt-4"
-              data={orders}
+              data={orders || []}
               columns={columns}
               isLoading={isLoading}
               actionCategories={activeOrderActions}
@@ -271,7 +266,7 @@ export function StudentOrders() {
           <TabPanel value="archived">
             <DataTable
               className="mt-4"
-              data={archivedOrders}
+              data={archivedOrders || []}
               columns={columns}
               isLoading={isArchiveLoading}
               actionCategories={archivedOrderActions}
@@ -294,6 +289,7 @@ export function StudentOrders() {
           onClose={() => setRejectDialogOpen(false)}
           onConfirm={handleReject}
           title={`Reject Order ${selectedOrder?.orderId}`}
+          isLoading={rejectMutation.isPending}
         />
 
         {/* Archive Confirmation Dialog */}
@@ -308,7 +304,7 @@ export function StudentOrders() {
               : `Are you sure you want to archive order ${selectedOrder?.orderId}?`
           }
           confirmText={selectedOrder?.isArchived ? "Restore" : "Archive"}
-          isLoading={isArchiveActionLoading}
+          isLoading={archiveMutation.isPending}
           variant={selectedOrder?.isArchived ? "success" : "default"}
           icon={selectedOrder?.isArchived ? ArchiveRestore : Archive}
         />

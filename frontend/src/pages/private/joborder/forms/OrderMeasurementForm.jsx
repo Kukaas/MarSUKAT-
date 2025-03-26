@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { Form } from "@/components/ui/form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GraduationCap, Shirt, Ruler, Scale } from "lucide-react";
+import { Shirt, Ruler, Scale } from "lucide-react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import EmptyState from "@/components/custom-components/EmptyState";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const formSchema = z.object({
   orderItems: z
@@ -36,7 +36,6 @@ export function OrderMeasurementForm({
   isSubmitting = false,
   studentLevel,
 }) {
-  const [productTypes, setProductTypes] = useState([]);
   const [filteredOptions, setFilteredOptions] = useState({
     productTypes: [],
     sizes: [],
@@ -60,36 +59,36 @@ export function OrderMeasurementForm({
     mode: "onTouched",
   });
 
-  // Fetch product types and filter by student level on mount
-  useEffect(() => {
-    const fetchProductTypes = async () => {
-      try {
-        const data = await systemMaintenanceAPI.getAllProductTypes();
-        setProductTypes(data);
+  // Fetch product types with React Query
+  const { data: productTypes = [], isLoading: isLoadingProducts } = useDataFetching(
+    ['productTypes', studentLevel],
+    async () => {
+      const data = await systemMaintenanceAPI.getAllProductTypes();
+      // Filter product types for student level
+      const levelProducts = data.filter(
+        (item) => item.level === studentLevel
+      );
+      const uniqueProductTypes = [
+        ...new Set(levelProducts.map((item) => item.productType)),
+      ];
 
-        // Filter product types for student level
-        const levelProducts = data.filter(
-          (item) => item.level === studentLevel
-        );
-        const uniqueProductTypes = [
-          ...new Set(levelProducts.map((item) => item.productType)),
-        ];
+      setFilteredOptions({
+        productTypes: uniqueProductTypes.map((type) => ({
+          value: type,
+          label: type,
+        })),
+        sizes: [],
+      });
 
-        setFilteredOptions({
-          productTypes: uniqueProductTypes.map((type) => ({
-            value: type,
-            label: type,
-          })),
-          sizes: [],
-        });
-      } catch (error) {
-        console.error("Error fetching product types:", error);
-      }
-    };
-    fetchProductTypes();
-  }, [studentLevel]);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+    }
+  );
 
-  // Add this new function to get size options
+  // Get size options
   const getSizeOptions = (productType) => {
     if (!productType || !productTypes.length) return [];
 
@@ -103,42 +102,13 @@ export function OrderMeasurementForm({
     }));
   };
 
-  // Update unit price when size is selected
-  const updateUnitPrice = (index, productType, size) => {
-    console.log("UpdateUnitPrice called with:", { index, productType, size });
-    console.log("Current productTypes:", productTypes);
-
-    if (!productType || !size) return;
-
-    const matchingProduct = productTypes.find(
-      (item) =>
-        item.level === studentLevel &&
-        item.productType === productType &&
-        item.size === size
-    );
-
-    console.log("Found matching product:", matchingProduct);
-
-    if (matchingProduct) {
-      // Update selected products array
-      const newSelectedProducts = [...selectedProducts];
-      newSelectedProducts[index] = matchingProduct;
-      setSelectedProducts(newSelectedProducts);
-
-      // Update the unit price in the form
-      form.setValue(`orderItems.${index}.unitPrice`, matchingProduct.price);
-
-      console.log("Updated price to:", matchingProduct.price);
-    }
-  };
-
-  // Update the addOrderItem function to not mess with filteredOptions
+  // Add order item
   const addOrderItem = () => {
     const newIndex = orderItems.length;
     setOrderItems([...orderItems, { id: Date.now() }]);
 
     const currentItems = form.getValues("orderItems");
-    form.setValue("orderItems", [
+    form.setValue("orderItems", [ 
       ...currentItems,
       {
         level: studentLevel,
@@ -150,6 +120,7 @@ export function OrderMeasurementForm({
     ]);
   };
 
+  // Remove order item
   const removeOrderItem = (index) => {
     const newItems = orderItems.filter((_, i) => i !== index);
     setOrderItems(newItems);
@@ -159,7 +130,6 @@ export function OrderMeasurementForm({
   };
 
   const handleFormSubmit = async (data) => {
-    // Ensure all required fields are present
     const formattedData = {
       orderItems: data.orderItems.map((item) => ({
         level: studentLevel,
@@ -191,6 +161,7 @@ export function OrderMeasurementForm({
                       variant="destructive"
                       size="sm"
                       onClick={() => removeOrderItem(index)}
+                      disabled={isSubmitting}
                     >
                       Remove
                     </Button>
@@ -212,13 +183,11 @@ export function OrderMeasurementForm({
                     options={filteredOptions.productTypes}
                     icon={Shirt}
                     required
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isLoadingProducts}
                     onChange={(value) => {
-                      console.log("Product Type Selected:", value);
                       form.setValue(`orderItems.${index}.size`, "");
                       form.setValue(`orderItems.${index}.unitPrice`, 0);
 
-                      // Clear selected product
                       const newSelectedProducts = [...selectedProducts];
                       newSelectedProducts[index] = null;
                       setSelectedProducts(newSelectedProducts);
@@ -237,16 +206,15 @@ export function OrderMeasurementForm({
                     required
                     disabled={
                       isSubmitting ||
+                      isLoadingProducts ||
                       !form.watch(`orderItems.${index}.productType`)
                     }
                     onValueChange={(value) => {
-                      console.log("Size Selected:", value);
                       const productType = form.watch(
                         `orderItems.${index}.productType`
                       );
 
                       if (value && productType) {
-                        // Find the matching product
                         const matchingProduct = productTypes.find(
                           (item) =>
                             item.level === studentLevel &&
@@ -254,15 +222,11 @@ export function OrderMeasurementForm({
                             item.size === value
                         );
 
-                        console.log("Found Matching Product:", matchingProduct);
-
                         if (matchingProduct) {
-                          // Update selected products
                           const newSelectedProducts = [...selectedProducts];
                           newSelectedProducts[index] = matchingProduct;
                           setSelectedProducts(newSelectedProducts);
 
-                          // Update form values
                           form.setValue(`orderItems.${index}.size`, value);
                           form.setValue(
                             `orderItems.${index}.unitPrice`,
@@ -331,12 +295,12 @@ export function OrderMeasurementForm({
             variant="outline"
             className="w-full"
             onClick={addOrderItem}
+            disabled={isSubmitting}
           >
             Add Another Item
           </Button>
         </div>
 
-        {/* Add Overall Total */}
         {orderItems.length > 0 && (
           <Card className="bg-muted/50">
             <CardContent className="p-4">
@@ -359,8 +323,8 @@ export function OrderMeasurementForm({
         )}
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save Measurements"}
+          <Button type="submit" disabled={isSubmitting || isLoadingProducts}>
+            {isSubmitting ? "Saving Measurements..." : "Save Measurements"}
           </Button>
         </div>
       </form>

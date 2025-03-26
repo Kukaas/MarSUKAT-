@@ -43,6 +43,7 @@ import { RejectDialog } from "@/components/custom-components/RejectDialog";
 import { StatusMessage } from "@/components/custom-components/StatusMessage";
 import { OrderMeasurementForm } from "../../forms/OrderMeasurementForm";
 import EmptyState from "@/components/custom-components/EmptyState";
+import { useDataMutation } from "@/hooks/useDataFetching";
 
 const STATUS_ICONS = {
   Pending: Clock,
@@ -126,7 +127,6 @@ function OrderContent({ order, onUpdate }) {
     timeline: false,
   });
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(order?.status);
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
@@ -141,6 +141,93 @@ function OrderContent({ order, onUpdate }) {
   const downPayment = getReceiptsByType("Down Payment");
   const partialPayment = getReceiptsByType("Partial Payment");
   const fullPayment = getReceiptsByType("Full Payment");
+
+  // Status update mutation
+  const statusUpdateMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async ({ orderId, status }) => {
+      const result = await jobOrderAPI.updateOrder(orderId, { status });
+      return result;
+    },
+    {
+      onSuccess: (updatedOrder) => {
+        toast.success("Order status updated successfully");
+        onUpdate && onUpdate(updatedOrder);
+      },
+      onError: (error) => {
+        // Check if it's an inventory error
+        if (error.response?.data?.error?.includes("Insufficient inventory")) {
+          toast.error(error.response.data.error);
+        } else {
+          toast.error(error.response?.data?.message || "Failed to update order status");
+        }
+        // Reset selected status on error
+        setSelectedStatus(order?.status);
+      },
+    }
+  );
+
+  // Receipt verification mutation
+  const verifyReceiptMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async ({ orderId, receiptId }) => {
+      const result = await jobOrderAPI.verifyReceipt(orderId, receiptId);
+      return result;
+    },
+    {
+      onSuccess: (updatedOrder) => {
+        toast.success("Receipt verified successfully");
+        onUpdate && onUpdate(updatedOrder);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update receipt verification");
+      },
+    }
+  );
+
+  // Reject order mutation
+  const rejectOrderMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async ({ orderId, reason }) => {
+      const result = await jobOrderAPI.rejectOrder(orderId, reason);
+      return result;
+    },
+    {
+      onSuccess: (updatedOrder) => {
+        toast.success("Order rejected successfully");
+        onUpdate && onUpdate(updatedOrder);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to reject order");
+      },
+    }
+  );
+
+  // Add measurements mutation
+  const addMeasurementsMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async ({ orderId, orderItems }) => {
+      const result = await jobOrderAPI.addOrderItemsAndMeasure(
+        orderId,
+        orderItems.map((item) => ({
+          ...item,
+          level: order.level,
+        }))
+      );
+      return result;
+    },
+    {
+      onSuccess: (updatedOrder) => {
+        toast.success("Measurements saved successfully");
+        onUpdate && onUpdate(updatedOrder);
+        setShowMeasurementForm(false);
+        setSelectedStatus("Measured");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to save measurements");
+      },
+    }
+  );
 
   const toggleSection = (sectionId) => {
     setOpenSections((prev) => ({
@@ -162,63 +249,41 @@ function OrderContent({ order, onUpdate }) {
   };
 
   const handleStatusUpdate = async () => {
-    try {
-      setIsUpdating(true);
-      const updatedOrder = await jobOrderAPI.updateOrder(order._id, {
+    if (order?._id) {
+      await statusUpdateMutation.mutateAsync({
+        orderId: order._id,
         status: selectedStatus,
       });
-      toast.success("Order status updated successfully");
-      onUpdate && onUpdate(updatedOrder);
-    } catch (error) {
-      // Check if it's an inventory error
-      if (error.response?.data?.error?.includes("Insufficient inventory")) {
-        toast.error(
-          error.response.data.error
-        );
-      } else {
-        toast.error(
-          error.response?.data?.message || "Failed to update order status"
-        );
-      }
-      // Reset selected status on error
-      setSelectedStatus(order?.status);
-      console.error("Error updating order status:", error);
-    } finally {
-      setIsUpdating(false);
       setConfirmDialog({ isOpen: false, type: null, data: null });
     }
   };
 
   const handleVerifyReceipt = async (receiptId) => {
-    try {
-      setIsUpdating(true);
-      const updatedOrder = await jobOrderAPI.verifyReceipt(
-        order._id,
-        receiptId
-      );
-      toast.success("Receipt verified successfully");
-      onUpdate && onUpdate(updatedOrder);
-    } catch (error) {
-      toast.error("Failed to update receipt verification");
-      console.error("Error updating receipt verification:", error);
-    } finally {
-      setIsUpdating(false);
+    if (order?._id) {
+      await verifyReceiptMutation.mutateAsync({
+        orderId: order._id,
+        receiptId,
+      });
       setConfirmDialog({ isOpen: false, type: null, data: null });
     }
   };
 
   const handleRejectOrder = async (reason) => {
-    try {
-      setIsUpdating(true);
-      const updatedOrder = await jobOrderAPI.rejectOrder(order._id, reason);
-      toast.success("Order rejected successfully");
-      onUpdate && onUpdate(updatedOrder);
-    } catch (error) {
-      toast.error("Failed to reject order");
-      console.error("Error rejecting order:", error);
-    } finally {
-      setIsUpdating(false);
+    if (order?._id) {
+      await rejectOrderMutation.mutateAsync({
+        orderId: order._id,
+        reason,
+      });
       setRejectDialogOpen(false);
+    }
+  };
+
+  const handleMeasurementSubmit = async (data) => {
+    if (order?._id) {
+      await addMeasurementsMutation.mutateAsync({
+        orderId: order._id,
+        orderItems: data.orderItems,
+      });
     }
   };
 
@@ -302,30 +367,6 @@ function OrderContent({ order, onUpdate }) {
     };
   };
 
-  const handleMeasurementSubmit = async (data) => {
-    try {
-      setIsUpdating(true);
-      const updatedOrder = await jobOrderAPI.addOrderItemsAndMeasure(
-        order._id,
-        data.orderItems.map((item) => ({
-          ...item,
-          level: order.level,
-        }))
-      );
-      toast.success("Measurements saved successfully");
-      onUpdate && onUpdate(updatedOrder);
-      setShowMeasurementForm(false);
-      setSelectedStatus("Measured");
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to save measurements"
-      );
-      console.error("Error saving measurements:", error);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const renderReceiptContent = (receipt) => (
     <>
       <div className="flex justify-between items-start">
@@ -337,10 +378,10 @@ function OrderContent({ order, onUpdate }) {
           variant={receipt.isVerified ? "outline" : "default"}
           size="sm"
           onClick={() => openVerifyConfirmation(receipt._id, receipt)}
-          disabled={isUpdating || receipt.isVerified || isRejected}
+          disabled={verifyReceiptMutation.isPending || receipt.isVerified || isRejected}
         >
           <Check className="h-4 w-4 mr-2" />
-          Verify Receipt
+          {verifyReceiptMutation.isPending ? "Verifying..." : "Verify Receipt"}
         </Button>
       </div>
 
@@ -699,14 +740,14 @@ function OrderContent({ order, onUpdate }) {
             <Button
               onClick={openStatusConfirmation}
               disabled={
-                isUpdating ||
+                statusUpdateMutation.isPending ||
                 selectedStatus === order?.status ||
                 rejectDialogOpen ||
                 isRejected ||
                 order?.status === "Claimed"
               }
             >
-              {isUpdating ? "Updating..." : "Update Status"}
+              {statusUpdateMutation.isPending ? "Updating..." : "Update Status"}
             </Button>
           </div>
         </div>
@@ -731,7 +772,7 @@ function OrderContent({ order, onUpdate }) {
         />
         <OrderMeasurementForm
           onSubmit={handleMeasurementSubmit}
-          isSubmitting={isUpdating}
+          isSubmitting={addMeasurementsMutation.isPending}
           studentLevel={order.level}
         />
       </CardContent>
@@ -895,7 +936,7 @@ function OrderContent({ order, onUpdate }) {
         onClose={closeConfirmDialog}
         onConfirm={handleStatusUpdate}
         {...getStatusConfirmationDetails()}
-        isLoading={isUpdating}
+        isLoading={statusUpdateMutation.isPending}
       />
 
       <ConfirmationDialog
@@ -940,7 +981,7 @@ function OrderContent({ order, onUpdate }) {
         }
         variant="success"
         icon={CheckCircle2}
-        isLoading={isUpdating}
+        isLoading={verifyReceiptMutation.isPending}
       />
 
       <RejectDialog
@@ -951,7 +992,7 @@ function OrderContent({ order, onUpdate }) {
         }}
         onConfirm={handleRejectOrder}
         title={`Reject Order ${order?.orderId}`}
-        isLoading={isUpdating}
+        isLoading={rejectOrderMutation.isPending}
       />
     </>
   );
