@@ -8,6 +8,6 @@ import { isJobOrder } from "../middleware/jobOrder.middleware.js";
 const router = express.Router();
 
 // Protected routes - requires JobOrder role
-router.get("/overview", authenticateUser, isJobOrder, getDashboardOverview);
+router.get("/overview", authenticateUser, getDashboardOverview);
 
 export default router; 
