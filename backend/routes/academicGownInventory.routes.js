@@ -19,9 +19,9 @@ router.get("/stats", getInventoryStats);
 router.get("/:id", getAcademicGownInventoryById);
 
 // Job Order only routes
-router.post("/", authenticateUser, isJobOrder, createAcademicGownInventory);
-router.put("/:id", authenticateUser, isJobOrder, updateAcademicGownInventory);
-router.delete("/:id", authenticateUser, isJobOrder, deleteAcademicGownInventory);
-router.patch("/:id/quantity", authenticateUser, isJobOrder, updateInventoryQuantity);
+router.post("/", authenticateUser, createAcademicGownInventory);
+router.put("/:id", authenticateUser, updateAcademicGownInventory);
+router.delete("/:id", authenticateUser, deleteAcademicGownInventory);
+router.patch("/:id/quantity", authenticateUser, updateInventoryQuantity);
 
 export default router; 
