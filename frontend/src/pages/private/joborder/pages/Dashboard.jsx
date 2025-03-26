@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { dashboardAPI } from "../api/dashboardApi";
@@ -9,6 +9,7 @@ import { CustomChart } from "@/components/custom-components/CustomChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
+import { useDataFetching } from "@/hooks/useDataFetching";
 import {
   DollarSign,
   Shirt,
@@ -56,8 +57,6 @@ const formatCurrency = (value) => {
 };
 
 export function Dashboard() {
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedWeek, setSelectedWeek] = useState("1");
@@ -73,34 +72,25 @@ export function Dashboard() {
     label: MONTHS[i],
   }));
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const data = await dashboardAPI.getDashboardOverview(
-        timeframe,
-        selectedYear,
-        selectedMonth,
-        timeframe === "week" ? selectedWeek : undefined
-      );
-
-      if (!data) {
-        toast.error("No data available for the selected period");
-        return;
-      }
-
-      setDashboardData(data);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to fetch dashboard data"
-      );
-    } finally {
-      setLoading(false);
+  // Use React Query for data fetching with caching
+  const { data: dashboardData, isLoading, error } = useDataFetching(
+    ['dashboard', timeframe, selectedYear, selectedMonth, selectedWeek],
+    () => dashboardAPI.getDashboardOverview(
+      timeframe,
+      selectedYear,
+      selectedMonth,
+      timeframe === "week" ? selectedWeek : undefined
+    ),
+    {
+      staleTime: 5 * 60 * 1000, // Data is considered fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message || "Failed to fetch dashboard data"
+        );
+      },
     }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [selectedYear, selectedMonth, selectedWeek, timeframe]);
+  );
 
   // Render loading skeletons for sections
   const renderSkeletons = () => (
@@ -202,7 +192,7 @@ export function Dashboard() {
         </Card>
 
         <div className="flex flex-col gap-8">
-          {loading ? (
+          {isLoading ? (
             renderSkeletons()
           ) : (
             dashboardData && (
@@ -247,7 +237,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Monthly Revenue"
                         icon={LineChartIcon}
-                        loading={loading}
+                        loading={isLoading}
                         data={dashboardData?.revenue?.monthlyRevenue?.map(item => ({
                           name: MONTHS[item.month - 1],
                           value: item.revenue
@@ -263,7 +253,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Department Sales Breakdown"
                         icon={PieChartIcon}
-                        loading={loading}
+                        loading={isLoading}
                         data={dashboardData?.sales?.departmentBreakdown?.map(item => ({
                           name: item.name,
                           value: item.totalSales
@@ -283,7 +273,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Production by Product Type"
                         icon={BarChartIcon}
-                        loading={loading}
+                        loading={isLoading}
                         data={dashboardData?.production?.productTypeBreakdown?.map(item => ({
                           name: item.name,
                           value: item.quantity
@@ -298,7 +288,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Production by Level"
                         icon={PieChartIcon}
-                        loading={loading}
+                        loading={isLoading}
                         data={dashboardData?.production?.levelBreakdown?.map(item => ({
                           name: item.name,
                           value: item.quantity
@@ -318,7 +308,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Uniform Inventory Status"
                         icon={Clipboard}
-                        loading={loading}
+                        loading={isLoading}
                         data={[
                           { name: 'Available', value: dashboardData?.inventory?.uniform?.status?.available },
                           { name: 'Low Stock', value: dashboardData?.inventory?.uniform?.status?.lowStock },
@@ -334,7 +324,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Raw Material Inventory Status"
                         icon={Package}
-                        loading={loading}
+                        loading={isLoading}
                         data={[
                           { name: 'Available', value: dashboardData?.inventory?.rawMaterial?.status?.available },
                           { name: 'Low Stock', value: dashboardData?.inventory?.rawMaterial?.status?.lowStock },
@@ -350,7 +340,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Uniform Inventory by Level"
                         icon={BarChartIcon}
-                        loading={loading}
+                        loading={isLoading}
                         data={dashboardData?.inventory?.uniform?.byLevel?.map(item => ({
                           name: item.name,
                           value: item.totalQuantity
@@ -365,7 +355,7 @@ export function Dashboard() {
                       <CustomChart
                         title="Raw Material by Category"
                         icon={BarChartIcon}
-                        loading={loading}
+                        loading={isLoading}
                         data={dashboardData?.inventory?.rawMaterial?.byCategory?.map(item => ({
                           name: item.name,
                           value: item.totalItems

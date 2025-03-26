@@ -9,63 +9,67 @@ import DevModeWrapper from "./components/dev/DevModeWrapper";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
 import { baoRoutes } from "./routes/baoRoutes";
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 
 export default function App() {
   const { user } = useAuth();
 
   return (
-    <DevModeWrapper>
-      <Routes>
-        {/* Public Routes */}
-        {publicRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={
-              <PublicRoute skipAuthCheck={route.skipAuthCheck}>
-                {route.element}
-              </PublicRoute>
-            }
-          />
-        ))}
+    <QueryClientProvider client={queryClient}>
+      <DevModeWrapper>
+        <Routes>
+          {/* Public Routes */}
+          {publicRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={
+                <PublicRoute skipAuthCheck={route.skipAuthCheck}>
+                  {route.element}
+                </PublicRoute>
+              }
+            />
+          ))}
 
-        {/* Protected Routes */}
-        {/* Student Routes */}
-        {studentRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<PrivateRoute>{route.element}</PrivateRoute>}
-          />
-        ))}
+          {/* Protected Routes */}
+          {/* Student Routes */}
+          {studentRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<PrivateRoute>{route.element}</PrivateRoute>}
+            />
+          ))}
 
-        {/* SuperAdmin Routes */}
-        {superAdminRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<PrivateRoute>{route.element}</PrivateRoute>}
-          />
-        ))}
+          {/* SuperAdmin Routes */}
+          {superAdminRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<PrivateRoute>{route.element}</PrivateRoute>}
+            />
+          ))}
 
-        {/* Job Order Routes */}
-        {jobOrderRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<PrivateRoute>{route.element}</PrivateRoute>}
-          />
-        ))}
+          {/* Job Order Routes */}
+          {jobOrderRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<PrivateRoute>{route.element}</PrivateRoute>}
+            />
+          ))}
 
-        {/* BAO Routes */}
-        {baoRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<PrivateRoute>{route.element}</PrivateRoute>}
-          />
-        ))}
-      </Routes>
-    </DevModeWrapper>
+          {/* BAO Routes */}
+          {baoRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<PrivateRoute>{route.element}</PrivateRoute>}
+            />
+          ))}
+        </Routes>
+      </DevModeWrapper>
+    </QueryClientProvider>
   );
 }
