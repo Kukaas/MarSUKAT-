@@ -16,7 +16,7 @@ import {
   BarChart3,
   Calendar
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -27,14 +27,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { RawMaterialInventoryDetails } from "../components/details/raw-material-inventory-details";
 import { RawMaterialInventoryForm } from "../forms/RawMaterialInventoryForm";
@@ -46,7 +38,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { RawMaterialInventoryDetailsDialog } from "../components/details/raw-material-inventory-details";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
-import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import { format } from "date-fns";
@@ -55,7 +46,7 @@ import StatsCard from "@/components/custom-components/StatsCard";
 import MaterialUsageOverviewChart from "../components/charts/MaterialUsageOverviewChart"; 
 import { MaterialForecastChart } from "../components/charts/MaterialForecastChart";
 import { MaterialUsageTable } from "../components/tables/MaterialUsageTable";
-import DateRangeSelector from "@/components/custom-components/DateRangeSelector";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January",
@@ -74,8 +65,6 @@ const MONTHS = [
 
 export default function RawMaterialsInventory() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [inventory, setInventory] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -89,23 +78,13 @@ export default function RawMaterialsInventory() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState("inventory");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
-
-  // Material usage monitoring states
-  const [isUsageLoading, setIsUsageLoading] = useState(true);
-  const [isReportLoading, setIsReportLoading] = useState(true);
-  const [usageStats, setUsageStats] = useState(null);
-  const [usageReport, setUsageReport] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [materialTypes, setMaterialTypes] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedMaterial, setSelectedMaterial] = useState("");
@@ -123,6 +102,150 @@ export default function RawMaterialsInventory() {
     value: (i + 1).toString(),
     label: MONTHS[i]
   }));
+
+  // Fetch inventory data with caching
+  const { data: inventoryData, isLoading, refetch: refetchInventory } = useDataFetching(
+    ['rawMaterialInventory'],
+    async () => {
+      const data = await inventoryAPI.getAllRawMaterialInventory();
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(data.map(item => item.category))];
+      const categories = uniqueCategories.map(category => ({
+        value: category,
+        label: category
+      }));
+      
+      // Extract unique material types with their categories
+      const materials = data.map(item => ({
+        category: item.category,
+        type: item.rawMaterialType.name,
+        id: `${item.category}-${item.rawMaterialType.name}`
+      }));
+      
+      const uniqueMaterials = materials.filter((material, index, self) => 
+        index === self.findIndex(m => m.id === material.id)
+      );
+      
+      const materialTypes = uniqueMaterials.map(material => ({
+        value: material.id,
+        label: `${material.category} - ${material.type}`,
+        category: material.category,
+        type: material.type
+      }));
+      
+      return {
+        inventory: data,
+        categories,
+        materialTypes
+      };
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+    }
+  );
+
+  const inventory = inventoryData?.inventory || [];
+  const categories = inventoryData?.categories || [];
+  const materialTypes = inventoryData?.materialTypes || [];
+
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['rawMaterialInventory'],
+    async (data) => {
+      const result = await inventoryAPI.createRawMaterialInventory(data);
+      await refetchInventory();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Inventory item created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create inventory item");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['rawMaterialInventory'],
+    async (data) => {
+      const result = await inventoryAPI.updateRawMaterialInventory(selectedId, data);
+      await refetchInventory();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Inventory item updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update inventory item");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['rawMaterialInventory'],
+    async (id) => {
+      const result = await inventoryAPI.deleteRawMaterialInventory(id);
+      await refetchInventory();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Inventory item deleted successfully");
+        setDeleteDialog({ isOpen: false, itemToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete inventory item");
+      },
+    }
+  );
+
+  // Fetch usage stats with caching
+  const { data: usageStats, isLoading: isUsageLoading } = useDataFetching(
+    ['materialUsageStats', selectedYear, selectedMonth, selectedCategory, selectedType],
+    async () => {
+      const stats = await productionAPI.getRawMaterialsUsageStats(
+        selectedYear, 
+        selectedMonth,
+        selectedCategory === "all" ? "" : selectedCategory,
+        selectedType === "all" ? "" : selectedType
+      );
+      return stats;
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      enabled: activeTab === "usage",
+    }
+  );
+
+  // Fetch usage report with caching
+  const { data: usageReport, isLoading: isReportLoading } = useDataFetching(
+    ['materialUsageReport', startDate, endDate, selectedCategory, selectedType],
+    async () => {
+      const report = await productionAPI.getMaterialUsageReport(
+        format(startDate, 'yyyy-MM-dd'),
+        format(endDate, 'yyyy-MM-dd'),
+        selectedCategory === "all" ? "" : selectedCategory,
+        selectedType === "all" ? "" : selectedType
+      );
+      return report;
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      enabled: activeTab === "usage",
+    }
+  );
 
   // Helper functions for usage statistics
   const calculateTotalUsage = () => {
@@ -162,69 +285,6 @@ export default function RawMaterialsInventory() {
       (prev.quantity > current.quantity) ? prev : current
     );
   };
-
-  // Fetch inventory data
-  const fetchInventory = async () => {
-    try {
-      setIsLoading(true);
-      const data = await inventoryAPI.getAllRawMaterialInventory();
-      setInventory(data);
-      
-      // Extract unique categories
-      const uniqueCategories = [...new Set(data.map(item => item.category))];
-      setCategories(uniqueCategories.map(category => ({
-        value: category,
-        label: category
-      })));
-      
-      // Extract unique material types with their categories
-      const materials = data.map(item => ({
-        category: item.category,
-        type: item.rawMaterialType.name,
-        id: `${item.category}-${item.rawMaterialType.name}`
-      }));
-      
-      const uniqueMaterials = materials.filter((material, index, self) => 
-        index === self.findIndex(m => m.id === material.id)
-      );
-      
-      setMaterialTypes(uniqueMaterials.map(material => ({
-        value: material.id,
-        label: `${material.category} - ${material.type}`,
-        category: material.category,
-        type: material.type
-      })));
-      
-    } catch (error) {
-      toast.error("Failed to fetch inventory items");
-      console.error("Error fetching inventory:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "usage") {
-      fetchUsageStats();
-      fetchUsageReport();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === "usage") {
-      fetchUsageStats();
-    }
-  }, [selectedYear, selectedMonth, selectedCategory, selectedType, activeTab]);
-
-  useEffect(() => {
-    if (activeTab === "usage") {
-      fetchUsageReport();
-    }
-  }, [startDate, endDate, selectedCategory, selectedType, activeTab]);
 
   // Column definitions
   const columns = [
@@ -319,40 +379,23 @@ export default function RawMaterialsInventory() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await inventoryAPI.deleteRawMaterialInventory(
-        deleteDialog.itemToDelete._id
-      );
-      await fetchInventory();
-      toast.success("Inventory item deleted successfully");
-      setDeleteDialog({ isOpen: false, itemToDelete: null });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to delete inventory item"
-      );
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.itemToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.itemToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, itemToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing) {
-        await inventoryAPI.updateRawMaterialInventory(selectedId, data);
-        toast.success("Inventory item updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await inventoryAPI.createRawMaterialInventory(data);
-        toast.success("Inventory item created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({
@@ -363,11 +406,8 @@ export default function RawMaterialsInventory() {
         status: "Available",
       });
       setSelectedId(null);
-      fetchInventory();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -422,42 +462,6 @@ export default function RawMaterialsInventory() {
         },
       ],
     },
-  };
-
-  const fetchUsageStats = async () => {
-    try {
-      setIsUsageLoading(true);
-      const stats = await productionAPI.getRawMaterialsUsageStats(
-        selectedYear, 
-        selectedMonth,
-        selectedCategory === "all" ? "" : selectedCategory,
-        selectedType === "all" ? "" : selectedType
-      );
-      setUsageStats(stats);
-    } catch (error) {
-      console.error("Error fetching usage stats:", error);
-      toast.error("Failed to fetch material usage statistics");
-    } finally {
-      setIsUsageLoading(false);
-    }
-  };
-
-  const fetchUsageReport = async () => {
-    try {
-      setIsReportLoading(true);
-      const report = await productionAPI.getMaterialUsageReport(
-        format(startDate, 'yyyy-MM-dd'),
-        format(endDate, 'yyyy-MM-dd'),
-        selectedCategory === "all" ? "" : selectedCategory,
-        selectedType === "all" ? "" : selectedType
-      );
-      setUsageReport(report);
-    } catch (error) {
-      console.error("Error fetching usage report:", error);
-      toast.error("Failed to fetch material usage report");
-    } finally {
-      setIsReportLoading(false);
-    }
   };
 
   return (
@@ -532,7 +536,7 @@ export default function RawMaterialsInventory() {
                     value={selectedCategory}
                     onChange={setSelectedCategory}
                   />
-                    </div>
+                </div>
                 <div className="w-full md:w-1/4">
                   <CustomSelect
                     name="type"
@@ -547,8 +551,8 @@ export default function RawMaterialsInventory() {
                     value={selectedType}
                     onChange={setSelectedType}
                   />
-                    </div>
-                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatsCard 
@@ -556,12 +560,14 @@ export default function RawMaterialsInventory() {
                   value={calculateTotalUsage().toFixed(2)}
                   icon={<Package className="h-4 w-4 text-muted-foreground" />}
                   description="Units used this period"
+                  isLoading={isUsageLoading}
                 />
                 <StatsCard 
                   title="Materials Tracked"
                   value={getMaterialsCount()}
                   icon={<Package className="h-4 w-4 text-muted-foreground" />}
                   description="Distinct materials in use"
+                  isLoading={isUsageLoading}
                 />
                 <StatsCard 
                   title="Low Stock Materials"
@@ -569,6 +575,7 @@ export default function RawMaterialsInventory() {
                   icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
                   description="Materials needing restock"
                   variant={getLowStockCount() > 0 ? "destructive" : "default"}
+                  isLoading={isUsageLoading}
                 />
               </div>
 
@@ -611,24 +618,24 @@ export default function RawMaterialsInventory() {
                   formData={formData}
                   setFormData={setFormData}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={createMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="rawMaterialInventoryForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -659,24 +666,24 @@ export default function RawMaterialsInventory() {
                   setFormData={setFormData}
                   isEdit={true}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={updateMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="rawMaterialInventoryForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -700,7 +707,7 @@ export default function RawMaterialsInventory() {
               ? `Are you sure you want to delete the inventory item "${deleteDialog.itemToDelete.rawMaterialType.name}"? This action cannot be undone.`
               : "Are you sure you want to delete this inventory item? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

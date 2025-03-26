@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import SectionHeader from "@/components/custom-components/SectionHeader";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { productionAPI } from "../api/productionApi";
 import { inventoryAPI } from "../api/inventoryApi";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { DataTable } from "@/components/custom-components/DataTable";
-import axios from "axios";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January",
@@ -37,21 +37,13 @@ const MONTHS = [
 
 export default function MaterialUsageMonitoring() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isReportLoading, setIsReportLoading] = useState(true);
-  const [usageStats, setUsageStats] = useState(null);
-  const [usageReport, setUsageReport] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [materialTypes, setMaterialTypes] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedMaterial, setSelectedMaterial] = useState("all");
-  const [materials, setMaterials] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)));
   const [endDate, setEndDate] = useState(new Date());
   const [filteredTypes, setFilteredTypes] = useState(["all"]);
-
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
 
@@ -68,120 +60,93 @@ export default function MaterialUsageMonitoring() {
     label: MONTHS[i]
   }));
 
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/raw-materials/inventory`, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-
-      if (response.data.success) {
+  // Fetch categories and materials with caching
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useDataFetching(
+    ['materialCategories'],
+    async () => {
+      const response = await inventoryAPI.getAllRawMaterials();
+      if (response.success) {
         // Extract unique categories and materials
-        const uniqueCategories = [...new Set(response.data.data.map(item => item.category))];
+        const uniqueCategories = [...new Set(response.data.map(item => item.category))];
         
         // Create materials mapping organized by category and type
-        const materialsMap = response.data.data.reduce((acc, material) => {
-          // Initialize category if not exists
+        const materialsMap = response.data.reduce((acc, material) => {
           if (!acc[material.category]) {
             acc[material.category] = {};
           }
-          
-          // Initialize type if not exists
           if (!acc[material.category][material.type]) {
             acc[material.category][material.type] = [];
           }
-          
-          // Add material to its category and type
           acc[material.category][material.type].push({
             id: `${material.category}-${material.type}`,
             name: `${material.name}`,
             unit: material.unit
           });
-          
           return acc;
         }, {});
         
-        setCategories(["all", ...uniqueCategories]);
-        setMaterialTypes(materialsMap);
-        setMaterials(response.data.data);
+        return {
+          categories: ["all", ...uniqueCategories],
+          materialTypes: materialsMap,
+          materials: response.data
+        };
       }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch categories and material types",
-        variant: "destructive"
-      });
+      throw new Error("Failed to fetch categories");
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  const fetchUsageStats = async () => {
-    setIsLoading(true);
-    try {
+  const categories = categoriesData?.categories || [];
+  const materialTypes = categoriesData?.materialTypes || {};
+  const materials = categoriesData?.materials || [];
+
+  // Fetch usage stats with caching
+  const { data: usageStats, isLoading: isStatsLoading } = useDataFetching(
+    ['materialUsageStats', selectedYear, selectedMonth, selectedCategory, selectedType, selectedMaterial],
+    async () => {
       const categoryParam = selectedCategory !== "all" ? selectedCategory : "";
       const typeParam = selectedType !== "all" ? selectedType : "";
       const materialParam = selectedMaterial !== "all" ? selectedMaterial : "";
 
-      const response = await axios.get(`${API_URL}/school-uniform-production/material-usage`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-        params: {
-          year: selectedYear,
-          month: selectedMonth !== "all" ? selectedMonth : "",
-          category: categoryParam,
-          type: typeParam,
-          material: materialParam
-        }
-      });
+      const response = await productionAPI.getMaterialUsageStats(
+        selectedYear,
+        selectedMonth !== "all" ? selectedMonth : "",
+        categoryParam,
+        typeParam,
+        materialParam
+      );
 
-      if (response.data.success) {
-        setUsageStats(response.data.data);
-      } else {
-        toast({
-          title: "Error",
-          description: response.data.message || "Failed to fetch material usage data",
-          variant: "destructive"
-        });
+      if (response.success) {
+        return response.data;
       }
-    } catch (error) {
-      console.error("Error fetching material usage stats:", error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to fetch material usage data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+      throw new Error(response.message || "Failed to fetch material usage data");
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
     }
-  };
+  );
 
-  const fetchUsageReport = async () => {
-    try {
-      setIsReportLoading(true);
+  // Fetch usage report with caching
+  const { data: usageReport, isLoading: isReportLoading, refetch: refetchReport } = useDataFetching(
+    ['materialUsageReport', startDate, endDate, selectedCategory, selectedType],
+    async () => {
       const report = await productionAPI.getMaterialUsageReport(
         format(startDate, 'yyyy-MM-dd'),
         format(endDate, 'yyyy-MM-dd'),
         selectedCategory === "all" ? "" : selectedCategory,
         selectedType === "all" ? "" : selectedType
       );
-      setUsageReport(report);
-    } catch (error) {
-      console.error("Error fetching usage report:", error);
-      toast.error("Failed to fetch material usage report");
-    } finally {
-      setIsReportLoading(false);
+      return report;
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
     }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    fetchUsageStats();
-  }, [selectedYear, selectedMonth, selectedCategory, selectedType]);
-
-  useEffect(() => {
-    fetchUsageReport();
-  }, [startDate, endDate, selectedCategory, selectedType]);
+  );
 
   const calculateTotalUsage = () => {
     if (!usageStats || !usageStats.monthlyData || usageStats.monthlyData.length === 0) {
@@ -268,13 +233,11 @@ export default function MaterialUsageMonitoring() {
     setSelectedType("all");
     setSelectedMaterial("all");
     
-    // If value is "all", we don't need to filter types
     if (value === "all") {
       setFilteredTypes(["all"]);
       return;
     }
     
-    // Get all available types for the selected category
     const types = Object.keys(materialTypes[value] || {});
     setFilteredTypes(["all", ...types]);
   };
@@ -331,6 +294,7 @@ export default function MaterialUsageMonitoring() {
                 }))}
                 value={selectedCategory}
                 onChange={handleCategoryChange}
+                isLoading={isCategoriesLoading}
               />
             </div>
             <div className="w-full md:w-1/4">
@@ -347,6 +311,7 @@ export default function MaterialUsageMonitoring() {
                 ]}
                 value={selectedMaterial}
                 onChange={setSelectedMaterial}
+                isLoading={isCategoriesLoading}
               />
             </div>
           </div>
@@ -360,6 +325,7 @@ export default function MaterialUsageMonitoring() {
                 value: type,
                 label: type === "all" ? "All Types" : type
               }))}
+              isLoading={isCategoriesLoading}
             />
           </div>
 
@@ -369,12 +335,14 @@ export default function MaterialUsageMonitoring() {
               value={calculateTotalUsage().toFixed(2)}
               icon={<Package className="h-4 w-4 text-muted-foreground" />}
               description="Units used this period"
+              isLoading={isStatsLoading}
             />
             <StatsCard 
               title="Materials Tracked"
               value={getMaterialsCount()}
               icon={<Package className="h-4 w-4 text-muted-foreground" />}
               description="Distinct materials in use"
+              isLoading={isStatsLoading}
             />
             <StatsCard 
               title="Low Stock Materials"
@@ -382,6 +350,7 @@ export default function MaterialUsageMonitoring() {
               icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
               description="Materials needing restock"
               variant={getLowStockCount() > 0 ? "destructive" : "default"}
+              isLoading={isStatsLoading}
             />
           </div>
 
@@ -394,7 +363,7 @@ export default function MaterialUsageMonitoring() {
               <div className="grid grid-cols-1 gap-8 mt-4">
                 <MaterialUsageOverviewChart 
                   data={usageStats} 
-                  loading={isLoading} 
+                  loading={isStatsLoading} 
                   selectedMaterial={selectedMaterial}
                 />
               </div>
@@ -428,10 +397,17 @@ export default function MaterialUsageMonitoring() {
                     </div>
                     <div className="flex justify-end mt-4">
                       <Button 
-                        onClick={fetchUsageReport} 
+                        onClick={refetchReport} 
                         disabled={isReportLoading}
                       >
-                        {isReportLoading ? "Loading..." : "Update Report"}
+                        {isReportLoading ? (
+                          <>
+                            <span className="loading loading-spinner loading-sm mr-2"></span>
+                            Loading...
+                          </>
+                        ) : (
+                          "Update Report"
+                        )}
                       </Button>
                     </div>
                   </CardContent>
@@ -471,10 +447,17 @@ export default function MaterialUsageMonitoring() {
                     </div>
                     <div className="flex justify-end mt-4">
                       <Button 
-                        onClick={fetchUsageReport} 
+                        onClick={refetchReport} 
                         disabled={isReportLoading}
                       >
-                        {isReportLoading ? "Loading..." : "Generate Report"}
+                        {isReportLoading ? (
+                          <>
+                            <span className="loading loading-spinner loading-sm mr-2"></span>
+                            Loading...
+                          </>
+                        ) : (
+                          "Generate Report"
+                        )}
                       </Button>
                     </div>
                   </CardContent>
@@ -507,7 +490,6 @@ export default function MaterialUsageMonitoring() {
                                 label: "View Breakdown",
                                 icon: Table2,
                                 onClick: (row) => {
-                                  // This could be expanded to show detailed breakdown in a modal
                                   console.log("View breakdown for:", row);
                                 },
                               },
@@ -520,27 +502,27 @@ export default function MaterialUsageMonitoring() {
                 </Card>
                 
                 {usageReport && usageReport.materialUsage && usageReport.materialUsage.length > 0 && (
-                      <ScrollArea className="h-[600px]">
-                        <div className="space-y-8">
-                          {usageReport.materialUsage.map((material, index) => (
-                            <div key={index} className="border rounded-md p-4">
-                              <h3 className="font-semibold text-lg mb-2">{material.type} ({material.category})</h3>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                  <span className="text-sm text-muted-foreground">Total Usage:</span>
-                                  <p className="font-medium">{material.totalQuantity.toFixed(2)} {material.unit}</p>
-                                </div>
-                                <div>
-                                  <span className="text-sm text-muted-foreground">Current Stock:</span>
-                                  <p className="font-medium">{material.currentInventory.toFixed(2)} {material.unit}</p>
-                                </div>
-                                <div>
-                                  <span className="text-sm text-muted-foreground">Daily Consumption:</span>
-                                  <p className="font-medium">{material.dailyConsumptionRate} {material.unit}/day</p>
-                                </div>
-                              </div>
-                              
-                              <h4 className="font-medium mb-2 text-sm text-muted-foreground">Usage by Product</h4>
+                  <ScrollArea className="h-[600px]">
+                    <div className="space-y-8">
+                      {usageReport.materialUsage.map((material, index) => (
+                        <div key={index} className="border rounded-md p-4">
+                          <h3 className="font-semibold text-lg mb-2">{material.type} ({material.category})</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <span className="text-sm text-muted-foreground">Total Usage:</span>
+                              <p className="font-medium">{material.totalQuantity.toFixed(2)} {material.unit}</p>
+                            </div>
+                            <div>
+                              <span className="text-sm text-muted-foreground">Current Stock:</span>
+                              <p className="font-medium">{material.currentInventory.toFixed(2)} {material.unit}</p>
+                            </div>
+                            <div>
+                              <span className="text-sm text-muted-foreground">Daily Consumption:</span>
+                              <p className="font-medium">{material.dailyConsumptionRate} {material.unit}/day</p>
+                            </div>
+                          </div>
+                          
+                          <h4 className="font-medium mb-2 text-sm text-muted-foreground">Usage by Product</h4>
                           <DataTable
                             data={material.usageByProduct}
                             columns={[
@@ -553,9 +535,10 @@ export default function MaterialUsageMonitoring() {
                                 render: (value) => `${value.toFixed(2)} ${material.unit}`
                               }
                             ]}
+                            isLoading={isReportLoading}
                           />
-                              
-                              <h4 className="font-medium mb-2 mt-4 text-sm text-muted-foreground">Monthly Usage</h4>
+                          
+                          <h4 className="font-medium mb-2 mt-4 text-sm text-muted-foreground">Monthly Usage</h4>
                           <DataTable
                             data={material.monthlyUsage}
                             columns={[
@@ -571,12 +554,13 @@ export default function MaterialUsageMonitoring() {
                                 render: (value) => `${value.toFixed(2)} ${material.unit}`
                               }
                             ]}
+                            isLoading={isReportLoading}
                           />
-                            </div>
-                          ))}
                         </div>
-                      </ScrollArea>
-                    )}
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
               </div>
             </TabPanel>
           </CustomTabs>
