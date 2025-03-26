@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import Calendar from "../../../../components/custom-components/Calendar";
 import { scheduleAPI } from "../../../../lib/api";
@@ -22,6 +22,7 @@ import { CalendarX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/custom-components/LoadingSpinner";
 import { cn } from "@/lib/utils";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const ScheduleItem = ({ event, isExpanded, onToggle }) => (
   <div className="overflow-hidden bg-background rounded-lg border transition-all duration-200 hover:shadow-md">
@@ -84,20 +85,16 @@ const ScheduleItem = ({ event, isExpanded, onToggle }) => (
 );
 
 export function Schedules() {
-  const [schedules, setSchedules] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [expandedEvents, setExpandedEvents] = useState(new Set());
 
-  useEffect(() => {
-    fetchSchedules();
-  }, []);
-
-  const fetchSchedules = async () => {
-    try {
+  // Fetch schedules with caching
+  const { data: schedules, isLoading } = useDataFetching(
+    ['schedules'],
+    async () => {
       const data = await scheduleAPI.getAllSchedules();
-      const calendarEvents = data.map((schedule) => ({
+      return data.map((schedule) => ({
         id: schedule.id,
         title: `${schedule.name} - ${schedule.department}`,
         start: new Date(schedule.date),
@@ -108,16 +105,12 @@ export function Schedules() {
         orderId: schedule.orderId,
         status: schedule.status,
       }));
-      setSchedules(calendarEvents);
-    } catch (error) {
-      toast.error("Failed to fetch schedules", {
-        description: "Please try again later",
-      });
-      console.error(error);
-    } finally {
-      setLoading(false);
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
   const handleEventClick = (events) => {
     setSelectedEvents(events);
@@ -144,11 +137,11 @@ export function Schedules() {
           description="View all student measurement schedules"
         />
 
-        {loading ? (
+        {isLoading ? (
           <Card className="p-6">
             <LoadingSpinner message="Loading Schedules" />
           </Card>
-        ) : schedules.length > 0 ? (
+        ) : schedules?.length > 0 ? (
           <div className="grid lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)] gap-6">
             <div className="min-w-0">
               <Card className="p-4 sm:p-6">

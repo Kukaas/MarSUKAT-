@@ -4,7 +4,6 @@ import { DataTable } from "@/components/custom-components/DataTable";
 import {
   Plus,
   Eye,
-  Edit2,
   Trash2,
   Shirt,
   GraduationCap,
@@ -15,7 +14,7 @@ import {
   Table2,
   BarChart3,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { productionAPI } from "../api/productionApi";
 import SectionHeader from "@/components/custom-components/SectionHeader";
@@ -41,6 +40,7 @@ import { LevelProductionChart } from "../components/charts/LevelProductionChart"
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January",
@@ -59,11 +59,8 @@ const MONTHS = [
 
 export const SchoolUniformProduction = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [productions, setProductions] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     level: "",
@@ -74,17 +71,11 @@ export const SchoolUniformProduction = () => {
     productionDateTo: "",
     rawMaterialsUsed: [],
   });
-  const [selectedId, setSelectedId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState(null);
   const [inventoryIssues, setInventoryIssues] = useState(null);
-  const [statsData, setStatsData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [activeTab, setActiveTab] = useState("table");
@@ -101,26 +92,87 @@ export const SchoolUniformProduction = () => {
     label: MONTHS[i]
   }));
 
-  const fetchProductions = async () => {
-    try {
-      setIsLoading(true);
-      const [productionsData, stats] = await Promise.all([
+  const handleDialogClose = (type) => {
+    if (type === "create") {
+      setIsCreateDialogOpen(false);
+    }
+    setFormData({
+      level: "",
+      productType: "",
+      size: "",
+      quantity: "",
+      productionDateFrom: "",
+      productionDateTo: "",
+      rawMaterialsUsed: [],
+    });
+  };
+
+  // Fetch productions data with caching
+  const { data: productionsData, isLoading, refetch: refetchProductions } = useDataFetching(
+    ['schoolUniformProductions', selectedYear, selectedMonth],
+    async () => {
+      const [productions, stats] = await Promise.all([
         productionAPI.getAllSchoolUniformProductions(),
         productionAPI.getProductionStats(selectedYear, selectedMonth)
       ]);
-      setProductions(productionsData);
-      setStatsData(stats);
-    } catch (error) {
-      toast.error("Failed to fetch production data");
-      console.error("Error fetching data:", error);
-    } finally {
-      setIsLoading(false);
+      return { productions, stats };
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchProductions();
-  }, [selectedYear, selectedMonth]);
+  const productions = productionsData?.productions || [];
+  const statsData = productionsData?.stats;
+
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['schoolUniformProductions'],
+    async (data) => {
+      const response = await productionAPI.createSchoolUniformProduction(data);
+      if (response.data?.inventoryIssues) {
+        setInventoryIssues(response.data.inventoryIssues);
+        return null;
+      }
+      await refetchProductions();
+      return response;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Production created successfully");
+        setIsCreateDialogOpen(false);
+        setInventoryIssues(null);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        if (error.response?.data?.inventoryIssues) {
+          setInventoryIssues(error.response.data.inventoryIssues);
+          return;
+        }
+        toast.error(error.response?.data?.message || "Failed to create production");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['schoolUniformProductions'],
+    async (id) => {
+      const result = await productionAPI.deleteSchoolUniformProduction(id);
+      await refetchProductions();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Production deleted successfully");
+        setDeleteDialog({ isOpen: false, itemToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete production");
+      },
+    }
+  );
 
   const columns = [
     {
@@ -177,29 +229,7 @@ export const SchoolUniformProduction = () => {
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
-      setInventoryIssues(null);
-
-      if (isEditing) {
-        console.log("Updating production...");
-        await productionAPI.updateSchoolUniformProduction(selectedId, data);
-        toast.success("Production updated successfully");
-        setIsEditDialogOpen(false);
-      } else {
-        console.log("Creating new production...");
-        const response = await productionAPI.createSchoolUniformProduction(
-          data
-        );
-
-        if (response.data?.inventoryIssues) {
-          setInventoryIssues(response.data.inventoryIssues);
-          return;
-        }
-
-        toast.success("Production created successfully");
-        setIsCreateDialogOpen(false);
-      }
-      setIsEditing(false);
+      await createMutation.mutateAsync(data);
       setFormData({
         level: "",
         productType: "",
@@ -209,17 +239,8 @@ export const SchoolUniformProduction = () => {
         productionDateTo: "",
         rawMaterialsUsed: [],
       });
-      setSelectedId(null);
-      fetchProductions();
     } catch (error) {
-      console.error("Operation error:", error);
-      if (error.response?.data?.inventoryIssues) {
-        setInventoryIssues(error.response.data.inventoryIssues);
-        return;
-      }
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -365,7 +386,7 @@ export const SchoolUniformProduction = () => {
           >
             <TabPanel value="table">
               <DataTable
-              className="mt-4"
+                className="mt-4"
                 data={productions}
                 columns={columns}
                 isLoading={isLoading}
@@ -380,8 +401,6 @@ export const SchoolUniformProduction = () => {
                     productionDateTo: "",
                     rawMaterialsUsed: [],
                   });
-                  setIsEditing(false);
-                  setSelectedId(null);
                   setIsCreateDialogOpen(true);
                 }}
                 createButtonText={
@@ -422,7 +441,7 @@ export const SchoolUniformProduction = () => {
                   formData={formData}
                   setFormData={setFormData}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={createMutation.isPending}
                   inventoryIssues={inventoryIssues}
                 />
               </div>
@@ -433,56 +452,23 @@ export const SchoolUniformProduction = () => {
                   setIsCreateDialogOpen(false);
                   setInventoryIssues(null);
                 }}
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="schoolUniformProductionForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? "Creating..." : "Create"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Edit Dialog */}
-        <AlertDialog open={isEditDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[600px]">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-2xl font-semibold">
-                Edit Production
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-500">
-                Modify the production details
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="py-2">
-                <SchoolUniformProductionForm
-                  formData={formData}
-                  setFormData={setFormData}
-                  isEdit={true}
-                  onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
-                />
-              </div>
-            </ScrollArea>
-            <AlertDialogFooter className="pt-4">
-              <AlertDialogCancel
-                onClick={() => !isSubmitting && setIsEditDialogOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                type="submit"
-                form="schoolUniformProductionForm"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Updating..." : "Update"}
+                {createMutation.isPending ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                    Creating...
+                  </>
+                ) : (
+                  "Create"
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -493,23 +479,13 @@ export const SchoolUniformProduction = () => {
           isOpen={deleteDialog.isOpen}
           onClose={() => setDeleteDialog({ isOpen: false, itemToDelete: null })}
           onConfirm={async () => {
-            try {
-              setIsDeleting(true);
-              await productionAPI.deleteSchoolUniformProduction(
-                deleteDialog.itemToDelete._id
-              );
-              toast.success("Production deleted successfully");
-              fetchProductions();
-            } catch (error) {
-              toast.error("Failed to delete production");
-            } finally {
-              setIsDeleting(false);
-              setDeleteDialog({ isOpen: false, itemToDelete: null });
+            if (deleteDialog.itemToDelete) {
+              await deleteMutation.mutateAsync(deleteDialog.itemToDelete._id);
             }
           }}
           title="Delete Production"
           description="Are you sure you want to delete this production record? This action cannot be undone."
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
 
         {/* View Dialog */}
