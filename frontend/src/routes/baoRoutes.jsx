@@ -3,6 +3,7 @@ import SchoolUniformProduction from "@/pages/private/bao/pages/SchoolUniformProd
 import RawMaterialsInventory from "@/pages/private/bao/pages/RawMaterialsInventory";
 import SchoolUniformInventory from "@/pages/private/bao/pages/SchoolUniformInventory";
 import SalesReport from "@/pages/private/bao/pages/SalesReport";
+import AcademicGownProduction from "@/pages/private/bao/pages/AcademicGownProduction";
 export const baoRoutes = [
   {
     path: "/bao/dashboard/:id",
@@ -11,6 +12,10 @@ export const baoRoutes = [
   {
     path: "/bao/productions/school-uniforms",
     element: <SchoolUniformProduction />,
+  },
+  {
+    path: "/bao/productions/academic-gowns",
+    element: <AcademicGownProduction />,
   },
   {
     path: "/bao/inventory/raw-materials",
