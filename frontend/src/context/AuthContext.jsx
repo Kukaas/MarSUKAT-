@@ -23,9 +23,24 @@ const PUBLIC_ROUTES = [
   "/verify-otp/:userId",
   "/about",
   "/contact-us",
-  "/faq",
-  "*",
+  "/faq"
 ];
+
+// Loading component
+const LoadingScreen = () => (
+  <div className="fixed inset-0 flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center">
+      <div className="relative">
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
+      </div>
+      <div className="mt-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Please wait while we fetch your data...
+        </p>
+      </div>
+    </div>
+  </div>
+);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -36,7 +51,8 @@ export function AuthProvider({ children }) {
 
   // Helper function to check if current path matches any public route pattern
   const isPublicRoute = (pathname) => {
-    return PUBLIC_ROUTES.some((route) => matchPath({ path: route }, pathname));
+    const isPublic = PUBLIC_ROUTES.some((route) => matchPath({ path: route }, pathname));
+    return isPublic;
   };
 
   // Function to handle logout
@@ -182,7 +198,8 @@ export function AuthProvider({ children }) {
   };
 
   if (loading && !isPublicRoute(location.pathname)) {
-    return null; // Or a loading spinner component
+    console.log('Rendering loading screen');
+    return <LoadingScreen />;
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
