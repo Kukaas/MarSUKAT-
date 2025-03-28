@@ -39,12 +39,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { Switch } from "./ui/switch";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "../lib/utils";
 import ProfileModal from "./profile/ProfileModal";
 import NotificationsModal from "./notifications/NotificationsModal";
 import { ConfirmationDialog } from "./custom-components/ConfirmationDialog";
 import { useLogoutMutation } from "../hooks/useDataFetching";
+import { notificationAPI } from "@/lib/api";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
@@ -82,6 +83,7 @@ const Header = () => {
   const [openAccordions, setOpenAccordions] = useState({});
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const logoutMutation = useLogoutMutation();
 
@@ -102,6 +104,38 @@ const Header = () => {
       setShowLogoutDialog(false);
     }
   };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await notificationAPI.getNotifications();
+      // Check if response exists and has the expected structure
+      const notifications = Array.isArray(response) ? response : response?.data || [];
+      const unreadNotifications = notifications.filter(
+        (notification) => !notification.read
+      );
+      setNotifications(unreadNotifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      // Set empty array in case of error
+      setNotifications([]);
+    }
+  };
+
+  useEffect(() => {
+    // Only fetch notifications if user is logged in
+    if (user) {
+      // Fetch notifications immediately when component mounts
+      fetchNotifications();
+      
+      // Then fetch notifications every 40 seconds
+      const interval = setInterval(() => {
+        fetchNotifications();
+      }, 40000);
+
+      // Cleanup interval on unmount
+      return () => clearInterval(interval);
+    }
+  }, [user]); // Add user as dependency
 
   const ListItem = React.forwardRef(
     ({ className, title, children, ...props }, ref) => {
@@ -204,7 +238,9 @@ const Header = () => {
             onClick={() => setNotificationsModalOpen(true)}
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+            {notifications.length > 0 && (
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+            )}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -257,7 +293,9 @@ const Header = () => {
             onClick={() => setNotificationsModalOpen(true)}
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+            {notifications.length > 0 && (
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+            )}
           </Button>
           <Sheet>
             <SheetTrigger asChild>

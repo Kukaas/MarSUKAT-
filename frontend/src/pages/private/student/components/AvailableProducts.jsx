@@ -311,7 +311,7 @@ export function AvailableProducts() {
   return (
     <div className="w-full">
       <div className="px-4 mb-6">
-        <SectionHeader title="Available Products" />
+        <SectionHeader title="Available Products" description="View available products for purchase" />
       </div>
 
       {isLoading ? (

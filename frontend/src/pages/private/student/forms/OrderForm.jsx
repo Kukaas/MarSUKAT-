@@ -163,11 +163,11 @@ export function OrderForm({
               disabled={true}
             />
 
-            <FormSelect
+            <FormInput
               form={form}
               name="gender"
               label="Gender"
-              options={genderOptions}
+              placeholder="Enter your gender"
               icon={Users}
               required
               disabled={true}
@@ -178,17 +178,14 @@ export function OrderForm({
           <div className="space-y-4 border rounded-lg p-4 bg-background/50">
             <h3 className="font-medium">Payment Details</h3>
             <div className="grid gap-4">
-              <FormSelect
+              <FormInput
                 form={form}
                 name="receipt.type"
                 label="Payment Type"
-                options={paymentTypes}
+                placeholder="Enter payment type"
                 icon={Receipt}
                 required
                 disabled={true}
-                description={
-                  !isEditing ? "New orders are always Down Payment" : undefined
-                }
               />
 
               <FormInput

@@ -64,6 +64,14 @@ export const createStudentOrder = async (req, res) => {
       return res.status(400).json({ message: "Receipt image is required" });
     }
 
+    const existingOrNumber = await StudentOrder.findOne({
+      "receipts.orNumber": receipt.orNumber.trim(),
+    });
+
+    if (existingOrNumber) {
+      return res.status(400).json({ message: "OR Number already exists" });
+    }
+
     const newOrder = new StudentOrder({
       userId,
       name,

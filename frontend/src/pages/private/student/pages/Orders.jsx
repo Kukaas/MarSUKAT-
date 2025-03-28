@@ -37,6 +37,7 @@ import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmationDialog } from "@/components/custom-components/ConfirmationDialog";
 import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
+import SectionHeader from "@/components/custom-components/SectionHeader";
 
 // Add this status icon mapping
 const STATUS_ICONS = {
@@ -302,20 +303,22 @@ export default function Orders() {
   return (
     <PrivateLayout>
       <div className="space-y-6 p-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">My Orders</h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Order
-          </Button>
-        </div>
-
+        <SectionHeader
+          title="My Orders"
+          description="View and manage your orders"
+        />
         <DataTable
           data={orders}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
-          gridView={true}
+          onCreateNew={() => setIsCreateDialogOpen(true)}
+          createButtonText={
+            <div className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span>New Order</span>
+            </div>
+          }
           emptyMessage="No orders found. Create your first order!"
         />
 
