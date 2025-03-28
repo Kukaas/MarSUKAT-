@@ -355,6 +355,7 @@ function OrderContent({ order, onUpdate }) {
         confirmText: "Approve Order",
         variant: "success",
         icon: CheckCircle2,
+        isLoading: statusUpdateMutation.isPending,
       };
     }
 
@@ -362,8 +363,9 @@ function OrderContent({ order, onUpdate }) {
       title: "Update Order Status",
       description: `Are you sure you want to update the order status to "${selectedStatus}"?`,
       confirmText: "Update Status",
-      variant: "default",
+      variant: "success",
       icon: AlertCircle,
+      isLoading: statusUpdateMutation.isPending,
     };
   };
 

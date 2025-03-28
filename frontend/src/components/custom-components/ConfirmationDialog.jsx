@@ -53,7 +53,7 @@ export function ConfirmationDialog({
       case "destructive":
         return "bg-destructive hover:bg-destructive/90 text-white";
       default:
-        return "bg-primary hover:bg-primary/90 text-white";
+        return "bg-blue-600 hover:bg-blue-700 text-white";
     }
   };
 

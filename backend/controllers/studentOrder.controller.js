@@ -209,67 +209,82 @@ export const updateStudentOrder = async (req, res) => {
           });
         }
       }
-      order.status = newStatus;
-
-      // If order is being claimed, create a sales report and update inventory
       if (newStatus === "Claimed") {
         try {
+          // Validate order items exist
+          if (!order.orderItems || order.orderItems.length === 0) {
+            return res.status(400).json({ 
+              message: "Cannot claim order without order items" 
+            });
+          }
+
           order.isArchived = true;
-          // Calculate subtotals and total amount
-          const orderItems = order.orderItems.map(item => ({
-            level: item.level,
-            productType: item.productType,
-            size: item.size,
-            unitPrice: item.unitPrice,
-            quantity: item.quantity,
-            subtotal: Number((item.unitPrice * item.quantity).toFixed(2))
-          }));
+          
+          // Process all inventory updates in a transaction
+          const session = await mongoose.startSession();
+          await session.withTransaction(async () => {
+            // Update inventory for each order item
+            for (const item of order.orderItems) {
+              const inventory = await UniformInventory.findOne({
+                level: item.level,
+                productType: item.productType,
+                size: item.size
+              }).session(session);
 
-          const totalAmount = Number(orderItems.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2));
+              if (!inventory) {
+                throw new Error(`Inventory not found for ${item.productType} - ${item.size}`);
+              }
 
-          // Create sales report
-          const salesReport = new SalesReport({
-            orderId: order.orderId,
-            studentName: order.name,
-            studentNumber: order.studentNumber,
-            department: order.department,
-            orderItems: orderItems,
-            totalAmount: totalAmount,
-            dateClaimed: new Date(),
-            month: new Date().getMonth() + 1,
-            year: new Date().getFullYear()
-          });
+              if (inventory.quantity < item.quantity) {
+                throw new Error(`Insufficient inventory for ${item.productType} - ${item.size}. Required: ${item.quantity}, Available: ${inventory.quantity}`);
+              }
 
-          await salesReport.save();
+              // Decrease quantity
+              inventory.quantity -= item.quantity;
 
-          // Update inventory for each order item
-          for (const item of order.orderItems) {
-            const inventory = await UniformInventory.findOne({
+              // Update status based on new quantity
+              if (inventory.quantity === 0) {
+                inventory.status = "Out of Stock";
+              } else if (inventory.quantity <= 50) {
+                inventory.status = "Low Stock";
+              } else {
+                inventory.status = "Available";
+              }
+
+              await inventory.save({ session });
+            }
+
+            // Calculate subtotals and total amount
+            const orderItems = order.orderItems.map(item => ({
               level: item.level,
               productType: item.productType,
-              size: item.size
+              size: item.size,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              subtotal: Number((item.unitPrice * item.quantity).toFixed(2))
+            }));
+
+            const totalAmount = Number(orderItems.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2));
+
+            // Create sales report
+            const salesReport = new SalesReport({
+              orderId: order.orderId,
+              studentName: order.name,
+              studentNumber: order.studentNumber,
+              department: order.department,
+              orderItems: orderItems,
+              totalAmount: totalAmount,
+              dateClaimed: new Date(),
+              month: new Date().getMonth() + 1,
+              year: new Date().getFullYear()
             });
 
-            if (!inventory) {
-              throw new Error(`Inventory not found for ${item.productType} - ${item.size}`);
-            }
+            await salesReport.save({ session });
+            order.status = newStatus;
+            await order.save({ session });
+          });
 
-            if (inventory.quantity < item.quantity) {
-              throw new Error(`Insufficient inventory for ${item.productType} - ${item.size}`);
-            }
-
-            // Decrease quantity
-            inventory.quantity -= item.quantity;
-
-            // Update status based on new quantity
-            if (inventory.quantity === 0) {
-              inventory.status = "Out of Stock";
-            } else if (inventory.quantity <= 5) { // Assuming 5 is the threshold for low stock
-              inventory.status = "Low Stock";
-            }
-
-            await inventory.save();
-          }
+          await session.endSession();
 
           // Create notification for the student
           const student = await User.findById(order.userId);
@@ -291,6 +306,7 @@ export const updateStudentOrder = async (req, res) => {
           });
         }
       }
+      order.status = newStatus;
     }
 
     // Apply any other updates from req.body
