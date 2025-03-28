@@ -20,6 +20,9 @@ import { toast } from "sonner";
 import { AvailableProducts } from "../components/AvailableProducts";
 import { formatDate } from "@/lib/utils";
 import { Announcements } from "../components/Announcements";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const getPriorityStyles = (priority) => {
   switch (priority) {
@@ -45,6 +48,8 @@ const getPriorityIcon = (priority) => {
 };
 
 export default function Dashboard() {
+  const { user } = useAuth();
+
   return (
     <PrivateLayout>
       <ScrollArea className="h-full">
@@ -165,6 +170,15 @@ export default function Dashboard() {
                 </Card>
               ))}
             </div>
+          </div>
+
+          {/* Order Now Button */}
+          <div className="flex justify-center mt-6">
+            <Link to={`/student/orders/${user._id}?openCreateModal=true`} className="w-[200px]">
+              <Button className="w-full h-11 text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                Order Now
+              </Button>
+            </Link>
           </div>
 
           {/* Products Section */}

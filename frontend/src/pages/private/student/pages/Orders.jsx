@@ -73,6 +73,15 @@ export default function Orders() {
     }
   );
 
+  // Check URL for openCreateModal parameter to open "New Order" modal automatically
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const openCreateModal = urlParams.get('openCreateModal') === 'true';
+    if (openCreateModal) {
+      setIsCreateDialogOpen(true);
+    }
+  }, []);
+
   // Create mutation
   const createMutation = useDataMutation(
     ['studentOrders'],
