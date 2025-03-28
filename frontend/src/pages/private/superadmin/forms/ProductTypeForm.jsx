@@ -145,25 +145,17 @@ export function ProductTypeForm({
 
         // Sort units alphabetically
         setUnits(sortOptionsAlphabetically(unitsData, "unit"));
-
-        // Handle edit mode filtered types
-        if (isEdit && formData?.rawMaterialsUsed) {
-          formData.rawMaterialsUsed.forEach((material, index) => {
-            if (material.category) {
-              handleCategoryChange(index, material.category);
-            }
-          });
-        }
       } catch (error) {
         console.error("Error fetching options:", error);
       }
     };
 
     fetchOptions();
-  }, [isEdit, formData]);
+  }, []);
 
   useEffect(() => {
     if (formData) {
+      // First reset the form with the data
       form.reset({
         level: formData.level || "",
         productType: formData.productType || "",
@@ -179,39 +171,32 @@ export function ProductTypeForm({
           : [{ category: "", type: "", quantity: "", unit: "" }],
       });
 
-      // Set up filtered types for each material
-      if (formData.rawMaterialsUsed) {
+      // Then set up filtered types for each material
+      if (formData.rawMaterialsUsed && rawMaterialTypes.length > 0) {
         formData.rawMaterialsUsed.forEach((material, index) => {
           if (material.category) {
-            handleCategoryChange(index, material.category);
+            // Filter and sort types for the selected category
+            const typesForCategory = rawMaterialTypes
+              .filter((type) => type.category === material.category)
+              .sort((a, b) =>
+                a.name.trim().localeCompare(b.name.trim(), "en", { sensitivity: "base" })
+              )
+              .map((type) => ({
+                value: type.name,
+                label: type.name.trim(),
+                unit: type.unit,
+              }));
+
+            // Update filtered types for this index
+            setFilteredTypes((prev) => ({
+              ...prev,
+              [index]: typesForCategory,
+            }));
           }
         });
       }
     }
-  }, [formData, form]);
-
-  // Handle category change
-  const handleCategoryChange = (index, category) => {
-    // Filter types for the selected category and sort alphabetically
-    const typesForCategory = rawMaterialTypes
-      .filter((type) => type.category === category)
-      .sort((a, b) =>
-        a.name
-          .trim()
-          .localeCompare(b.name.trim(), "en", { sensitivity: "base" })
-      )
-      .map((type) => ({
-        value: type.name,
-        label: type.name.trim(),
-        unit: type.unit,
-      }));
-
-    // Update filtered types for this index
-    setFilteredTypes((prev) => ({
-      ...prev,
-      [index]: typesForCategory,
-    }));
-  };
+  }, [formData, form, rawMaterialTypes]);
 
   // Handle type change to set the corresponding unit
   const handleTypeChange = (index, typeName) => {
@@ -349,7 +334,6 @@ export function ProductTypeForm({
                     form.setValue(`rawMaterialsUsed.${index}.type`, "");
                     form.setValue(`rawMaterialsUsed.${index}.unit`, "");
                     form.setValue(`rawMaterialsUsed.${index}.category`, value);
-                    handleCategoryChange(index, value);
                   }}
                 />
                 <FormSelect
