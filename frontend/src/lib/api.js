@@ -212,9 +212,9 @@ export const userAPI = {
     }
   },
 
-  deactivateStaffUser: async (staffUserId) => {
+  deactivateStaffUser: async (staffUserId, reason) => {
     try {
-      const response = await api.put(`/users/staff/${staffUserId}/deactivate`);
+      const response = await api.put(`/users/staff/${staffUserId}/deactivate`, reason);
       return response.data;
     } catch (error) {
       throw error;

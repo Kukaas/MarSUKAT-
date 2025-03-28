@@ -15,17 +15,24 @@ const createFormSchema = z.object({
   role: z.enum(["JobOrder", "BAO"], {
     required_error: "Role is required",
   }),
+  gender: z.string().min(1, "Gender is required"),
 });
 
 const editFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   position: z.string().min(1, "Position is required"),
+  gender: z.string().min(1, "Gender is required"),
 });
 
 const roleOptions = [
   { value: "JobOrder", label: "Job Order" },
   { value: "BAO", label: "BAO" },
+];
+
+const genderOptions = [
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
 ];
 
 export function StaffUserForm({
@@ -42,6 +49,7 @@ export function StaffUserForm({
       email: formData?.email || "",
       position: formData?.position || "",
       role: formData?.role || "",
+      gender: formData?.gender || genderOptions[0].value,
     },
     mode: "onTouched",
   });
@@ -87,6 +95,15 @@ export function StaffUserForm({
                     label="Email"
                     type="email"
                     placeholder="Enter email address"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <FormSelect
+                    form={form}
+                    name="gender"
+                    label="Gender"
+                    placeholder="Select gender"
+                    options={genderOptions}
                     required
                     disabled={isSubmitting}
                   />

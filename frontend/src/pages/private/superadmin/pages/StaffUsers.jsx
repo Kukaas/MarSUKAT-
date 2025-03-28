@@ -11,8 +11,10 @@ import {
   Briefcase,
   Power,
   Activity,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { userAPI } from "@/lib/api";
 import {
   AlertDialog,
@@ -32,11 +34,121 @@ import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { ConfirmationDialog } from "@/components/custom-components/ConfirmationDialog";
 import StatusBadge from "@/components/custom-components/StatusBadge";
+import { useDataFetching } from "@/hooks/useDataFetching";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
-export default function StaffUsers() {
+// DeactivateDialog Component
+function DeactivateDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  staffUser,
+  isLoading = false,
+}) {
+  const [reason, setReason] = useState("");
+
+  const handleConfirm = () => {
+    onConfirm(reason);
+    setReason("");
+  };
+
+  const handleClose = () => {
+    setReason("");
+    onClose();
+  };
+
+  return (
+    <AlertDialog open={isOpen}>
+      <AlertDialogContent className="border-border/50">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span>Deactivate Staff Account</span>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {staffUser ? (
+              <>
+                Are you sure you want to deactivate the staff account for "
+                <span className="font-medium">{staffUser.name}</span>"?
+              </>
+            ) : (
+              "Are you sure you want to deactivate this staff account?"
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Deactivation Reason <span className="text-destructive">*</span>
+          </label>
+          <Textarea
+            placeholder="Enter reason for deactivation..."
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className={cn(
+              "resize-none",
+              "bg-background",
+              "border-input",
+              "placeholder:text-muted-foreground/60",
+              "focus-visible:ring-destructive",
+              "dark:bg-card/50",
+              "dark:border-border/50",
+              "dark:placeholder:text-muted-foreground/50",
+              "dark:focus-visible:ring-destructive"
+            )}
+            rows={3}
+          />
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            type="button"
+            onClick={handleClose}
+            disabled={isLoading}
+            className={cn(
+              "border-border/50",
+              "bg-background text-foreground",
+              "hover:bg-accent hover:text-accent-foreground",
+              "dark:bg-card/50",
+              "dark:text-foreground",
+              "dark:hover:bg-accent/50"
+            )}
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            type="button"
+            onClick={handleConfirm}
+            disabled={isLoading || !reason.trim()}
+            className={cn(
+              "bg-destructive",
+              "text-white",
+              "hover:bg-destructive/90",
+              "disabled:pointer-events-none disabled:opacity-50",
+              "dark:bg-destructive",
+              "dark:text-white",
+              "dark:hover:bg-destructive/90"
+            )}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>Deactivating...</span>
+              </>
+            ) : (
+              "Deactivate Account"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+const StaffUsers = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [staffUsers, setStaffUsers] = useState([]);
   const [selectedStaffUser, setSelectedStaffUser] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -60,24 +172,28 @@ export default function StaffUsers() {
     staffUser: null,
     isActivating: false,
   });
+  const [deactivateDialog, setDeactivateDialog] = useState({
+    isOpen: false,
+    staffUser: null,
+  });
 
-  // Fetch staff users data
-  const fetchStaffUsers = async () => {
-    try {
-      setIsLoading(true);
-      const data = await userAPI.getAllStaffUsers();
-      setStaffUsers(data);
-    } catch (error) {
-      toast.error("Failed to fetch staff users");
-      console.error("Error fetching staff users:", error);
-    } finally {
-      setIsLoading(false);
+  // Use React Query for data fetching with caching
+  const { 
+    data: staffUsers, 
+    isLoading,
+    error: staffError,
+    refetch: refetchStaffUsers 
+  } = useDataFetching(
+    ['staffUsers'],
+    () => userAPI.getAllStaffUsers(),
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
+      onError: (error) => {
+        toast.error("Failed to fetch staff users");
+      },
     }
-  };
-
-  useEffect(() => {
-    fetchStaffUsers();
-  }, []);
+  );
 
   // Column definitions
   const columns = [
@@ -176,38 +292,37 @@ export default function StaffUsers() {
   };
 
   const handleToggleStatus = (row) => {
-    setStatusDialog({
-      isOpen: true,
-      staffUser: row,
-      isActivating: !row.isActive,
-    });
+    if (row.isActive) {
+      setDeactivateDialog({
+        isOpen: true,
+        staffUser: row,
+      });
+    } else {
+      setStatusDialog({
+        isOpen: true,
+        staffUser: row,
+        isActivating: true,
+      });
+    }
   };
 
-  const handleStatusConfirm = async () => {
+  const handleDeactivateConfirm = async (reason) => {
     try {
       setIsSubmitting(true);
-      const { staffUser, isActivating } = statusDialog;
-
-      if (isActivating) {
-        await userAPI.activateStaffUser(staffUser._id);
-        toast.success("Staff user activated successfully");
-      } else {
-        await userAPI.deactivateStaffUser(staffUser._id);
-        toast.success("Staff user deactivated successfully");
-      }
-
-      setStatusDialog({ isOpen: false, staffUser: null, isActivating: false });
-      fetchStaffUsers();
+      await userAPI.deactivateStaffUser(deactivateDialog.staffUser._id, { reason });
+      toast.success("Staff user deactivated successfully");
+      setDeactivateDialog({ isOpen: false, staffUser: null });
+      refetchStaffUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update status");
+      toast.error(error.response?.data?.message || "Failed to deactivate staff user");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleStatusCancel = () => {
+  const handleDeactivateCancel = () => {
     if (!isSubmitting) {
-      setStatusDialog({ isOpen: false, staffUser: null, isActivating: false });
+      setDeactivateDialog({ isOpen: false, staffUser: null });
     }
   };
 
@@ -215,7 +330,7 @@ export default function StaffUsers() {
     try {
       setIsDeleting(true);
       await userAPI.deleteStaffUser(deleteDialog.staffUserToDelete._id);
-      await fetchStaffUsers();
+      refetchStaffUsers();
       toast.success("Staff user deleted successfully");
       setDeleteDialog({ isOpen: false, staffUserToDelete: null });
     } catch (error) {
@@ -253,7 +368,7 @@ export default function StaffUsers() {
         role: "",
       });
       setSelectedId(null);
-      fetchStaffUsers();
+      refetchStaffUsers();
     } catch (error) {
       toast.error(error.response?.data?.message || "Operation failed");
     } finally {
@@ -328,7 +443,7 @@ export default function StaffUsers() {
         />
 
         <DataTable
-          data={staffUsers}
+          data={staffUsers || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -465,35 +580,17 @@ export default function StaffUsers() {
           isDeleting={isDeleting}
         />
 
-        {/* Status Change Confirmation Dialog */}
-        <ConfirmationDialog
-          isOpen={statusDialog.isOpen}
-          onClose={handleStatusCancel}
-          onConfirm={handleStatusConfirm}
-          title={`${statusDialog.isActivating ? "Activate" : "Deactivate"} Staff User`}
-          description={
-            statusDialog.staffUser
-              ? `Are you sure you want to ${
-                  statusDialog.isActivating ? "activate" : "deactivate"
-                } the staff user "${statusDialog.staffUser.name}"? ${
-                  statusDialog.isActivating
-                    ? "This will allow the user to access the system."
-                    : "This will prevent the user from accessing the system."
-                }`
-              : `Are you sure you want to ${
-                  statusDialog.isActivating ? "activate" : "deactivate"
-                } this staff user? ${
-                  statusDialog.isActivating
-                    ? "This will allow the user to access the system."
-                    : "This will prevent the user from accessing the system."
-                }`
-          }
-          confirmText={statusDialog.isActivating ? "Activate" : "Deactivate"}
-          cancelText="Cancel"
+        {/* Deactivate Dialog */}
+        <DeactivateDialog
+          isOpen={deactivateDialog.isOpen}
+          onClose={handleDeactivateCancel}
+          onConfirm={handleDeactivateConfirm}
+          staffUser={deactivateDialog.staffUser}
           isLoading={isSubmitting}
-          variant={statusDialog.isActivating ? "success" : "destructive"}
         />
       </div>
     </PrivateLayout>
   );
-} 
+};
+
+export default StaffUsers; 

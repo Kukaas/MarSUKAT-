@@ -91,7 +91,7 @@ export const register = async (req, res) => {
 // Create Staff User (JobOrder or BAO) (SuperAdmin only)
 export const createStaffUser = async (req, res) => {
   try {
-    const { name, email, position, role } = req.body;
+    const { name, email, position, role, gender } = req.body;
 
     // Validate role
     if (!['JobOrder', 'BAO'].includes(role)) {
@@ -127,6 +127,7 @@ export const createStaffUser = async (req, res) => {
     const staffUser = await User.create({
       name,
       email,
+      gender,
       password: hashedPassword,
       role,
       position,
@@ -166,6 +167,7 @@ export const createStaffUser = async (req, res) => {
         name: staffUser.name,
         email: staffUser.email,
         role: staffUser.role,
+        gender: staffUser.gender,
         position: staffUser.position,
         isActive: staffUser.isActive,
         verified: staffUser.verified,
