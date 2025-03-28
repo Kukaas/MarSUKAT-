@@ -10,6 +10,7 @@ import {
   Package,
   Power,
   PowerOff,
+  Activity,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ import {
 import { ProductDetailsDialog } from "../components/details/product-details";
 import { StatusConfirmation } from "@/components/custom-components/StatusConfirmation";
 import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
+import StatusBadge from "@/components/custom-components/StatusBadge";
 
 export default function ProductManagement() {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -188,9 +190,12 @@ export default function ProductManagement() {
       key: "isActive",
       header: "Status",
       render: (value) => (
-        <span className={value ? "text-green-600" : "text-red-600"}>
-          {value ? "Active" : "Inactive"}
-        </span>
+        <StatusBadge
+          status={value ? "Active" : "Inactive"}
+          icon={Activity}
+          variant={value ? "success" : "destructive"}
+          className="text-xs"
+        />
       ),
     },
   ];

@@ -11,6 +11,7 @@ import {
   Building2,
   X,
   GraduationCap,
+  Activity,
 } from "lucide-react";
 import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
@@ -30,6 +31,7 @@ import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirm
 import { DepartmentLevelForm } from "../forms/DepartmentLevelForm";
 import { DepartmentLevelDetailsDialog } from "../components/details/department-level-details";
 import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
+import StatusBadge from "@/components/custom-components/StatusBadge";
 
 export default function DepartmentLevelOptions() {
   const { user } = useAuth();
@@ -173,9 +175,12 @@ export default function DepartmentLevelOptions() {
       key: "isActive",
       header: "Status",
       render: (value) => (
-        <span className={value ? "text-green-600" : "text-red-600"}>
-          {value ? "Active" : "Inactive"}
-        </span>
+        <StatusBadge
+          status={value ? "Active" : "Inactive"}
+          icon={Activity}
+          variant={value ? "success" : "destructive"}
+          className="text-xs"
+        />
       ),
     },
   ];
