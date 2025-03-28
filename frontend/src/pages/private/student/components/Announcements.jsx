@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import EmptyState from "@/components/custom-components/EmptyState";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { AlertCircle, Bell, Calendar } from "lucide-react";
 import { dashboardAPI } from "../api/dashboardApi";
-import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const getPriorityStyles = (priority) => {
   switch (priority) {
@@ -31,24 +30,17 @@ const getPriorityIcon = (priority) => {
 };
 
 export function Announcements() {
-  const [announcements, setAnnouncements] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const data = await dashboardAPI.getCurrentAnnouncements();
-        setAnnouncements(data);
-      } catch (error) {
-        console.error("Error fetching announcements:", error);
-        toast.error("Failed to fetch announcements");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAnnouncements();
-  }, []);
+  const { data: announcements = [], isLoading } = useDataFetching(
+    ['announcements'],
+    async () => {
+      const data = await dashboardAPI.getCurrentAnnouncements();
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+    }
+  );
 
   return (
     <div className="max-w-7xl mx-auto">

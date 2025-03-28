@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import Calendar from "../../../../components/custom-components/Calendar";
 import { scheduleAPI } from "../../../../lib/api";
@@ -22,6 +22,7 @@ import { CalendarX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/custom-components/LoadingSpinner";
 import { cn } from "@/lib/utils";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const ScheduleItem = ({ event, isExpanded, onToggle }) => (
   <div className="overflow-hidden bg-background rounded-lg border transition-all duration-200 hover:shadow-md">
@@ -88,29 +89,21 @@ const ScheduleItem = ({ event, isExpanded, onToggle }) => (
 );
 
 export default function Schedule() {
-  const [schedules, setSchedules] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [expandedEvents, setExpandedEvents] = useState(new Set());
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user?._id) {
-      fetchSchedule(user._id);
-    }
-  }, [user]);
+  // Fetch schedule with React Query
+  const { data: schedules = [], isLoading } = useDataFetching(
+    ['schedule', user?._id],
+    async () => {
+      if (!user?._id) return [];
+      const data = await scheduleAPI.getMySchedule(user._id);
+      
+      if (!data.length) return [];
 
-  const fetchSchedule = async (userId) => {
-    try {
-      const data = await scheduleAPI.getMySchedule(userId);
-
-      if (!data.length) {
-        setSchedules([]);
-        return;
-      }
-
-      const calendarEvents = data.map((schedule) => ({
+      return data.map((schedule) => ({
         id: schedule.id,
         title: `Measurement Schedule`,
         start: new Date(schedule.date),
@@ -120,18 +113,13 @@ export default function Schedule() {
         status: schedule.status,
         orderId: schedule.orderId,
       }));
-
-      setSchedules(calendarEvents);
-    } catch (error) {
-      toast.error("Failed to fetch your schedule", {
-        description:
-          "Please try again later or contact support if the problem persists",
-      });
-      console.error("Schedule error:", error);
-    } finally {
-      setLoading(false);
+    },
+    {
+      enabled: !!user?._id,
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
   const handleEventClick = (events) => {
     setSelectedEvents(events);
@@ -158,7 +146,7 @@ export default function Schedule() {
           description="View your upcoming measurement schedules"
         />
 
-        {loading ? (
+        {isLoading ? (
           <Card className="p-6">
             <LoadingSpinner message="Loading Schedules" />
           </Card>
