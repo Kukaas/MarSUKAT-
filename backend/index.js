@@ -43,7 +43,8 @@ app.use(
       "http://192.168.100.39:5173",
       "http://192.168.100.39:3000",
       "http://127.0.0.1:5173",
-      "http://127.0.0.1:3000"
+      "http://127.0.0.1:3000",
+      "https://marsukat.vercel.app"
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -92,10 +93,16 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
-    app.listen(port, "0.0.0.0", () => {
-      console.log(`Server is running on port ${port}`);
-    });
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err);
   });
+
+// Only start the server if we're not in a Vercel environment
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+export default app;

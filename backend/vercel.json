@@ -1,26 +1,32 @@
 {
     "version": 2,
+    "builds": [
+      {
+        "src": "index.js",
+        "use": "@vercel/node"
+      }
+    ],
     "rewrites": [
       {
         "source": "/(.*)",
-        "destination": "/api"
+        "destination": "index.js"
       }
     ],
     "headers": [
       {
-        "source": "/api/(.*)",
+        "source": "/(.*)",
         "headers": [
           {
             "key": "Access-Control-Allow-Origin",
-            "value": "http://localhost:5173"
+            "value": "https://marsukat.vercel.app"
           },
           {
             "key": "Access-Control-Allow-Methods",
-            "value": "GET, POST, PUT, DELETE, OPTIONS"
+            "value": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
           },
           {
             "key": "Access-Control-Allow-Headers",
-            "value": "X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Access-Control-Request-Headers"
+            "value": "Content-Type, Authorization, Access-Control-Allow-Headers"
           },
           {
             "key": "Access-Control-Allow-Credentials",
