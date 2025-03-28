@@ -44,10 +44,6 @@ export function Announcements() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <SectionHeader
-        title="Announcements"
-        icon={<Bell className="h-5 w-5" />}
-      />
       <div className="mt-4 space-y-4">
         {isLoading ? (
           <Card className="bg-muted/50">
@@ -94,7 +90,7 @@ export function Announcements() {
         ) : (
           <EmptyState
             icon={Bell}
-            title="No Announcements"
+            message="There are no current announcements at this time."
             description="There are no current announcements at this time."
           />
         )}

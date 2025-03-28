@@ -49,31 +49,19 @@ export default function Dashboard() {
     <PrivateLayout>
       <ScrollArea className="h-full">
         <div className="p-4 space-y-6">
-          {/* Welcome Section - Full width */}
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Welcome Back!
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Let's get started with your uniform order
-              </p>
-            </div>
-          </div>
-
-          <Separator className="my-6" />
+          <SectionHeader title="Welcome Back!" description="Let's get started with your uniform order" />
 
           {/* Announcements Section */}
           <Announcements />
 
           {/* Quick Info Cards - Full width */}
           <div className="max-w-7xl mx-auto grid gap-3">
-            <Alert className="bg-primary/5 border-primary/10">
-              <AlertCircle className="h-4 w-4 text-primary" />
-              <AlertTitle className="text-primary ml-2">
+            <Alert className="bg-yellow-100 dark:bg-yellow-800/60 text-yellow-600 dark:text-yellow-400">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertTitle className="text-yellow-900 dark:text-yellow-300">
                 Important Notice
               </AlertTitle>
-              <AlertDescription className="ml-6">
+              <AlertDescription className="text-yellow-700 dark:text-yellow-400">
                 A ₱500 downpayment is required for your uniform order
               </AlertDescription>
             </Alert>
