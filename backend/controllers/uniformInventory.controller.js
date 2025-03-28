@@ -46,16 +46,40 @@ export const getUniformInventoryByLevel = async (req, res) => {
 // @access  Private/Admin
 export const createUniformInventory = async (req, res) => {
   try {
-    const { level, productType, size, quantity, price, status, image } =
-      req.body;
+    const { level, productType, size, quantity, price, image } = req.body;
+    // Remove status from destructuring since we'll determine it automatically
 
+    // Check if uniform with same level, productType and size exists
+    const existingUniform = await UniformInventory.findOne({
+      level,
+      productType,
+      size
+    });
+
+    if (existingUniform) {
+      // Update existing uniform quantity
+      const newQuantity = existingUniform.quantity + quantity;
+      existingUniform.quantity = newQuantity;
+      
+      // Automatically set status based on quantity
+      existingUniform.status = newQuantity < 50 ? "Low Stock" : "Available";
+      
+      // Update other fields if provided
+      if (price !== undefined) existingUniform.price = price;
+      if (image) existingUniform.image = image;
+
+      const updatedUniform = await existingUniform.save();
+      return res.status(200).json(updatedUniform);
+    }
+
+    // If no existing uniform found, create new one
     const newInventory = new UniformInventory({
       level,
       productType,
       size,
       quantity,
       price,
-      status,
+      status: quantity < 50 ? "Low Stock" : "Available", // Set initial status based on quantity
       image: image || undefined,
     });
 
@@ -76,21 +100,19 @@ export const updateUniformInventory = async (req, res) => {
       return res.status(404).json({ message: "Inventory item not found" });
     }
 
-    const { level, productType, size, quantity, price, status, image } =
-      req.body;
+    const { level, productType, size, quantity, price, image } = req.body;
 
-    inventoryToUpdate.level = level || inventoryToUpdate.level;
-    inventoryToUpdate.productType =
-      productType || inventoryToUpdate.productType;
-    inventoryToUpdate.size = size || inventoryToUpdate.size;
-    inventoryToUpdate.quantity =
-      quantity !== undefined ? quantity : inventoryToUpdate.quantity;
-    inventoryToUpdate.price =
-      price !== undefined ? price : inventoryToUpdate.price;
-    inventoryToUpdate.status = status || inventoryToUpdate.status;
-    if (image) {
-      inventoryToUpdate.image = image;
+    // Update fields if provided
+    if (level) inventoryToUpdate.level = level;
+    if (productType) inventoryToUpdate.productType = productType;
+    if (size) inventoryToUpdate.size = size;
+    if (quantity !== undefined) {
+      inventoryToUpdate.quantity = quantity;
+      // Automatically update status based on new quantity
+      inventoryToUpdate.status = quantity < 50 ? "Low Stock" : "Available";
     }
+    if (price !== undefined) inventoryToUpdate.price = price;
+    if (image) inventoryToUpdate.image = image;
 
     const updatedInventory = await inventoryToUpdate.save();
     res.status(200).json(updatedInventory);
