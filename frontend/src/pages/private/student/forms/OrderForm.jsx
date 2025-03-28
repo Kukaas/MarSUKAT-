@@ -59,13 +59,13 @@ export function OrderForm({
       department: formData?.department || user?.department || "",
       gender: formData?.gender || user?.gender || "Male",
       receipt: {
-        type: isEditing ? formData?.receipt?.type : "Down Payment",
-        orNumber: formData?.receipt?.orNumber || "",
-        datePaid: formData?.receipt?.datePaid
-          ? new Date(formData.receipt.datePaid).toISOString().split("T")[0]
+        type: formData?.receipts?.[0]?.type || "Down Payment",
+        orNumber: formData?.receipts?.[0]?.orNumber || "",
+        datePaid: formData?.receipts?.[0]?.datePaid 
+          ? new Date(formData.receipts[0].datePaid).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
-        amount: formData?.receipt?.amount || 500,
-        image: formData?.receipt?.image || null,
+        amount: formData?.receipts?.[0]?.amount || 500,
+        image: formData?.receipts?.[0]?.image || null,
       },
     },
   });
@@ -110,7 +110,7 @@ export function OrderForm({
         className="space-y-6"
       >
         <div className="space-y-4">
-          {/* Personal Information */}
+          {/* Personal Information - All disabled */}
           <div className="grid gap-4">
             <FormInput
               form={form}
@@ -174,7 +174,7 @@ export function OrderForm({
             />
           </div>
 
-          {/* Payment Information */}
+          {/* Payment Information - Only date paid and receipt image are enabled */}
           <div className="space-y-4 border rounded-lg p-4 bg-background/50">
             <h3 className="font-medium">Payment Details</h3>
             <div className="grid gap-4">
@@ -185,7 +185,7 @@ export function OrderForm({
                 options={paymentTypes}
                 icon={Receipt}
                 required
-                disabled={isSubmitting || !isEditing}
+                disabled={true}
                 description={
                   !isEditing ? "New orders are always Down Payment" : undefined
                 }
@@ -201,6 +201,7 @@ export function OrderForm({
                 disabled={isSubmitting}
               />
 
+              {/* Date Paid - Enabled */}
               <FormDateInput
                 form={form}
                 name="receipt.datePaid"
@@ -219,9 +220,10 @@ export function OrderForm({
                 placeholder="Enter amount"
                 icon={Receipt}
                 required
-                disabled={isSubmitting}
+                disabled={true}
               />
 
+              {/* Receipt Image Upload - Enabled */}
               <ImageUpload
                 form={form}
                 name="receipt.image"

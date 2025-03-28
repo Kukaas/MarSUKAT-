@@ -14,6 +14,8 @@ import {
   ShoppingBag,
   Calendar,
   Edit,
+  Trash2,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import OrderForm from "../forms/OrderForm";
@@ -33,6 +35,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { ConfirmationDialog } from "@/components/custom-components/ConfirmationDialog";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 // Add this status icon mapping
 const STATUS_ICONS = {
@@ -43,37 +47,92 @@ const STATUS_ICONS = {
   Claimed: ShoppingBag,
   "Payment Verified": CheckCircle2,
   "For Verification": Clock,
+  Cancelled: XCircle,
 };
 
 export default function Orders() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [orderToEdit, setOrderToEdit] = useState(null);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
 
-  // Fetch orders for current user
-  const fetchOrders = async () => {
-    try {
-      setIsLoading(true);
+  // Replace fetchOrders with useDataFetching
+  const { data: orders = [], isLoading, refetch: refetchOrders } = useDataFetching(
+    ['studentOrders', user?._id],
+    async () => {
       const data = await orderAPI.getOrdersByUserId(user?._id);
-      setOrders(data);
-    } catch (error) {
-      toast.error("Failed to fetch your orders");
-      console.error("Error fetching orders:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      enabled: !!user?._id,
     }
+  );
+
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['studentOrders'],
+    async (data) => {
+      const result = await orderAPI.createStudentOrder(data);
+      await refetchOrders();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Order created successfully");
+        setIsCreateDialogOpen(false);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create order");
+      },
+    }
+  );
+
+  // Cancel mutation
+  const cancelMutation = useDataMutation(
+    ['studentOrders'],
+    async (id) => {
+      const result = await orderAPI.deleteStudentOrder(id);
+      await refetchOrders();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Order cancelled successfully");
+        setIsCancelDialogOpen(false);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to cancel order");
+      },
+    }
+  );
+
+  // Update handlers to use mutations
+  const handleCreateOrder = async (data) => {
+    if (!user?._id) {
+      toast.error("User authentication error");
+      return;
+    }
+
+    const orderData = {
+      ...data,
+      userId: user._id,
+    };
+
+    await createMutation.mutateAsync(orderData);
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  const handleCancelOrder = async () => {
+    await cancelMutation.mutateAsync(orderToCancel._id);
+  };
+
+  const handleOrderUpdate = () => {
+    refetchOrders();
+  };
 
   // Column definitions for table view
   const columns = [
@@ -126,51 +185,6 @@ export default function Orders() {
     },
   ];
 
-  const handleCreateOrder = async (data) => {
-    try {
-      setIsSubmitting(true);
-
-      if (!user?._id) {
-        toast.error("User authentication error");
-        return;
-      }
-
-      const orderData = {
-        ...data,
-        userId: user._id,
-      };
-
-      await orderAPI.createStudentOrder(orderData);
-      toast.success("Order created successfully");
-      setIsCreateDialogOpen(false);
-      fetchOrders();
-    } catch (error) {
-      console.error("Order creation error:", error);
-      toast.error(error.response?.data?.message || "Failed to create order");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEditOrder = async (data) => {
-    try {
-      setIsSubmitting(true);
-      await orderAPI.updateStudentOrder(orderToEdit._id, data);
-      toast.success("Order updated successfully");
-      setIsEditDialogOpen(false);
-      fetchOrders();
-    } catch (error) {
-      console.error("Order update error:", error);
-      toast.error(error.response?.data?.message || "Failed to update order");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleOrderUpdate = () => {
-    fetchOrders(); // Refresh orders after update
-  };
-
   // Define actions for both views
   const actionCategories = {
     view: {
@@ -185,13 +199,14 @@ export default function Orders() {
           },
         },
         {
-          label: "Edit Order",
-          icon: Edit,
+          label: "Cancel Order",
+          icon: XCircle,
           onClick: (row) => {
-            setOrderToEdit(row);
-            setIsEditDialogOpen(true);
+            setOrderToCancel(row);
+            setIsCancelDialogOpen(true);
           },
           show: (row) => row.status === "Pending",
+          className: "text-destructive",
         },
       ],
     },
@@ -246,13 +261,14 @@ export default function Orders() {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="text-destructive"
                     onClick={() => {
-                      setOrderToEdit(order);
-                      setIsEditDialogOpen(true);
+                      setOrderToCancel(order);
+                      setIsCancelDialogOpen(true);
                     }}
                   >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel
                   </Button>
                 )}
                 <Button
@@ -308,7 +324,7 @@ export default function Orders() {
                 <div className="px-1 py-4">
                   <OrderForm
                     onSubmit={handleCreateOrder}
-                    isSubmitting={isSubmitting}
+                    isSubmitting={createMutation.isPending}
                     formData={{ userId: user?._id }}
                   />
                 </div>
@@ -316,17 +332,17 @@ export default function Orders() {
             </div>
             <AlertDialogFooter className="flex-none border-t pt-4">
               <AlertDialogCancel
-                onClick={() => !isSubmitting && setIsCreateDialogOpen(false)}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && setIsCreateDialogOpen(false)}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="orderForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -339,58 +355,25 @@ export default function Orders() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Edit Order Dialog */}
-        <AlertDialog open={isEditDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[90vh] flex flex-col gap-0">
-            <AlertDialogHeader className="flex-none">
-              <AlertDialogTitle>Edit Order</AlertDialogTitle>
-              <AlertDialogDescription>
-                Update your order details
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="flex-1 min-h-0">
-              <ScrollArea className="h-full">
-                <div className="px-1 py-4">
-                  <OrderForm
-                    onSubmit={handleEditOrder}
-                    isSubmitting={isSubmitting}
-                    formData={orderToEdit}
-                    isEditing={true}
-                  />
-                </div>
-              </ScrollArea>
-            </div>
-            <AlertDialogFooter className="flex-none border-t pt-4">
-              <AlertDialogCancel
-                onClick={() => !isSubmitting && setIsEditDialogOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                type="submit"
-                form="orderForm"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm mr-2"></span>
-                    Updating...
-                  </>
-                ) : (
-                  "Update Order"
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
         {/* View Order Dialog */}
         <OrderDetailsDialog
           isOpen={isViewDialogOpen}
           onClose={() => setIsViewDialogOpen(false)}
           order={selectedOrder}
           onOrderUpdate={handleOrderUpdate}
+        />
+
+        {/* Cancel Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={isCancelDialogOpen}
+          onClose={() => setIsCancelDialogOpen(false)}
+          onConfirm={handleCancelOrder}
+          title="Cancel Order"
+          description="Are you sure you want to cancel this order? This action cannot be undone."
+          confirmText="Cancel Order"
+          cancelText="Keep Order"
+          isLoading={cancelMutation.isPending}
+          variant="destructive"
         />
       </div>
     </PrivateLayout>
