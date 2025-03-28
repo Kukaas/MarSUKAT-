@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewDetailsDialog } from "@/components/custom-components/ViewDetailsDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 function ImageModal({
   isOpen,
@@ -266,8 +267,19 @@ function ProductCard({ product }) {
 }
 
 export function AvailableProducts() {
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Use React Query for data fetching with caching
+  const { data: products = [], isLoading, error } = useDataFetching(
+    ['activeProducts'],
+    () => dashboardAPI.getActiveProducts(),
+    {
+      staleTime: 5 * 60 * 1000, // Data is considered fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      onError: (error) => {
+        toast.error("Failed to fetch products");
+        console.error("Error fetching products:", error);
+      },
+    }
+  );
 
   // Sort products with favorites first
   const sortedProducts = useMemo(() => {
@@ -285,28 +297,11 @@ export function AvailableProducts() {
     });
   }, [products]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoading(true);
-        const data = await dashboardAPI.getActiveProducts();
-        setProducts(data);
-      } catch (error) {
-        toast.error("Failed to fetch products");
-        console.error("Error fetching products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
   // Add event listener for localStorage changes
   useEffect(() => {
     const handleStorageChange = () => {
       // Force re-render to update product order
-      setProducts((prev) => [...prev]);
+      window.dispatchEvent(new Event('storage'));
     };
 
     window.addEventListener("storage", handleStorageChange);
