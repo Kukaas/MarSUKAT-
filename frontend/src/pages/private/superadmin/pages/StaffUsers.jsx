@@ -11,8 +11,6 @@ import {
   Briefcase,
   Power,
   Activity,
-  AlertCircle,
-  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import { userAPI } from "@/lib/api";
@@ -33,119 +31,9 @@ import { StaffUserForm } from "../forms/StaffUserForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { ConfirmationDialog } from "@/components/custom-components/ConfirmationDialog";
+import { DeactivateDialog } from "@/components/custom-components/DeactivateDialog";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { useDataFetching } from "@/hooks/useDataFetching";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-
-// DeactivateDialog Component
-function DeactivateDialog({
-  isOpen,
-  onClose,
-  onConfirm,
-  staffUser,
-  isLoading = false,
-}) {
-  const [reason, setReason] = useState("");
-
-  const handleConfirm = () => {
-    onConfirm(reason);
-    setReason("");
-  };
-
-  const handleClose = () => {
-    setReason("");
-    onClose();
-  };
-
-  return (
-    <AlertDialog open={isOpen}>
-      <AlertDialogContent className="border-border/50">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-            <span>Deactivate Staff Account</span>
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {staffUser ? (
-              <>
-                Are you sure you want to deactivate the staff account for "
-                <span className="font-medium">{staffUser.name}</span>"?
-              </>
-            ) : (
-              "Are you sure you want to deactivate this staff account?"
-            )}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Deactivation Reason <span className="text-destructive">*</span>
-          </label>
-          <Textarea
-            placeholder="Enter reason for deactivation..."
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className={cn(
-              "resize-none",
-              "bg-background",
-              "border-input",
-              "placeholder:text-muted-foreground/60",
-              "focus-visible:ring-destructive",
-              "dark:bg-card/50",
-              "dark:border-border/50",
-              "dark:placeholder:text-muted-foreground/50",
-              "dark:focus-visible:ring-destructive"
-            )}
-            rows={3}
-          />
-        </div>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel
-            type="button"
-            onClick={handleClose}
-            disabled={isLoading}
-            className={cn(
-              "border-border/50",
-              "bg-background text-foreground",
-              "hover:bg-accent hover:text-accent-foreground",
-              "dark:bg-card/50",
-              "dark:text-foreground",
-              "dark:hover:bg-accent/50"
-            )}
-          >
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction
-            type="button"
-            onClick={handleConfirm}
-            disabled={isLoading || !reason.trim()}
-            className={cn(
-              "bg-destructive",
-              "text-white",
-              "hover:bg-destructive/90",
-              "disabled:pointer-events-none disabled:opacity-50",
-              "dark:bg-destructive",
-              "dark:text-white",
-              "dark:hover:bg-destructive/90"
-            )}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>Deactivating...</span>
-              </>
-            ) : (
-              "Deactivate Account"
-            )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
 
 const StaffUsers = () => {
   const { user } = useAuth();
@@ -303,6 +191,25 @@ const StaffUsers = () => {
         staffUser: row,
         isActivating: true,
       });
+    }
+  };
+
+  const handleStatusConfirm = async () => {
+    try {
+      setIsSubmitting(true);
+      const { staffUser, isActivating } = statusDialog;
+
+      if (isActivating) {
+        await userAPI.activateStaffUser(staffUser._id);
+        toast.success("Staff user activated successfully");
+      }
+
+      setStatusDialog({ isOpen: false, staffUser: null, isActivating: false });
+      refetchStaffUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update status");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -580,12 +487,30 @@ const StaffUsers = () => {
           isDeleting={isDeleting}
         />
 
+        {/* Status Change Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={statusDialog.isOpen}
+          onClose={() => setStatusDialog({ isOpen: false, staffUser: null, isActivating: false })}
+          onConfirm={handleStatusConfirm}
+          title="Activate Staff Account"
+          description={
+            statusDialog.staffUser
+              ? `Are you sure you want to activate the staff account for "${statusDialog.staffUser.name}"?`
+              : "Are you sure you want to activate this staff account?"
+          }
+          confirmText="Activate"
+          cancelText="Cancel"
+          isLoading={isSubmitting}
+          variant="success"
+        />
+
         {/* Deactivate Dialog */}
         <DeactivateDialog
           isOpen={deactivateDialog.isOpen}
           onClose={handleDeactivateCancel}
           onConfirm={handleDeactivateConfirm}
-          staffUser={deactivateDialog.staffUser}
+          user={deactivateDialog.staffUser}
+          userType="staff"
           isLoading={isSubmitting}
         />
       </div>
