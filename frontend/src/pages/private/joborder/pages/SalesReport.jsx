@@ -90,13 +90,13 @@ export const SalesReport = () => {
 
   return (
     <PrivateLayout>
-      <div className="container mx-auto py-8 space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-6">
           <SectionHeader
             title="Sales Report"
             description="View and analyze sales performance across different metrics"
           />
-          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto justify-end">
             <Button
               className="w-full md:w-auto flex items-center justify-center"
               onClick={() => handlePrint(salesData, selectedMonth, selectedYear, MONTHS, formatCurrency)}
@@ -114,7 +114,6 @@ export const SalesReport = () => {
               Print Yearly Report
             </Button>
           </div>
-        </div>
 
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row gap-4 items-center">
