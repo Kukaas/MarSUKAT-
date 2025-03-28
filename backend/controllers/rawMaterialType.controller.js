@@ -74,6 +74,13 @@ export const createRawMaterialType = async (req, res) => {
 // @access  Private/SuperAdmin
 export const updateRawMaterialType = async (req, res) => {
   try {
+    // Validate required fields
+    if (!req.body.name || !req.body.category || !req.body.unit) {
+      return res.status(400).json({
+        message: "Name, category, and unit are required fields"
+      });
+    }
+
     const typeToUpdate = await RawMaterialType.findById(req.params.id);
     if (!typeToUpdate) {
       return res.status(404).json({ message: "Raw material type not found" });
@@ -90,14 +97,25 @@ export const updateRawMaterialType = async (req, res) => {
       });
     }
 
-    typeToUpdate.name = req.body.name;
-    typeToUpdate.description = req.body.description;
-    typeToUpdate.category = req.body.category;
-    typeToUpdate.unit = req.body.unit;
+    // Update using findByIdAndUpdate for atomic operation
+    const updatedType = await RawMaterialType.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: req.body.name?.trim(),
+        description: req.body.description,
+        category: req.body.category,
+        unit: req.body.unit,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
 
-    const updatedType = await typeToUpdate.save();
+    if (!updatedType) {
+      return res.status(400).json({ message: "Update failed" });
+    }
     res.status(200).json(updatedType);
   } catch (error) {
+    console.error("Update error:", error);
     if (error.name === "CastError") {
       return res.status(400).json({ message: "Invalid ID format" });
     }

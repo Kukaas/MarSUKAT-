@@ -1,4 +1,5 @@
 import api from "./api";
+import axios from "axios";
 
 /**
  * System Maintenance API functions for managing levels and departments
@@ -389,17 +390,9 @@ export const systemMaintenanceAPI = {
     }
   },
 
-  updateRawMaterialType: async (id, typeData) => {
-    try {
-      const { name, description } = typeData;
-      const response = await api.put(`/raw-material-types/${id}`, {
-        name,
-        description,
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+  updateRawMaterialType: async (id, data) => {
+    const response = await api.put(`/raw-material-types/${id}`, data);
+    return response.data;
   },
 
   deleteRawMaterialType: async (id) => {

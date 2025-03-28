@@ -12,7 +12,7 @@ import {
   Tag,
   Ruler,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -41,6 +41,9 @@ export default function RawMaterialTypes() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    category: "",
+    unit: "",
+    typeId: "",
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -97,7 +100,16 @@ export default function RawMaterialTypes() {
   const updateMutation = useDataMutation(
     ['rawMaterialTypes'],
     async (data) => {
-      const result = await systemMaintenanceAPI.updateRawMaterialType(selectedId, data);
+      if (!selectedId) throw new Error("No ID selected for update");
+
+      const updateData = {
+        name: data.name?.trim(),
+        category: data.category,
+        unit: data.unit,
+        description: data.description || ""
+      };
+
+      const result = await systemMaintenanceAPI.updateRawMaterialType(selectedId, updateData);
       await refetchTypes();
       return result;
     },
@@ -106,6 +118,7 @@ export default function RawMaterialTypes() {
         toast.success("Raw material type updated successfully");
         setIsEditDialogOpen(false);
         handleDialogClose("edit");
+        refetchTypes();
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || "Failed to update raw material type");
@@ -131,6 +144,13 @@ export default function RawMaterialTypes() {
       },
     }
   );
+
+  // Add this after the mutation definitions
+  useEffect(() => {
+    if (updateMutation.isSuccess) {
+      refetchTypes();
+    }
+  }, [updateMutation.isSuccess]);
 
   // Column definitions
   const columns = [
@@ -202,13 +222,15 @@ export default function RawMaterialTypes() {
   };
 
   const handleEdit = (row) => {
-    setFormData({
-      name: row.name,
-      description: row.description,
-      category: row.category,
-      unit: row.unit,
-      typeId: row.typeId,
-    });
+    const editData = {
+      name: row.name || "",
+      description: row.description || "",
+      category: row.category || "",
+      unit: row.unit || "",
+      typeId: row.typeId || "",
+    };
+    
+    setFormData(editData);
     setSelectedId(row._id);
     setIsEditing(true);
     setIsEditDialogOpen(true);
@@ -236,15 +258,25 @@ export default function RawMaterialTypes() {
   const handleSubmit = async (data) => {
     try {
       if (isEditing) {
+        if (!data.name || !data.category || !data.unit) {
+          throw new Error("Name, category, and unit are required");
+        }
         await updateMutation.mutateAsync(data);
       } else {
         await createMutation.mutateAsync(data);
       }
+      
       setIsEditing(false);
-      setFormData({ name: "", description: "" });
+      setFormData({
+        name: "",
+        description: "",
+        category: "",
+        unit: "",
+        typeId: ""
+      });
       setSelectedId(null);
     } catch (error) {
-      console.error("Error submitting form:", error);
+      toast.error(error.message || "Error submitting form");
     }
   };
 
@@ -257,7 +289,14 @@ export default function RawMaterialTypes() {
     } else if (type === "create") {
       setIsCreateDialogOpen(false);
     }
-    setFormData({ name: "", description: "" });
+    // Reset all form fields
+    setFormData({
+      name: "",
+      description: "",
+      category: "",
+      unit: "",
+      typeId: ""
+    });
   };
 
   // Define actions for the raw material types

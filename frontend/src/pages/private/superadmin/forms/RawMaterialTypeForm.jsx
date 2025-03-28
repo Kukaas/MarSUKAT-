@@ -42,22 +42,24 @@ export function RawMaterialTypeForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: formData?.name || "",
-      category: formData?.category || "",
-      unit: formData?.unit || "",
+      name: formData?.name?.trim() || "",
+      category: formData?.category?.trim() || "",
+      unit: formData?.unit?.trim() || "",
       description: formData?.description || "",
     },
     mode: "onTouched",
   });
 
+  // Update form values when formData changes
   useEffect(() => {
     if (formData) {
-      form.reset({
-        name: formData.name || "",
-        category: formData.category || "",
-        unit: formData.unit || "",
+      const values = {
+        name: formData.name?.trim() || "",
+        category: formData.category?.trim() || "",
+        unit: formData.unit?.trim() || "",
         description: formData.description || "",
-      });
+      };
+      form.reset(values);
     }
   }, [formData, form]);
 
@@ -88,9 +90,20 @@ export function RawMaterialTypeForm({
 
   const handleSubmit = async (data) => {
     try {
-      await onSubmit(data);
+      const formattedData = {
+        name: data.name?.trim(),
+        category: data.category,
+        unit: data.unit,
+        description: data.description?.trim() || "",
+      };
+
+      if (!formattedData.name || !formattedData.category || !formattedData.unit) {
+        throw new Error("Name, category, and unit are required fields");
+      }
+
+      await onSubmit(formattedData);
     } catch (error) {
-      console.error("Form submission error:", error);
+      toast.error(error.message || "Error submitting form");
     }
   };
 
@@ -127,6 +140,7 @@ export function RawMaterialTypeForm({
           icon={Tag}
           required
           disabled={isSubmitting}
+          defaultValue={formData?.category}
         />
         <FormSelect
           form={form}
@@ -137,6 +151,7 @@ export function RawMaterialTypeForm({
           icon={Ruler}
           required
           disabled={isSubmitting}
+          defaultValue={formData?.unit}
         />
         <FormInput
           form={form}
