@@ -7,6 +7,8 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Home() {
   return (
@@ -30,19 +32,17 @@ export default function Home() {
               system
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 animate-fade-in-up delay-200 px-4">
-              <Button
-                size="lg"
-                className="shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto"
-              >
-                Place an Order
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto"
-              >
-                View Catalog
-              </Button>
+              <Link to="/login">
+                <Button
+                  size="lg"
+                  className="shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto"
+                  onClick={() => {
+                    toast.info("Please login or register to place an order");
+                  }}
+                >
+                  Place an Order
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
