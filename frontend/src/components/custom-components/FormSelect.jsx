@@ -45,10 +45,15 @@ const FormSelect = ({
                   <select
                     className={`${
                       Icon ? "pl-10" : "pl-3"
-                    } flex h-11 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background pr-10 appearance-none`}
+                    } flex h-11 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background pr-10 appearance-none w-full sm:w-[315px]`}
                     value={field.value || ""}
                     onChange={(e) => field.onChange(e.target.value)}
                     {...props}
+                    style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
                   >
                     {!field.value && (
                       <option
@@ -93,10 +98,11 @@ const FormSelect = ({
                   {...props}
                 >
                   <SelectTrigger
-                    className={`${
-                      Icon ? "pl-10" : ""
-                    } h-11 bg-background border-input ring-offset-background focus:ring-ring w-full`}
-                  >
+                      className={`${
+                        Icon ? "pl-10" : ""
+                      } h-11 bg-background border-input ring-offset-background focus:ring-ring 
+                      w-full sm:max-w-[380px] max-w-full whitespace-normal break-words`}
+                    >
                     <SelectValue placeholder={placeholder} />
                   </SelectTrigger>
                   <SelectContent>
