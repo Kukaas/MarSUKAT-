@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import { SalesOverviewChart } from "../../joborder/components/charts/SalesOverviewChart.jsx";
 import { DepartmentSalesChart } from "../../joborder/components/charts/DepartmentSalesChart.jsx";
@@ -11,6 +11,7 @@ import { FileDown, Package, DollarSign, TrendingUp, CalendarDays, CalendarRange,
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { handlePrint, handleYearlyPrint } from "../../joborder/components/print/print";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January",
@@ -36,9 +37,7 @@ const formatCurrency = (value) => {
   }).format(value || 0);
 };
 
-export default function SalesReport() {
-  const [loading, setLoading] = useState(true);
-  const [salesData, setSalesData] = useState(null);
+const SalesReport = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [timePeriod, setTimePeriod] = useState("month");
@@ -49,15 +48,17 @@ export default function SalesReport() {
     label: MONTHS[i]
   }));
 
-  const fetchSalesData = async () => {
-    try {
-      setLoading(true);
-      let data;
-      let transformedData;
-
+  // Use React Query for data fetching with caching
+  const { 
+    data: salesData, 
+    isLoading,
+    error: salesError 
+  } = useDataFetching(
+    ['salesReport', selectedYear, selectedMonth, timePeriod],
+    async () => {
       if (timePeriod === "month") {
-        data = await salesReportAPI.getMonthlySalesSummary(selectedYear, selectedMonth);
-        transformedData = {
+        const data = await salesReportAPI.getMonthlySalesSummary(selectedYear, selectedMonth);
+        return {
           ...data,
           monthlyData: data.monthlyData?.map(item => ({
             month: item.month,
@@ -84,12 +85,12 @@ export default function SalesReport() {
         const yearData = await Promise.all(yearPromises);
         
         // Transform the data to show yearly comparison
-        transformedData = {
+        return {
           ...yearData[0], // Use the most recent year's data for other metrics
           monthlyData: yearData.map((year, index) => ({
             month: currentYear - index,
             totalSales: year.totalSales
-          })), // Remove reverse() to maintain ascending order
+          })),
           departmentBreakdown: yearData[0].department.map(dept => ({
             name: dept.name,
             totalSales: dept.totalSales,
@@ -102,23 +103,15 @@ export default function SalesReport() {
           }))
         };
       }
-
-      if (!transformedData) {
-        toast.error("No data available for the selected period");
-        return;
-      }
-
-      setSalesData(transformedData);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to fetch sales data");
-    } finally {
-      setLoading(false);
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to fetch sales data");
+      },
     }
-  };
-
-  useEffect(() => {
-    fetchSalesData();
-  }, [selectedYear, selectedMonth, timePeriod]);
+  );
 
   return (
     <PrivateLayout>
@@ -210,14 +203,16 @@ export default function SalesReport() {
           </div>
 
           <div className="grid grid-cols-1 gap-8">
-            <SalesOverviewChart data={salesData} loading={loading} />
+            <SalesOverviewChart data={salesData} loading={isLoading} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <DepartmentSalesChart data={salesData?.departmentBreakdown} loading={loading} />
-              <ProductTypeSalesChart data={salesData?.productTypeBreakdown} loading={loading} />
+              <DepartmentSalesChart data={salesData?.departmentBreakdown} loading={isLoading} />
+              <ProductTypeSalesChart data={salesData?.productTypeBreakdown} loading={isLoading} />
             </div>
           </div>
         </div>
       </div>
     </PrivateLayout>
   );
-}
+};
+
+export default SalesReport;

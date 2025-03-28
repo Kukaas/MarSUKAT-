@@ -9,36 +9,35 @@ import {
   AlertCircle,
   Info,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { UniformInventoryDetailsDialog } from "../../joborder/components/details/uniform-inventory-details";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { inventoryAPI } from "../../joborder/api/inventoryApi";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const SchoolUniformInventory = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [inventory, setInventory] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const fetchInventory = async () => {
-    try {
-      setIsLoading(true);
-      const data = await inventoryAPI.getAllUniformInventory();
-      setInventory(data);
-    } catch (error) {
-      toast.error("Failed to fetch inventory items");
-      console.error("Error fetching inventory:", error);
-    } finally {
-      setIsLoading(false);
+  // Fetch inventory data with React Query
+  const { 
+    data: inventory, 
+    isLoading,
+    error: inventoryError 
+  } = useDataFetching(
+    ['uniformInventory'],
+    () => inventoryAPI.getAllUniformInventory(),
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
+      onError: (error) => {
+        toast.error("Failed to fetch inventory items");
+      },
     }
-  };
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
+  );
 
   const columns = [
     {
@@ -125,7 +124,7 @@ const SchoolUniformInventory = () => {
         />
 
         <DataTable
-          data={inventory}
+          data={inventory || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}

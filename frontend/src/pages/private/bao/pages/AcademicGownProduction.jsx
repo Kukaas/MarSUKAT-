@@ -8,7 +8,7 @@ import {
   Table2,
   BarChart3,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { productionAPI } from "../../joborder/api/productionApi";
 import SectionHeader from "@/components/custom-components/SectionHeader";
@@ -20,6 +20,7 @@ import StatsCard from "@/components/custom-components/StatsCard";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 import { AcademicGownProductionDetailsDialog } from "../../joborder/components/details/academic-gown-production-details";
 import { formatDate } from "@/lib/utils";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January",
@@ -38,11 +39,8 @@ const MONTHS = [
 
 export default function AcademicGownProduction() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [productions, setProductions] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [statsData, setStatsData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [activeTab, setActiveTab] = useState("table");
@@ -59,26 +57,26 @@ export default function AcademicGownProduction() {
     label: MONTHS[i]
   }));
 
-  const fetchProductions = async () => {
-    try {
-      setIsLoading(true);
-      const [productionsData, stats] = await Promise.all([
-        productionAPI.getAllAcademicGownProductions(),
-        productionAPI.getAcademicGownProductionStats(selectedYear, selectedMonth)
-      ]);
-      setProductions(productionsData);
-      setStatsData(stats);
-    } catch (error) {
-      toast.error("Failed to fetch production data");
-      console.error("Error fetching data:", error);
-    } finally {
-      setIsLoading(false);
+  // Use React Query for data fetching with caching
+  const { data: productionData, isLoading, error } = useDataFetching(
+    ['academicGownProduction', selectedYear, selectedMonth],
+    () => Promise.all([
+      productionAPI.getAllAcademicGownProductions(),
+      productionAPI.getAcademicGownProductionStats(selectedYear, selectedMonth)
+    ]),
+    {
+      staleTime: 5 * 60 * 1000, // Data is considered fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message || "Failed to fetch production data"
+        );
+      },
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchProductions();
-  }, [selectedYear, selectedMonth]);
+  const productions = productionData?.[0] || [];
+  const statsData = productionData?.[1] || null;
 
   const columns = [
     {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Eye, GraduationCap, Ruler, AlertCircle } from "lucide-react";
 import { DataTable } from "@/components/custom-components/DataTable";
@@ -7,29 +7,28 @@ import SectionHeader from "@/components/custom-components/SectionHeader";
 import { AcademicGownInventoryDetailsDialog } from "../../joborder/components/details/academic-gown-inventory-details";
 import { inventoryAPI } from "../../joborder/api/inventoryApi";
 import StatusBadge from "@/components/custom-components/StatusBadge";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
-export default function AcademicGownInventory() {
-  const [loading, setLoading] = useState(true);
-  const [inventoryItems, setInventoryItems] = useState([]);
+const AcademicGownInventory = () => {
   const [selectedInventory, setSelectedInventory] = useState(null);
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
 
-  const fetchInventory = async () => {
-    try {
-      setLoading(true);
-      const inventoryData = await inventoryAPI.getAllAcademicGownInventory();
-      setInventoryItems(inventoryData);
-    } catch (error) {
-      toast.error("Failed to fetch inventory items");
-      console.error(error);
-    } finally {
-      setLoading(false);
+  // Fetch inventory data with React Query
+  const { 
+    data: inventoryItems, 
+    isLoading,
+    error: inventoryError 
+  } = useDataFetching(
+    ['academicGownInventory'],
+    () => inventoryAPI.getAllAcademicGownInventory(),
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
+      onError: (error) => {
+        toast.error("Failed to fetch inventory items");
+      },
     }
-  };
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
+  );
 
   const handleView = (row) => {
     setSelectedInventory(row);
@@ -118,9 +117,9 @@ export default function AcademicGownInventory() {
         <div className="flex flex-col gap-8">
           <DataTable
             className="mt-4"
-            data={inventoryItems}
+            data={inventoryItems || []}
             columns={columns}
-            isLoading={loading}
+            isLoading={isLoading}
             actionCategories={actionCategories}
           />
         </div>
@@ -134,4 +133,6 @@ export default function AcademicGownInventory() {
       </div>
     </PrivateLayout>
   );
-}
+};
+
+export default AcademicGownInventory;

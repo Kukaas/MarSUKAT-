@@ -38,7 +38,7 @@ const MONTHS = [
   "December",
 ];
 
-export default function SchoolUniformProduction() {
+const SchoolUniformProduction = () => {
   const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -59,12 +59,19 @@ export default function SchoolUniformProduction() {
   }));
 
   // Use React Query for data fetching with caching
-  const { data: productionsData, isLoading: isLoadingProductions } = useDataFetching(
-    ['productions'],
-    () => productionAPI.getAllSchoolUniformProductions(),
+  const { 
+    data: productionData, 
+    isLoading,
+    error: productionError 
+  } = useDataFetching(
+    ['schoolUniformProduction', selectedYear, selectedMonth],
+    () => Promise.all([
+      productionAPI.getAllSchoolUniformProductions(),
+      productionAPI.getProductionStats(selectedYear, selectedMonth)
+    ]),
     {
-      staleTime: 5 * 60 * 1000, // Data is considered fresh for 5 minutes
-      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
       onError: (error) => {
         toast.error("Failed to fetch production data");
         console.error("Error fetching data:", error);
@@ -72,20 +79,8 @@ export default function SchoolUniformProduction() {
     }
   );
 
-  const { data: statsData, isLoading: isLoadingStats } = useDataFetching(
-    ['production-stats', selectedYear, selectedMonth],
-    () => productionAPI.getProductionStats(selectedYear, selectedMonth),
-    {
-      staleTime: 5 * 60 * 1000,
-      cacheTime: 30 * 60 * 1000,
-      onError: (error) => {
-        toast.error("Failed to fetch production statistics");
-        console.error("Error fetching stats:", error);
-      },
-    }
-  );
-
-  const isLoading = isLoadingProductions || isLoadingStats;
+  const productions = productionData?.[0] || [];
+  const statsData = productionData?.[1] || null;
 
   const columns = [
     {
@@ -213,7 +208,7 @@ export default function SchoolUniformProduction() {
             <TabPanel value="table">
               <DataTable
                 className="mt-4"
-                data={productionsData || []}
+                data={productions}
                 columns={columns}
                 isLoading={isLoading}
                 actionCategories={actionCategories}
@@ -241,4 +236,6 @@ export default function SchoolUniformProduction() {
       </div>
     </PrivateLayout>
   );
-}
+};
+
+export default SchoolUniformProduction;

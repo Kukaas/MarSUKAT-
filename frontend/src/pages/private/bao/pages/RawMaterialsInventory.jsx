@@ -2,7 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Eye, Box, Tag, Ruler, AlertCircle, Package, BarChart3 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { RawMaterialInventoryDetailsDialog } from "../../joborder/components/details/raw-material-inventory-details";
 import SectionHeader from "@/components/custom-components/SectionHeader";
@@ -15,34 +15,25 @@ import { MaterialUsageTable } from "../../joborder/components/tables/MaterialUsa
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 import { productionAPI } from "../../joborder/api/productionApi";
 import { format } from "date-fns";
+import { useDataFetching } from "@/hooks/useDataFetching";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-export default function RawMaterialsInventory() {
+const RawMaterialsInventory = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [inventory, setInventory] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
-  const [categories, setCategories] = useState([]);
-  const [materialTypes, setMaterialTypes] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)));
   const [endDate, setEndDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState("inventory");
-
-  // Material usage monitoring states
-  const [isUsageLoading, setIsUsageLoading] = useState(true);
-  const [isReportLoading, setIsReportLoading] = useState(true);
-  const [usageStats, setUsageStats] = useState(null);
-  const [usageReport, setUsageReport] = useState(null);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -56,110 +47,90 @@ export default function RawMaterialsInventory() {
     { value: "usage", label: "Material Usage", icon: BarChart3 },
   ];
 
-  // Fetch usage stats
-  const fetchUsageStats = async () => {
-    try {
-      setIsUsageLoading(true);
-      const stats = await productionAPI.getRawMaterialsUsageStats(
-        selectedYear, 
-        selectedMonth,
-        selectedCategory === "all" ? "" : selectedCategory,
-        selectedType === "all" ? "" : selectedType
-      );
-      setUsageStats(stats);
-    } catch (error) {
-      console.error("Error fetching usage stats:", error);
-      toast.error("Failed to fetch material usage statistics");
-    } finally {
-      setIsUsageLoading(false);
+  // Fetch inventory data with React Query
+  const { 
+    data: inventoryData, 
+    isLoading,
+    error: inventoryError 
+  } = useDataFetching(
+    ['rawMaterialInventory'],
+    () => inventoryAPI.getAllRawMaterialInventory(),
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
+      onError: (error) => {
+        toast.error("Failed to fetch inventory items");
+      },
     }
-  };
+  );
 
-  // Fetch usage report
-  const fetchUsageReport = async () => {
-    try {
-      setIsReportLoading(true);
-      const report = await productionAPI.getMaterialUsageReport(
-        format(startDate, 'yyyy-MM-dd'),
-        format(endDate, 'yyyy-MM-dd'),
-        selectedCategory === "all" ? "" : selectedCategory,
-        selectedType === "all" ? "" : selectedType
-      );
-      setUsageReport(report);
-    } catch (error) {
-      console.error("Error fetching usage report:", error);
-      toast.error("Failed to fetch material usage report");
-    } finally {
-      setIsReportLoading(false);
+  // Extract categories and material types from inventory data
+  const categories = inventoryData ? [...new Set(inventoryData.map(item => item.category))].map(category => ({
+    value: category,
+    label: category
+  })) : [];
+
+  const materialTypes = inventoryData ? inventoryData
+    .map(item => ({
+      category: item.category,
+      type: item.rawMaterialType.name,
+      id: `${item.category}-${item.rawMaterialType.name}`
+    }))
+    .filter((material, index, self) => 
+      index === self.findIndex(m => m.id === material.id)
+    )
+    .map(material => ({
+      value: material.id,
+      label: `${material.category} - ${material.type}`,
+      category: material.category,
+      type: material.type
+    })) : [];
+
+  // Fetch usage stats with React Query
+  const { 
+    data: usageStats, 
+    isLoading: isUsageLoading,
+    error: usageError 
+  } = useDataFetching(
+    ['materialUsageStats', selectedYear, selectedMonth, selectedCategory, selectedType],
+    () => productionAPI.getRawMaterialsUsageStats(
+      selectedYear, 
+      selectedMonth,
+      selectedCategory === "all" ? "" : selectedCategory,
+      selectedType === "all" ? "" : selectedType
+    ),
+    {
+      enabled: activeTab === "usage",
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      onError: (error) => {
+        toast.error("Failed to fetch material usage statistics");
+      },
     }
-  };
+  );
 
-  // Fetch inventory data
-  const fetchInventory = async () => {
-    try {
-      setIsLoading(true);
-      const data = await inventoryAPI.getAllRawMaterialInventory();
-      setInventory(data);
-      
-      // Extract unique categories
-      const uniqueCategories = [...new Set(data.map(item => item.category))];
-      setCategories(uniqueCategories.map(category => ({
-        value: category,
-        label: category
-      })));
-      
-      // Extract unique material types with their categories
-      const materials = data.map(item => ({
-        category: item.category,
-        type: item.rawMaterialType.name,
-        id: `${item.category}-${item.rawMaterialType.name}`
-      }));
-      
-      const uniqueMaterials = materials.filter((material, index, self) => 
-        index === self.findIndex(m => m.id === material.id)
-      );
-      
-      setMaterialTypes(uniqueMaterials.map(material => ({
-        value: material.id,
-        label: `${material.category} - ${material.type}`,
-        category: material.category,
-        type: material.type
-      })));
-      
-    } catch (error) {
-      toast.error("Failed to fetch inventory items");
-      console.error("Error fetching inventory:", error);
-    } finally {
-      setIsLoading(false);
+  // Fetch usage report with React Query
+  const { 
+    data: usageReport, 
+    isLoading: isReportLoading,
+    error: reportError 
+  } = useDataFetching(
+    ['materialUsageReport', startDate, endDate, selectedCategory, selectedType],
+    () => productionAPI.getMaterialUsageReport(
+      format(startDate, 'yyyy-MM-dd'),
+      format(endDate, 'yyyy-MM-dd'),
+      selectedCategory === "all" ? "" : selectedCategory,
+      selectedType === "all" ? "" : selectedType
+    ),
+    {
+      enabled: activeTab === "usage",
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      onError: (error) => {
+        toast.error("Failed to fetch material usage report");
+      },
     }
-  };
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
-  // Fetch usage data when usage tab is active
-  useEffect(() => {
-    if (activeTab === "usage") {
-      fetchUsageStats();
-      fetchUsageReport();
-    }
-  }, [activeTab]);
-
-  // Fetch usage stats when filters change
-  useEffect(() => {
-    if (activeTab === "usage") {
-      fetchUsageStats();
-    }
-  }, [selectedYear, selectedMonth, selectedCategory, selectedType, activeTab]);
-
-  // Fetch usage report when date range or filters change
-  useEffect(() => {
-    if (activeTab === "usage") {
-      fetchUsageReport();
-    }
-  }, [startDate, endDate, selectedCategory, selectedType, activeTab]);
+  );
 
   // Column definitions
   const columns = [
@@ -261,13 +232,13 @@ export default function RawMaterialsInventory() {
         >
           <TabPanel value="inventory">
             <div className="mt-4">
-                  <DataTable
-                    data={inventory}
-                    columns={columns}
-                    isLoading={isLoading}
-                    actionCategories={actionCategories}
-                    hideCreateButton={true}
-                  />
+              <DataTable
+                data={inventoryData || []}
+                columns={columns}
+                isLoading={isLoading}
+                actionCategories={actionCategories}
+                hideCreateButton={true}
+              />
             </div>
           </TabPanel>
 
@@ -343,4 +314,6 @@ export default function RawMaterialsInventory() {
       </div>
     </PrivateLayout>
   );
-}
+};
+
+export default RawMaterialsInventory;
