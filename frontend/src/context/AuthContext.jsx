@@ -45,7 +45,6 @@ const LoadingScreen = () => (
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -66,7 +65,6 @@ export function AuthProvider({ children }) {
         console.error("Logout error:", error);
       } finally {
         setUser(null);
-        // Navigate to login page after logout, preserving the current location for potential redirect back
         navigate("/login", {
           state: {
             from: location.pathname !== "/login" ? location : undefined,
@@ -78,56 +76,14 @@ export function AuthProvider({ children }) {
     [navigate, location]
   );
 
-  // Setup axios interceptor for token refresh
+  // Setup axios interceptor for unauthorized responses
   useEffect(() => {
-    let refreshAttempts = 0;
-    const MAX_REFRESH_ATTEMPTS = 3;
-    let isRefreshingToken = false;
-
     const interceptor = api.interceptors.response.use(
       (response) => response,
       async (error) => {
-        const originalRequest = error.config;
-
-        // Don't attempt refresh for logout requests or public routes
-        if (
-          originalRequest.url.includes("/auth/logout") ||
-          isPublicRoute(location.pathname)
-        ) {
-          return Promise.reject(error);
-        }
-
-        // If error is 401 and we haven't tried to refresh yet and it's not a refresh token request
-        if (
-          error.response?.status === 401 &&
-          !originalRequest._retry &&
-          !originalRequest.url.includes("/refresh-token") &&
-          refreshAttempts < MAX_REFRESH_ATTEMPTS &&
-          !isRefreshingToken
-        ) {
-          originalRequest._retry = true;
-          refreshAttempts++;
-
-          try {
-            isRefreshingToken = true;
-            await api.post("/auth/refresh-token");
-            isRefreshingToken = false;
-            return api(originalRequest);
-          } catch (refreshError) {
-            isRefreshingToken = false;
-            // If refresh fails, logout without calling API
-            await logout(false);
-            return Promise.reject(refreshError);
-          }
-        }
-
-        // If we've exceeded max refresh attempts, logout without calling API
-        if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+        if (error.response?.status === 401 && !isPublicRoute(location.pathname)) {
           await logout(false);
-          refreshAttempts = 0;
-          return Promise.reject(new Error("Maximum refresh attempts exceeded"));
         }
-
         return Promise.reject(error);
       }
     );
@@ -142,24 +98,12 @@ export function AuthProvider({ children }) {
     const initializeAuth = async () => {
       try {
         setLoading(true);
-        // Try to get user data using existing tokens
         const response = await api.get("/auth/me");
         setUser(response.data.user);
       } catch (error) {
-        if (error.response?.status === 401) {
-          try {
-            // Try to refresh token
-            await api.post("/auth/refresh-token");
-            // After successful refresh, try getting user data again
-            const userResponse = await api.get("/auth/me");
-            setUser(userResponse.data.user);
-          } catch (refreshError) {
-            // Only clear user and redirect if not on a public route
-            setUser(null);
-            if (!isPublicRoute(location.pathname)) {
-              navigate("/login", { state: { from: location.pathname }, replace: true });
-            }
-          }
+        setUser(null);
+        if (!isPublicRoute(location.pathname)) {
+          navigate("/login", { state: { from: location.pathname }, replace: true });
         }
       } finally {
         setLoading(false);
@@ -172,7 +116,6 @@ export function AuthProvider({ children }) {
   const login = async (userData) => {
     try {
       setUser(userData.user);
-      // Navigate to appropriate dashboard
       navigateToRoleDashboard(navigate, userData.user);
     } catch (error) {
       console.error("Login error:", error);
@@ -184,7 +127,7 @@ export function AuthProvider({ children }) {
     setUser((prevUser) => ({
       ...prevUser,
       ...updatedUserData,
-      photo: updatedUserData.photo, // Explicitly handle photo updates
+      photo: updatedUserData.photo,
     }));
   }, []);
 
@@ -198,7 +141,6 @@ export function AuthProvider({ children }) {
   };
 
   if (loading && !isPublicRoute(location.pathname)) {
-    console.log('Rendering loading screen');
     return <LoadingScreen />;
   }
 

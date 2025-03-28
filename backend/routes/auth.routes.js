@@ -5,12 +5,10 @@ import {
   login,
   logout,
   getMe,
-  refreshToken,
   changePassword,
 } from "../controllers/auth.controller.js";
 import {
   authenticateUser,
-  verifyRefreshToken,
 } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -27,8 +25,6 @@ router.post("/verify/:userId/:uniqueString", verifyEmail);
 router.get("/me", authenticateUser, getMe);
 router.post("/logout", authenticateUser, logout);
 
-// Token refresh route (requires refresh token)
-router.post("/refresh-token", verifyRefreshToken, refreshToken);
 
 router.put("/change-password", authenticateUser, changePassword);
 

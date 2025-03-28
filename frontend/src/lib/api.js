@@ -15,18 +15,29 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Add default timeout
+  timeout: 30000, // 30 seconds
 });
 
 // Add request interceptor to include token
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // No need to manually set Authorization header when using httpOnly cookies
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear any existing cookies on 401
+      Cookies.remove('access_token', { path: '/' });
+    }
     return Promise.reject(error);
   }
 );

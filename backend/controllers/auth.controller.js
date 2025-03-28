@@ -311,48 +311,26 @@ export const login = async (req, res) => {
     const accessToken = jwt.sign(
       {
         id: user._id,
-        role: user.role,
-        tokenVersion: user.tokenVersion || 0,
+        role: user.role
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Get the origin of the request
-    const origin = req.get('origin');
-    
-    // Set cookie options based on the origin
+    // Set cookie options based on environment
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
+      sameSite: 'none', // Required for cross-origin cookies
+      path: '/',
+      maxAge: 60 * 60 * 1000 // 1 hour in milliseconds
     };
 
-    // If accessing via network IP, set the specific domain
-    if (origin && origin.includes('192.168.100.39')) {
-      cookieOptions.domain = '192.168.100.39';
-    }
-
-    // Set tokens in cookies
-    res.cookie("access_token", accessToken, {
-      ...cookieOptions,
-      expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-    });
-
-    res.cookie("refresh_token", refreshToken, {
-      ...cookieOptions,
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    });
+    // Set access token in cookie
+    res.cookie("access_token", accessToken, cookieOptions);
 
     // Send user data (excluding sensitive information)
-    const { password: _, tokenVersion: __, ...userData } = user.toObject();
+    const { password: _, ...userData } = user.toObject();
     res.status(200).json({
       message: "Login successful",
       user: userData,
@@ -368,27 +346,13 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    // Clear both access and refresh tokens
+    // Clear access token with same settings as when setting it
     res.clearCookie("access_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      domain: process.env.COOKIE_DOMAIN || undefined,
+      sameSite: 'none',
+      path: '/'
     });
-
-    res.clearCookie("refresh_token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      domain: process.env.COOKIE_DOMAIN || undefined,
-    });
-
-    // Increment token version to invalidate all existing tokens
-    if (req.user) {
-      await User.findByIdAndUpdate(req.user.id, { $inc: { tokenVersion: 1 } });
-    }
 
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
@@ -413,53 +377,6 @@ export const getMe = async (req, res) => {
     console.error("Get user error:", error);
     res.status(500).json({
       message: "Error fetching user data",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
-  }
-};
-
-// New refresh token endpoint
-export const refreshToken = async (req, res) => {
-  try {
-    // User is already verified by verifyRefreshToken middleware
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    // Create new access token
-    const accessToken = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-        tokenVersion: user.tokenVersion,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    // Set new access token cookie
-    res.cookie("access_token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      domain: process.env.COOKIE_DOMAIN || undefined,
-      expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-    });
-
-    res.status(200).json({
-      message: "Token refreshed successfully",
-      user: {
-        id: user._id,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error("Token refresh error:", error);
-    res.status(401).json({
-      message: "Failed to refresh token",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }

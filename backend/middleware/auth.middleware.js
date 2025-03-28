@@ -38,21 +38,23 @@ export const authenticateUser = async (req, res, next) => {
       return res.status(401).json({ message: "User no longer exists" });
     }
 
-    // Check token version
-    if (decoded.tokenVersion !== user.tokenVersion) {
-      return res.status(401).json({ message: "Token is no longer valid" });
-    }
-
     // Add user info to request object
     req.user = {
       id: user._id,
-      role: user.role,
-      tokenVersion: user.tokenVersion,
+      role: user.role
     };
 
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
+
+    // Clear the invalid cookie
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/'
+    });
 
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
@@ -71,42 +73,6 @@ export const authenticateUser = async (req, res, next) => {
 
     return res.status(401).json({
       message: "Invalid authentication token",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
-  }
-};
-
-// Middleware to verify refresh token
-export const verifyRefreshToken = async (req, res, next) => {
-  try {
-    const refreshToken = req.cookies.refresh_token;
-
-    if (!refreshToken) {
-      return res.status(401).json({ message: "Refresh token required" });
-    }
-
-    if (!process.env.JWT_REFRESH_SECRET) {
-      throw new Error("JWT_REFRESH_SECRET is not configured");
-    }
-
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({ message: "User no longer exists" });
-    }
-
-    req.user = {
-      id: user._id,
-      role: user.role,
-      tokenVersion: user.tokenVersion,
-    };
-
-    next();
-  } catch (error) {
-    console.error("Refresh token verification error:", error);
-    return res.status(401).json({
-      message: "Invalid refresh token",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
