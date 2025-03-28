@@ -43,6 +43,8 @@ import React, { useState } from "react";
 import { cn } from "../lib/utils";
 import ProfileModal from "./profile/ProfileModal";
 import NotificationsModal from "./notifications/NotificationsModal";
+import { ConfirmationDialog } from "./custom-components/ConfirmationDialog";
+import { useLogoutMutation } from "../hooks/useDataFetching";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
@@ -80,9 +82,25 @@ const Header = () => {
   const [openAccordions, setOpenAccordions] = useState({});
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const logoutMutation = useLogoutMutation();
 
-  const handleLogout = () => {
-    logout(true);
+  const handleLogoutConfirm = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      await logout(true);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast.error(error.response?.data?.message || "Failed to logout");
+    } finally {
+      setShowLogoutDialog(false);
+    }
+  };
+
+  const handleLogoutCancel = () => {
+    if (!logoutMutation.isPending) {
+      setShowLogoutDialog(false);
+    }
   };
 
   const ListItem = React.forwardRef(
@@ -219,7 +237,7 @@ const Header = () => {
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={handleLogout}
+                onClick={() => setShowLogoutDialog(true)}
                 className="cursor-pointer"
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -359,7 +377,7 @@ const Header = () => {
                       <span className="ml-2 text-sm">Profile</span>
                     </button>
                     <button
-                      onClick={handleLogout}
+                      onClick={() => setShowLogoutDialog(true)}
                       className="flex w-full items-center p-2 rounded-lg hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
@@ -382,6 +400,18 @@ const Header = () => {
         <ProfileModal
           open={profileModalOpen}
           onOpenChange={setProfileModalOpen}
+        />
+
+        <ConfirmationDialog
+          isOpen={showLogoutDialog}
+          onClose={handleLogoutCancel}
+          onConfirm={handleLogoutConfirm}
+          title="Confirm Logout"
+          description="Are you sure you want to logout? You will need to login again to access your account."
+          confirmText="Logout"
+          cancelText="Cancel"
+          isLoading={logoutMutation.isPending}
+          variant="destructive"
         />
       </>
     );

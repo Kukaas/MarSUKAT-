@@ -1,4 +1,4 @@
-import api from '@/lib/api';
+import { authAPI } from '@/lib/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Custom hook for fetching data with caching
@@ -26,4 +26,20 @@ export const useDataMutation = (queryKey, apiFunction, options = {}) => {
     },
     ...options,
   });
+};
+
+// Specific logout mutation hook
+export const useLogoutMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useDataMutation(
+    'auth',
+    authAPI.logout,
+    {
+      onSuccess: () => {
+        // Clear all queries from the cache on logout
+        queryClient.clear();
+      },
+    }
+  );
 };

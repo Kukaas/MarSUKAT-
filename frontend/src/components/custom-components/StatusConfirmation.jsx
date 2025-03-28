@@ -48,8 +48,8 @@ export function StatusConfirmation({
             disabled={isUpdating}
             className={cn(
               status === "deactivate"
-                ? "bg-destructive hover:bg-destructive/90"
-                : "bg-primary hover:bg-primary/90"
+                ? "bg-destructive hover:bg-destructive/90 text-white"
+                : "bg-green-600 hover:bg-green-700 text-white"
             )}
           >
             {isUpdating ? (

@@ -8,15 +8,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
-import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
-
+import { ConfirmationDialog } from "./custom-components/ConfirmationDialog";
+import { useLogoutMutation } from "../hooks/useDataFetching";
 export default function AppSidebar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const role = user?.role || "Student";
   const userId = user?._id;
   const [openAccordion, setOpenAccordion] = useState(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const logoutMutation = useLogoutMutation();
 
   const currentMenuItems = menuItems[role] || [];
 
@@ -153,13 +155,45 @@ export default function AppSidebar() {
     );
   };
 
+  const handleLogoutConfirm = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      await logout(true);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast.error(error.response?.data?.message || "Failed to logout");
+    } finally {
+      setShowLogoutDialog(false);
+    }
+  };
+
+  const handleLogoutCancel = () => {
+    if (!logoutMutation.isPending) {
+      setShowLogoutDialog(false);
+    }
+  };
+
   return (
-    <div className="hidden md:flex h-full flex-col bg-background border-r border-border">
-      <ScrollArea className="h-[calc(100vh-4rem)]">
-        <div className="px-3 py-6 space-y-1.5">
-          {currentMenuItems.map((item) => renderMenuItem(item))}
-        </div>
-      </ScrollArea>
-    </div>
+    <>
+      <div className="hidden md:flex h-full flex-col bg-background border-r border-border">
+        <ScrollArea className="h-[calc(100vh-4rem)]">
+          <div className="px-3 py-6 space-y-1.5">
+            {currentMenuItems.map((item) => renderMenuItem(item))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={showLogoutDialog}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+        title="Confirm Logout"
+        description="Are you sure you want to logout? You will need to login again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        isLoading={logoutMutation.isPending}
+        variant="destructive"
+      />
+    </>
   );
 }

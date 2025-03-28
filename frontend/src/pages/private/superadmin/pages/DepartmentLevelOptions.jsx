@@ -12,6 +12,7 @@ import {
   X,
   GraduationCap,
   Activity,
+  PowerOff,
 } from "lucide-react";
 import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
@@ -32,6 +33,7 @@ import { DepartmentLevelForm } from "../forms/DepartmentLevelForm";
 import { DepartmentLevelDetailsDialog } from "../components/details/department-level-details";
 import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 import StatusBadge from "@/components/custom-components/StatusBadge";
+import { StatusConfirmation } from "@/components/custom-components/StatusConfirmation";
 
 export default function DepartmentLevelOptions() {
   const { user } = useAuth();
@@ -42,6 +44,10 @@ export default function DepartmentLevelOptions() {
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemToDelete: null,
+  });
+  const [statusDialog, setStatusDialog] = useState({
+    isOpen: false,
+    item: null,
   });
 
   // Fetch department levels data with caching
@@ -101,21 +107,27 @@ export default function DepartmentLevelOptions() {
   );
 
   // Status toggle mutation
-  const statusToggleMutation = useDataMutation(
+  const statusMutation = useDataMutation(
     ['departmentLevels'],
     async (id) => {
+      const item = statusDialog.item;
       const result = await systemMaintenanceAPI.updateDepartmentLevelStatus(id, {
-        isActive: !selectedDepartmentLevel.isActive,
+        isActive: !item.isActive,
       });
       await refetchDepartmentLevels();
       return result;
     },
     {
       onSuccess: () => {
-        toast.success("Status updated successfully");
+        toast.success(
+          statusDialog.item?.isActive
+            ? "Department level deactivated successfully"
+            : "Department level activated successfully"
+        );
+        setStatusDialog({ isOpen: false, item: null });
       },
       onError: (error) => {
-        toast.error("Failed to update status");
+        toast.error(error.response?.data?.message || "Failed to update status");
       },
     }
   );
@@ -196,9 +208,11 @@ export default function DepartmentLevelOptions() {
     setIsEditDialogOpen(true);
   };
 
-  const handleStatusToggle = async (row) => {
-    setSelectedDepartmentLevel(row);
-    await statusToggleMutation.mutateAsync(row._id);
+  const handleStatusToggle = (row) => {
+    setStatusDialog({
+      isOpen: true,
+      item: row,
+    });
   };
 
   const handleDeleteClick = (row) => {
@@ -226,6 +240,18 @@ export default function DepartmentLevelOptions() {
     }
   };
 
+  const handleStatusConfirm = async () => {
+    if (statusDialog.item) {
+      await statusMutation.mutateAsync(statusDialog.item._id);
+    }
+  };
+
+  const handleStatusCancel = () => {
+    if (!statusMutation.isPending) {
+      setStatusDialog({ isOpen: false, item: null });
+    }
+  };
+
   // Define actions for the data table
   const actionCategories = {
     view: {
@@ -247,9 +273,10 @@ export default function DepartmentLevelOptions() {
           onClick: handleEdit,
         },
         {
-          label: "Toggle Status",
-          icon: Eye,
+          label: (row) => (row.isActive ? "Deactivate" : "Activate"),
+          icon: PowerOff,
           onClick: handleStatusToggle,
+          variant: (row) => (row.isActive ? "destructive" : "default"),
         },
       ],
     },
@@ -399,6 +426,25 @@ export default function DepartmentLevelOptions() {
               : "Are you sure you want to delete this combination? This action cannot be undone."
           }
           isDeleting={deleteMutation.isPending}
+        />
+
+        {/* Status Confirmation Dialog */}
+        <StatusConfirmation
+          isOpen={statusDialog.isOpen}
+          onClose={handleStatusCancel}
+          onConfirm={handleStatusConfirm}
+          title={`${
+            statusDialog.item?.isActive ? "Deactivate" : "Activate"
+          } Department Level`}
+          description={
+            statusDialog.item
+              ? `Are you sure you want to ${
+                  statusDialog.item.isActive ? "deactivate" : "activate"
+                } the department level combination "${statusDialog.item.department} - ${statusDialog.item.level}"?`
+              : "Are you sure you want to update this department level's status?"
+          }
+          isUpdating={statusMutation.isPending}
+          status={statusDialog.item?.isActive ? "deactivate" : "activate"}
         />
       </div>
     </PrivateLayout>
