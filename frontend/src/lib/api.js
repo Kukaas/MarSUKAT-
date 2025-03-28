@@ -50,6 +50,15 @@ export const devAPI = {
     } catch (error) {
       throw error;
     }
+  },
+
+  createTestOrder: async (studentEmail) => {
+    try {
+      const response = await api.post("/dev/create-test-order", { studentEmail });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

@@ -7,6 +7,7 @@ import {
   Settings,
   Database,
   Bug,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,11 +26,13 @@ import { isDevelopment } from "@/lib/utils";
 import AccountSwitcherTab from "./tabs/AccountSwitcherTab";
 import EnvironmentTab from "./tabs/EnvironmentTab";
 import ApiDebuggerTab from "./tabs/ApiDebuggerTab";
+import OrdersTab from "./tabs/OrdersTab";
 
 const TABS = [
   { id: "account-switcher", shortcut: "1" },
   { id: "environment", shortcut: "2" },
-  { id: "api-debugger", shortcut: "3" },
+  { id: "orders", shortcut: "3" },
+  { id: "api-debugger", shortcut: "4" },
 ];
 
 const DevPanel = () => {
@@ -50,7 +53,7 @@ const DevPanel = () => {
       // Only handle other shortcuts if panel is open
       if (!open) return;
 
-      // Number keys 1-3 to switch tabs
+      // Number keys 1-4 to switch tabs
       if (!e.ctrlKey && !e.altKey && !e.metaKey) {
         const tab = TABS.find((t) => t.shortcut === e.key);
         if (tab) {
@@ -112,7 +115,7 @@ const DevPanel = () => {
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid grid-cols-3 w-full">
+              <TabsList className="grid grid-cols-4 w-full">
                 <TabsTrigger
                   value="account-switcher"
                   className="flex items-center gap-2 justify-center"
@@ -136,6 +139,17 @@ const DevPanel = () => {
                   </kbd>
                 </TabsTrigger>
                 <TabsTrigger
+                  value="orders"
+                  className="flex items-center gap-2 justify-center"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  <span className="hidden sm:inline">Orders</span>
+                  <span className="sm:hidden">Orders</span>
+                  <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+                    3
+                  </kbd>
+                </TabsTrigger>
+                <TabsTrigger
                   value="api-debugger"
                   className="flex items-center gap-2 justify-center"
                 >
@@ -143,7 +157,7 @@ const DevPanel = () => {
                   <span className="hidden sm:inline">API Debugger</span>
                   <span className="sm:hidden">API</span>
                   <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
-                    3
+                    4
                   </kbd>
                 </TabsTrigger>
               </TabsList>
@@ -162,6 +176,13 @@ const DevPanel = () => {
                     className="mt-0 focus-visible:outline-none focus-visible:ring-0 data-[state=active]:h-full"
                   >
                     <EnvironmentTab />
+                  </TabsContent>
+
+                  <TabsContent
+                    value="orders"
+                    className="mt-0 focus-visible:outline-none focus-visible:ring-0 data-[state=active]:h-full"
+                  >
+                    <OrdersTab />
                   </TabsContent>
 
                   <TabsContent

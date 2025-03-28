@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import StudentOrder from "../models/studentOrder.model.js";
 
 /**
  * Developer-only endpoint to switch between user accounts
@@ -96,6 +97,93 @@ export const getAvailableUsers = async (req, res) => {
     res.status(500).json({
       message: "An error occurred while fetching available users",
       error: error.message,
+    });
+  }
+};
+
+/**
+ * Create a test order for a student
+ * This should ONLY be enabled in development environments
+ */
+export const createTestOrder = async (req, res) => {
+  try {
+    const { studentEmail } = req.body;
+
+    if (!studentEmail) {
+      return res.status(400).json({
+        message: "Student email is required",
+      });
+    }
+
+    // Find the student user by email
+    const student = await User.findOne({ 
+      email: studentEmail,
+      role: "Student" 
+    }).select("-password");
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found",
+      });
+    }
+
+    // Create a test receipt
+    const testReceipt = {
+      type: "Down Payment",
+      orNumber: `TEST-${Date.now()}`,
+      datePaid: new Date(),
+      image: {
+        filename: "test-receipt.jpg",
+        contentType: "image/jpeg",
+        data: "data:image/jpeg;base64,/9j/4AAQSkZJRg==" // Minimal base64 image data
+      },
+      amount: 500
+    };
+
+    // Create the order
+    const newOrder = new StudentOrder({
+      userId: student._id,
+      name: student.name,
+      email: student.email,
+      studentNumber: student.studentNumber,
+      level: student.level,
+      department: student.department,
+      gender: student.studentGender,
+      receipts: [testReceipt]
+    });
+
+    const savedOrder = await newOrder.save();
+
+    // Find all active JobOrder users to notify them
+    const jobOrderUsers = await User.find({
+      role: "JobOrder",
+      isActive: true,
+    });
+
+    // Create notification
+    const notification = {
+      title: "New Test Order Received",
+      message: `${student.name} (${student.studentNumber}) from ${student.department} submitted a test payment of ₱${testReceipt.amount}`,
+      read: false,
+    };
+
+    // Add notification to each JobOrder user
+    const notificationPromises = jobOrderUsers.map(async (user) => {
+      user.notifications.push(notification);
+      return user.save();
+    });
+
+    await Promise.all(notificationPromises);
+
+    res.status(201).json({
+      message: "Test order created successfully",
+      order: savedOrder
+    });
+  } catch (error) {
+    console.error("Test order creation error:", error);
+    res.status(400).json({ 
+      message: "Error creating test order",
+      error: error.message 
     });
   }
 };
