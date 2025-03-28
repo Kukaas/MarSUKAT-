@@ -3,7 +3,7 @@ import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Eye, Edit2, Trash2, Box } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -15,24 +15,15 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { UnitDetailsDialog } from "../components/details/unit-details";
 import { UnitForm } from "../forms/UnitForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function Units() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [units, setUnits] = useState([]);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -42,31 +33,82 @@ export default function Units() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     unitToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch units data
-  const fetchUnits = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch units data with caching
+  const { data: units, isLoading, refetch: refetchUnits } = useDataFetching(
+    ['units'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllUnits();
-      setUnits(data);
-    } catch (error) {
-      toast.error("Failed to fetch units");
-      console.error("Error fetching units:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchUnits();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['units'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createUnit(data);
+      await refetchUnits();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Unit created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create unit");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['units'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateUnit(selectedId, data);
+      await refetchUnits();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Unit updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update unit");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['units'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteUnit(id);
+      await refetchUnits();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Unit deleted successfully");
+        setDeleteDialog({ isOpen: false, unitToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete unit");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -130,45 +172,29 @@ export default function Units() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteUnit(deleteDialog.unitToDelete._id);
-      await fetchUnits();
-      toast.success("Unit deleted successfully");
-      setDeleteDialog({ isOpen: false, unitToDelete: null });
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete unit");
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.unitToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.unitToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, unitToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing) {
-        await systemMaintenanceAPI.updateUnit(selectedId, data);
-        toast.success("Unit updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createUnit(data);
-        toast.success("Unit created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({ unit: "" });
       setSelectedId(null);
-      fetchUnits();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -228,7 +254,7 @@ export default function Units() {
         />
 
         <DataTable
-          data={units}
+          data={units || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -267,23 +293,23 @@ export default function Units() {
                 formData={formData}
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={createMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="unitForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -313,23 +339,23 @@ export default function Units() {
                 setFormData={setFormData}
                 isEdit={true}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={updateMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="unitForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -353,7 +379,7 @@ export default function Units() {
               ? `Are you sure you want to delete the unit "${deleteDialog.unitToDelete.unit}"? This action cannot be undone.`
               : "Are you sure you want to delete this unit? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

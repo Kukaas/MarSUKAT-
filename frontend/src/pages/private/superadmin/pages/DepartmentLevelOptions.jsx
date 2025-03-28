@@ -12,7 +12,7 @@ import {
   X,
   GraduationCap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -24,51 +24,118 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { DepartmentLevelForm } from "../forms/DepartmentLevelForm";
 import { DepartmentLevelDetailsDialog } from "../components/details/department-level-details";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function DepartmentLevelOptions() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [departmentLevels, setDepartmentLevels] = useState([]);
   const [selectedDepartmentLevel, setSelectedDepartmentLevel] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch department levels data
-  const fetchDepartmentLevels = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch department levels data with caching
+  const { data: departmentLevels, isLoading, refetch: refetchDepartmentLevels } = useDataFetching(
+    ['departmentLevels'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllDepartmentLevels();
-      setDepartmentLevels(data);
-    } catch (error) {
-      toast.error("Failed to fetch department levels");
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchDepartmentLevels();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['departmentLevels'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createDepartmentLevel(data);
+      await refetchDepartmentLevels();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Department level combination created successfully");
+        setIsCreateDialogOpen(false);
+        setSelectedDepartmentLevel(null);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create department level combination");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['departmentLevels'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateDepartmentLevel(
+        selectedDepartmentLevel._id,
+        data
+      );
+      await refetchDepartmentLevels();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Department level combination updated successfully");
+        setIsEditDialogOpen(false);
+        setSelectedDepartmentLevel(null);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update department level combination");
+      },
+    }
+  );
+
+  // Status toggle mutation
+  const statusToggleMutation = useDataMutation(
+    ['departmentLevels'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.updateDepartmentLevelStatus(id, {
+        isActive: !selectedDepartmentLevel.isActive,
+      });
+      await refetchDepartmentLevels();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Status updated successfully");
+      },
+      onError: (error) => {
+        toast.error("Failed to update status");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['departmentLevels'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteDepartmentLevel(id);
+      await refetchDepartmentLevels();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Department level combination deleted successfully");
+        setDeleteDialog({ isOpen: false, itemToDelete: null });
+      },
+      onError: (error) => {
+        toast.error("Failed to delete department level combination");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -125,15 +192,8 @@ export default function DepartmentLevelOptions() {
   };
 
   const handleStatusToggle = async (row) => {
-    try {
-      await systemMaintenanceAPI.updateDepartmentLevelStatus(row._id, {
-        isActive: !row.isActive,
-      });
-      await fetchDepartmentLevels();
-      toast.success("Status updated successfully");
-    } catch (error) {
-      toast.error("Failed to update status");
-    }
+    setSelectedDepartmentLevel(row);
+    await statusToggleMutation.mutateAsync(row._id);
   };
 
   const handleDeleteClick = (row) => {
@@ -144,45 +204,20 @@ export default function DepartmentLevelOptions() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteDepartmentLevel(
-        deleteDialog.itemToDelete._id
-      );
-      await fetchDepartmentLevels();
-      toast.success("Department level combination deleted successfully");
-      setDeleteDialog({ isOpen: false, itemToDelete: null });
-    } catch (error) {
-      toast.error("Failed to delete department level combination");
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.itemToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.itemToDelete._id);
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditDialogOpen) {
-        await systemMaintenanceAPI.updateDepartmentLevel(
-          selectedDepartmentLevel._id,
-          data
-        );
-        toast.success("Department level combination updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createDepartmentLevel(data);
-        toast.success("Department level combination created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
-      fetchDepartmentLevels();
     } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to save department level combination"
-      );
-    } finally {
-      setIsSubmitting(false);
-      setSelectedDepartmentLevel(null);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -235,7 +270,7 @@ export default function DepartmentLevelOptions() {
         />
 
         <DataTable
-          data={departmentLevels}
+          data={departmentLevels || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -269,23 +304,23 @@ export default function DepartmentLevelOptions() {
             <div className="py-2">
               <DepartmentLevelForm
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={createMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && setIsCreateDialogOpen(false)}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && setIsCreateDialogOpen(false)}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="departmentLevelForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -312,7 +347,7 @@ export default function DepartmentLevelOptions() {
             <div className="py-2">
               <DepartmentLevelForm
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={updateMutation.isPending}
                 defaultValues={selectedDepartmentLevel}
               />
             </div>
@@ -320,21 +355,21 @@ export default function DepartmentLevelOptions() {
               <AlertDialogCancel
                 type="button"
                 onClick={() => {
-                  if (!isSubmitting) {
+                  if (!updateMutation.isPending) {
                     setIsEditDialogOpen(false);
                     setSelectedDepartmentLevel(null);
                   }
                 }}
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="departmentLevelForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -358,7 +393,7 @@ export default function DepartmentLevelOptions() {
               ? `Are you sure you want to delete the combination of "${deleteDialog.itemToDelete.department}" department and "${deleteDialog.itemToDelete.level}" level? This action cannot be undone.`
               : "Are you sure you want to delete this combination? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

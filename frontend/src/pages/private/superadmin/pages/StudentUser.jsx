@@ -15,7 +15,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { userAPI } from "@/lib/api";
 import {
   AlertDialog,
@@ -38,23 +38,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { StudentUserDetailsDialog } from "../components/details/student-user-details";
-
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export function StudentUser() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     studentToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
   const [statusDialog, setStatusDialog] = useState({
     isOpen: false,
     student: null,
@@ -65,23 +61,94 @@ export function StudentUser() {
     student: null,
   });
 
-  // Fetch students data
-  const fetchStudents = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch students data with caching
+  const { data: students, isLoading, refetch: refetchStudents } = useDataFetching(
+    ['students'],
+    async () => {
       const data = await userAPI.getAllStudents();
-      setStudents(data);
-    } catch (error) {
-      toast.error("Failed to fetch students");
-      console.error("Error fetching students:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['students'],
+    async (id) => {
+      const result = await userAPI.deleteStudent(id);
+      await refetchStudents();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Student deleted successfully");
+        setDeleteDialog({ isOpen: false, studentToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete student");
+      },
+    }
+  );
+
+  // Verify mutation
+  const verifyMutation = useDataMutation(
+    ['students'],
+    async (id) => {
+      const result = await userAPI.verifyStudent(id);
+      await refetchStudents();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Student account verified successfully");
+        setStatusDialog({ isOpen: false, student: null, action: '' });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to verify student");
+      },
+    }
+  );
+
+  // Activate mutation
+  const activateMutation = useDataMutation(
+    ['students'],
+    async (id) => {
+      const result = await userAPI.activateStudent(id);
+      await refetchStudents();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Student account activated successfully");
+        setStatusDialog({ isOpen: false, student: null, action: '' });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to activate student");
+      },
+    }
+  );
+
+  // Deactivate mutation
+  const deactivateMutation = useDataMutation(
+    ['students'],
+    async ({ id, reason }) => {
+      const result = await userAPI.deactivateStudent(id, reason);
+      await refetchStudents();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Student account deactivated successfully");
+        setDeactivateDialog({ isOpen: false, student: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to deactivate student");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -176,66 +243,42 @@ export function StudentUser() {
   };
 
   const handleDeactivateConfirm = async (reason) => {
-    try {
-      setIsSubmitting(true);
-      await userAPI.deactivateStudent(deactivateDialog.student._id, reason);
-      toast.success("Student account deactivated successfully");
-      setDeactivateDialog({ isOpen: false, student: null });
-      fetchStudents();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to deactivate student");
-    } finally {
-      setIsSubmitting(false);
+    if (deactivateDialog.student) {
+      await deactivateMutation.mutateAsync({
+        id: deactivateDialog.student._id,
+        reason,
+      });
     }
   };
 
   const handleDeactivateCancel = () => {
-    if (!isSubmitting) {
+    if (!deactivateMutation.isPending) {
       setDeactivateDialog({ isOpen: false, student: null });
     }
   };
 
   const handleStatusConfirm = async () => {
-    try {
-      setIsSubmitting(true);
-      const { student, action } = statusDialog;
-
+    const { student, action } = statusDialog;
+    if (student) {
       switch (action) {
         case 'verify':
-          await userAPI.verifyStudent(student._id);
-          toast.success("Student account verified successfully");
+          await verifyMutation.mutateAsync(student._id);
           break;
         case 'activate':
-          await userAPI.activateStudent(student._id);
-          toast.success("Student account activated successfully");
+          await activateMutation.mutateAsync(student._id);
           break;
       }
-
-      setStatusDialog({ isOpen: false, student: null, action: '' });
-      fetchStudents();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update status");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await userAPI.deleteStudent(deleteDialog.studentToDelete._id);
-      await fetchStudents();
-      toast.success("Student deleted successfully");
-      setDeleteDialog({ isOpen: false, studentToDelete: null });
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete student");
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.studentToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.studentToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, studentToDelete: null });
     }
   };
@@ -285,7 +328,7 @@ export function StudentUser() {
         />
 
         <DataTable
-          data={students}
+          data={students || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -310,7 +353,7 @@ export function StudentUser() {
               ? `Are you sure you want to delete the student "${deleteDialog.studentToDelete.name}"? This action cannot be undone.`
               : "Are you sure you want to delete this student? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
 
         {/* Status Change Confirmation Dialog */}
@@ -330,7 +373,7 @@ export function StudentUser() {
           }
           confirmText={statusDialog.action === 'verify' ? "Verify" : "Activate"}
           cancelText="Cancel"
-          isLoading={isSubmitting}
+          isLoading={verifyMutation.isPending || activateMutation.isPending}
           variant="success"
         />
 
@@ -341,7 +384,7 @@ export function StudentUser() {
           onConfirm={handleDeactivateConfirm}
           user={deactivateDialog.student}
           userType="student"
-          isLoading={isSubmitting}
+          isLoading={deactivateMutation.isPending}
         />
       </div>
     </PrivateLayout>

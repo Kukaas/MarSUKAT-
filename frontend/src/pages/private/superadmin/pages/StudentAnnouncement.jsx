@@ -10,7 +10,7 @@ import {
   Calendar,
   MessageSquare,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import SectionHeader from "@/components/custom-components/SectionHeader";
@@ -29,11 +29,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnnouncementForm } from "../forms/AnnouncementForm";
 import { AnnouncementDetailsDialog } from "../components/details/announcement-details";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export function StudentAnnouncement() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [announcements, setAnnouncements] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -46,29 +45,92 @@ export function StudentAnnouncement() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchAnnouncements = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch announcements data with caching
+  const { data: announcements, isLoading, refetch: refetchAnnouncements } = useDataFetching(
+    ['announcements'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllAnnouncements();
-      setAnnouncements(data);
-    } catch (error) {
-      toast.error("Failed to fetch announcements");
-      console.error("Error fetching announcements:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['announcements'],
+    async (data) => {
+      const formattedData = {
+        ...data,
+        startDate: new Date(data.startDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
+      };
+      const result = await systemMaintenanceAPI.createAnnouncement(formattedData);
+      await refetchAnnouncements();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Announcement created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create announcement");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['announcements'],
+    async (data) => {
+      const formattedData = {
+        ...data,
+        startDate: new Date(data.startDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
+      };
+      const result = await systemMaintenanceAPI.updateAnnouncement(selectedId, formattedData);
+      await refetchAnnouncements();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Announcement updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update announcement");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['announcements'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteAnnouncement(id);
+      await refetchAnnouncements();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Announcement deleted successfully");
+        setDeleteDialog({ isOpen: false, itemToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete announcement");
+      },
+    }
+  );
 
   const columns = [
     {
@@ -115,28 +177,11 @@ export function StudentAnnouncement() {
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
-
-      // Ensure dates are properly formatted
-      const formattedData = {
-        ...data,
-        startDate: new Date(data.startDate).toISOString(),
-        endDate: new Date(data.endDate).toISOString(),
-      };
-
-      if (isEditing) {
-        await systemMaintenanceAPI.updateAnnouncement(
-          selectedId,
-          formattedData
-        );
-        toast.success("Announcement updated successfully");
-        setIsEditDialogOpen(false);
+      if (isEditing && selectedId) {
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createAnnouncement(formattedData);
-        toast.success("Announcement created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
-
       setIsEditing(false);
       setFormData({
         title: "",
@@ -145,18 +190,30 @@ export function StudentAnnouncement() {
         endDate: "",
       });
       setSelectedId(null);
-      fetchAnnouncements();
     } catch (error) {
-      console.error("Operation error:", error);
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
   const handleView = (row) => {
     setSelectedItem(row);
     setIsViewDialogOpen(true);
+  };
+
+  const handleDialogClose = (type) => {
+    if (type === "edit") {
+      setIsEditDialogOpen(false);
+      setIsEditing(false);
+      setSelectedId(null);
+    } else if (type === "create") {
+      setIsCreateDialogOpen(false);
+    }
+    setFormData({
+      title: "",
+      content: "",
+      startDate: "",
+      endDate: "",
+    });
   };
 
   const actionCategories = {
@@ -217,7 +274,7 @@ export function StudentAnnouncement() {
         />
 
         <DataTable
-          data={announcements}
+          data={announcements || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -256,7 +313,7 @@ export function StudentAnnouncement() {
                 <AnnouncementForm
                   formData={formData}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={createMutation.isPending}
                 />
               </div>
             </ScrollArea>
@@ -271,16 +328,23 @@ export function StudentAnnouncement() {
                     endDate: "",
                   });
                 }}
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="announcementForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? "Creating..." : "Create"}
+                {createMutation.isPending ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                    Creating...
+                  </>
+                ) : (
+                  "Create"
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -303,7 +367,7 @@ export function StudentAnnouncement() {
                   formData={formData}
                   isEdit={true}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={updateMutation.isPending}
                 />
               </div>
             </ScrollArea>
@@ -318,16 +382,23 @@ export function StudentAnnouncement() {
                     endDate: "",
                   });
                 }}
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="announcementForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {updateMutation.isPending ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                    Updating...
+                  </>
+                ) : (
+                  "Update"
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -338,23 +409,13 @@ export function StudentAnnouncement() {
           isOpen={deleteDialog.isOpen}
           onClose={() => setDeleteDialog({ isOpen: false, itemToDelete: null })}
           onConfirm={async () => {
-            try {
-              setIsDeleting(true);
-              await systemMaintenanceAPI.deleteAnnouncement(
-                deleteDialog.itemToDelete._id
-              );
-              toast.success("Announcement deleted successfully");
-              fetchAnnouncements();
-            } catch (error) {
-              toast.error("Failed to delete announcement");
-            } finally {
-              setIsDeleting(false);
-              setDeleteDialog({ isOpen: false, itemToDelete: null });
+            if (deleteDialog.itemToDelete) {
+              await deleteMutation.mutateAsync(deleteDialog.itemToDelete._id);
             }
           }}
           title="Delete Announcement"
           description="Are you sure you want to delete this announcement? This action cannot be undone."
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
 
         {/* View Dialog */}

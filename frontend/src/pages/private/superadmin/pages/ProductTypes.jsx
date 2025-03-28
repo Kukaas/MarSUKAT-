@@ -3,7 +3,7 @@ import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Eye, Edit2, Trash2, Box } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -22,11 +22,10 @@ import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductTypeDetailsDialog } from "../components/details/product-type-details";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function ProductTypes() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [productTypes, setProductTypes] = useState([]);
   const [selectedProductType, setSelectedProductType] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -40,31 +39,86 @@ export default function ProductTypes() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     productTypeToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch product types data
-  const fetchProductTypes = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch product types data with caching
+  const { data: productTypes, isLoading, refetch: refetchProductTypes } = useDataFetching(
+    ['productTypes'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllProductTypes();
-      setProductTypes(data);
-    } catch (error) {
-      toast.error("Failed to fetch product types");
-      console.error("Error fetching product types:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchProductTypes();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['productTypes'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createProductType(data);
+      await refetchProductTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Product type created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create product type");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['productTypes'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateProductType(selectedId, {
+        ...data,
+        _id: selectedId,
+        productTypeId: data.productTypeId,
+      });
+      await refetchProductTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Product type updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update product type");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['productTypes'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteProductType(id);
+      await refetchProductTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Product type deleted successfully");
+        setDeleteDialog({ isOpen: false, productTypeToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete product type");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -177,44 +231,23 @@ export default function ProductTypes() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteProductType(
-        deleteDialog.productTypeToDelete._id
-      );
-      await fetchProductTypes();
-      toast.success("Product type deleted successfully");
-      setDeleteDialog({ isOpen: false, productTypeToDelete: null });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to delete product type"
-      );
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.productTypeToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.productTypeToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, productTypeToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing && selectedId) {
-        await systemMaintenanceAPI.updateProductType(selectedId, {
-          ...data,
-          _id: selectedId,
-          productTypeId: data.productTypeId,
-        });
-        toast.success("Product type updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createProductType(data);
-        toast.success("Product type created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({
@@ -225,11 +258,8 @@ export default function ProductTypes() {
         rawMaterialsUsed: [{ category: "", type: "", quantity: "", unit: "" }],
       });
       setSelectedId(null);
-      fetchProductTypes();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -295,7 +325,7 @@ export default function ProductTypes() {
         />
 
         <DataTable
-          data={productTypes}
+          data={productTypes || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -343,24 +373,24 @@ export default function ProductTypes() {
                   formData={formData}
                   setFormData={setFormData}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={createMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="productTypeForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -391,24 +421,24 @@ export default function ProductTypes() {
                   setFormData={setFormData}
                   isEdit={true}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={updateMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="productTypeForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -432,7 +462,7 @@ export default function ProductTypes() {
               ? `Are you sure you want to delete the product type "${deleteDialog.productTypeToDelete.productType}"? This action cannot be undone.`
               : "Are you sure you want to delete this product type? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

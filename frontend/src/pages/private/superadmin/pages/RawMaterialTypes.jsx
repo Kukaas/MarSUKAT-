@@ -12,7 +12,7 @@ import {
   Tag,
   Ruler,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -30,11 +30,10 @@ import { RawMaterialTypeForm } from "../forms/RawMaterialTypeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { RawMaterialTypeDetailsDialog } from "../components/details/raw-material-type-details";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function RawMaterialTypes() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [types, setTypes] = useState([]);
   const [selectedType, setSelectedType] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -45,21 +44,18 @@ export default function RawMaterialTypes() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     typeToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch raw material types data
-  const fetchTypes = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch raw material types data with caching
+  const { data: types, isLoading, refetch: refetchTypes } = useDataFetching(
+    ['rawMaterialTypes'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllRawMaterialTypes();
       // Sort data first by category, then by name
-      const sortedData = [...data].sort((a, b) => {
+      return [...data].sort((a, b) => {
         // First sort by category
         const categoryComparison = a.category
           .trim()
@@ -70,18 +66,71 @@ export default function RawMaterialTypes() {
           .trim()
           .localeCompare(b.name.trim(), "en", { sensitivity: "base" });
       });
-      setTypes(sortedData);
-    } catch (error) {
-      toast.error("Failed to fetch raw material types");
-      console.error("Error fetching raw material types:", error);
-    } finally {
-      setIsLoading(false);
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchTypes();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['rawMaterialTypes'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createRawMaterialType(data);
+      await refetchTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Raw material type created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create raw material type");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['rawMaterialTypes'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateRawMaterialType(selectedId, data);
+      await refetchTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Raw material type updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update raw material type");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['rawMaterialTypes'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteRawMaterialType(id);
+      await refetchTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Raw material type deleted successfully");
+        setDeleteDialog({ isOpen: false, typeToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete raw material type");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -173,49 +222,29 @@ export default function RawMaterialTypes() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteRawMaterialType(
-        deleteDialog.typeToDelete._id
-      );
-      await fetchTypes();
-      toast.success("Raw material type deleted successfully");
-      setDeleteDialog({ isOpen: false, typeToDelete: null });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to delete raw material type"
-      );
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.typeToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.typeToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, typeToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing) {
-        await systemMaintenanceAPI.updateRawMaterialType(selectedId, data);
-        toast.success("Raw material type updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createRawMaterialType(data);
-        toast.success("Raw material type created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({ name: "", description: "" });
       setSelectedId(null);
-      fetchTypes();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -275,7 +304,7 @@ export default function RawMaterialTypes() {
         />
 
         <DataTable
-          data={types}
+          data={types || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -314,23 +343,23 @@ export default function RawMaterialTypes() {
                 formData={formData}
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={createMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="rawMaterialTypeForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -360,23 +389,23 @@ export default function RawMaterialTypes() {
                 setFormData={setFormData}
                 isEdit={true}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={updateMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="rawMaterialTypeForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -400,7 +429,7 @@ export default function RawMaterialTypes() {
               ? `Are you sure you want to delete the raw material type "${deleteDialog.typeToDelete.name}"? This action cannot be undone.`
               : "Are you sure you want to delete this raw material type? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

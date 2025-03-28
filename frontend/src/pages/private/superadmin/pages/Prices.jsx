@@ -3,7 +3,7 @@ import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { Coins, Plus, Eye, Edit2, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -20,11 +20,10 @@ import { PriceDetailsDialog } from "../components/details/price-details";
 import { PriceForm } from "../forms/PriceForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function Prices() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [prices, setPrices] = useState([]);
   const [selectedPrice, setSelectedPrice] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -34,31 +33,82 @@ export default function Prices() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     priceToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch prices data
-  const fetchPrices = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch prices data with caching
+  const { data: prices, isLoading, refetch: refetchPrices } = useDataFetching(
+    ['prices'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllPrices();
-      setPrices(data);
-    } catch (error) {
-      toast.error("Failed to fetch prices");
-      console.error("Error fetching prices:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchPrices();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['prices'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createPrice(data);
+      await refetchPrices();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Price created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create price");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['prices'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updatePrice(selectedId, data);
+      await refetchPrices();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Price updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update price");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['prices'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deletePrice(id);
+      await refetchPrices();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Price deleted successfully");
+        setDeleteDialog({ isOpen: false, priceToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete price");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -122,45 +172,29 @@ export default function Prices() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deletePrice(deleteDialog.priceToDelete._id);
-      await fetchPrices();
-      toast.success("Price deleted successfully");
-      setDeleteDialog({ isOpen: false, priceToDelete: null });
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete price");
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.priceToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.priceToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, priceToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing) {
-        await systemMaintenanceAPI.updatePrice(selectedId, data);
-        toast.success("Price updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createPrice(data);
-        toast.success("Price created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({ price: "" });
       setSelectedId(null);
-      fetchPrices();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -220,7 +254,7 @@ export default function Prices() {
         />
 
         <DataTable
-          data={prices}
+          data={prices || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -259,23 +293,23 @@ export default function Prices() {
                 formData={formData}
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={createMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="priceForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -305,23 +339,23 @@ export default function Prices() {
                 setFormData={setFormData}
                 isEdit={true}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={updateMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="priceForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -347,7 +381,7 @@ export default function Prices() {
                 )}"? This action cannot be undone.`
               : "Are you sure you want to delete this price? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

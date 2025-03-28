@@ -3,7 +3,7 @@ import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Eye, Edit2, Trash2, Building2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -20,11 +20,10 @@ import { DepartmentDetailsDialog } from "../components/details/department-detail
 import { DepartmentForm } from "../forms/DepartmentForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function Department() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -35,31 +34,82 @@ export default function Department() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     departmentToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch departments data
-  const fetchDepartments = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch departments data with caching
+  const { data: departments, isLoading, refetch: refetchDepartments } = useDataFetching(
+    ['departments'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllDepartments();
-      setDepartments(data);
-    } catch (error) {
-      toast.error("Failed to fetch departments");
-      console.error("Error fetching departments:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['departments'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createDepartment(data);
+      await refetchDepartments();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Department created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create department");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['departments'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateDepartment(selectedId, data);
+      await refetchDepartments();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Department updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update department");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['departments'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteDepartment(id);
+      await refetchDepartments();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Department deleted successfully");
+        setDeleteDialog({ isOpen: false, departmentToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete department");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -134,49 +184,29 @@ export default function Department() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteDepartment(
-        deleteDialog.departmentToDelete._id
-      );
-      await fetchDepartments();
-      toast.success("Department deleted successfully");
-      setDeleteDialog({ isOpen: false, departmentToDelete: null });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to delete department"
-      );
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.departmentToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.departmentToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, departmentToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing) {
-        await systemMaintenanceAPI.updateDepartment(selectedId, data);
-        toast.success("Department updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createDepartment(data);
-        toast.success("Department created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({ department: "", description: "" });
       setSelectedId(null);
-      fetchDepartments();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -236,7 +266,7 @@ export default function Department() {
         />
 
         <DataTable
-          data={departments}
+          data={departments || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -275,23 +305,23 @@ export default function Department() {
                 formData={formData}
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={createMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="departmentForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -321,23 +351,23 @@ export default function Department() {
                 setFormData={setFormData}
                 isEdit={true}
                 onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={updateMutation.isPending}
               />
             </div>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="departmentForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -361,7 +391,7 @@ export default function Department() {
               ? `Are you sure you want to delete the department "${deleteDialog.departmentToDelete.department}"? This action cannot be undone.`
               : "Are you sure you want to delete this department? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>

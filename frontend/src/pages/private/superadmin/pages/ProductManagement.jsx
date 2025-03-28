@@ -11,7 +11,7 @@ import {
   Power,
   PowerOff,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ProductForm } from "../forms/ProductForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
@@ -30,10 +30,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ProductDetailsDialog } from "../components/details/product-details";
 import { StatusConfirmation } from "@/components/custom-components/StatusConfirmation";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function ProductManagement() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -45,35 +44,113 @@ export default function ProductManagement() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
   const [statusDialog, setStatusDialog] = useState({
     isOpen: false,
     item: null,
   });
-  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
-  // Fetch products data
-  const fetchProducts = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch products data with caching
+  const { data: products, isLoading, refetch: refetchProducts } = useDataFetching(
+    ['products'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllProducts();
-      setProducts(data);
-    } catch (error) {
-      toast.error("Failed to fetch products");
-      console.error("Error fetching products:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['products'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createProduct(data);
+      await refetchProducts();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Product created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create product");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['products'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateProduct(selectedId, data);
+      await refetchProducts();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Product updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update product");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['products'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteProduct(id);
+      await refetchProducts();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Product deleted successfully");
+        setDeleteDialog({ isOpen: false, itemToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete product");
+      },
+    }
+  );
+
+  // Status toggle mutation
+  const statusMutation = useDataMutation(
+    ['products'],
+    async (id) => {
+      const item = statusDialog.item;
+      if (item.isActive) {
+        return await systemMaintenanceAPI.deactivateProduct(id);
+      } else {
+        return await systemMaintenanceAPI.activateProduct(id);
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.success(
+          statusDialog.item?.isActive
+            ? "Product deactivated successfully"
+            : "Product activated successfully"
+        );
+        setStatusDialog({ isOpen: false, item: null });
+        refetchProducts();
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update status");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -143,36 +220,23 @@ export default function ProductManagement() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteProduct(deleteDialog.itemToDelete._id);
-      await fetchProducts();
-      toast.success("Product deleted successfully");
-      setDeleteDialog({ isOpen: false, itemToDelete: null });
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete product");
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.itemToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.itemToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, itemToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
-      if (isEditing) {
-        await systemMaintenanceAPI.updateProduct(selectedId, data);
-        toast.success("Product updated successfully");
-        setIsEditDialogOpen(false);
+      if (isEditing && selectedId) {
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createProduct(data);
-        toast.success("Product created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({
@@ -181,11 +245,8 @@ export default function ProductManagement() {
         isActive: true,
       });
       setSelectedId(null);
-      fetchProducts();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -212,29 +273,13 @@ export default function ProductManagement() {
   };
 
   const handleStatusConfirm = async () => {
-    try {
-      setIsStatusUpdating(true);
-      const item = statusDialog.item;
-
-      if (item.isActive) {
-        await systemMaintenanceAPI.deactivateProduct(item._id);
-        toast.success("Product deactivated successfully");
-      } else {
-        await systemMaintenanceAPI.activateProduct(item._id);
-        toast.success("Product activated successfully");
-      }
-
-      await fetchProducts();
-      setStatusDialog({ isOpen: false, item: null });
-    } catch (error) {
-      toast.error("Failed to update status");
-    } finally {
-      setIsStatusUpdating(false);
+    if (statusDialog.item) {
+      await statusMutation.mutateAsync(statusDialog.item._id);
     }
   };
 
   const handleStatusCancel = () => {
-    if (!isStatusUpdating) {
+    if (!statusMutation.isPending) {
       setStatusDialog({ isOpen: false, item: null });
     }
   };
@@ -288,7 +333,7 @@ export default function ProductManagement() {
         />
 
         <DataTable
-          data={products}
+          data={products || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -334,7 +379,7 @@ export default function ProductManagement() {
                   setFormData={setFormData}
                   isEdit={isEditing}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={isEditing ? updateMutation.isPending : createMutation.isPending}
                 />
               </div>
             </ScrollArea>
@@ -342,19 +387,19 @@ export default function ProductManagement() {
               <AlertDialogCancel
                 type="button"
                 onClick={() =>
-                  !isSubmitting &&
+                  !(isEditing ? updateMutation.isPending : createMutation.isPending) &&
                   handleDialogClose(isEditing ? "edit" : "create")
                 }
-                disabled={isSubmitting}
+                disabled={isEditing ? updateMutation.isPending : createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="productForm"
-                disabled={isSubmitting}
+                disabled={isEditing ? updateMutation.isPending : createMutation.isPending}
               >
-                {isSubmitting ? (
+                {(isEditing ? updateMutation.isPending : createMutation.isPending) ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     {isEditing ? "Updating..." : "Creating..."}
@@ -380,10 +425,10 @@ export default function ProductManagement() {
               ? `Are you sure you want to delete the product "${deleteDialog.itemToDelete.productType}"? This action cannot be undone.`
               : "Are you sure you want to delete this product? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
 
-        {/* Add Status Confirmation Dialog */}
+        {/* Status Confirmation Dialog */}
         <StatusConfirmation
           isOpen={statusDialog.isOpen}
           onClose={handleStatusCancel}
@@ -398,7 +443,7 @@ export default function ProductManagement() {
                 } the product "${statusDialog.item.productType}"?`
               : "Are you sure you want to update this product's status?"
           }
-          isUpdating={isStatusUpdating}
+          isUpdating={statusMutation.isPending}
           status={statusDialog.item?.isActive ? "deactivate" : "activate"}
         />
       </div>

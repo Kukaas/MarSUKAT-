@@ -3,7 +3,7 @@ import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Eye, Edit2, Trash2, Box } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { systemMaintenanceAPI } from "@/lib/systemMaintenance";
 import {
   AlertDialog,
@@ -21,11 +21,10 @@ import { AcademicGownTypeForm } from "../forms/AcademicGownTypeForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 
 export default function AcademicGownTypes() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [gownTypes, setGownTypes] = useState([]);
   const [selectedGownType, setSelectedGownType] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -38,31 +37,86 @@ export default function AcademicGownTypes() {
   });
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     gownTypeToDelete: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch academic gown types data
-  const fetchGownTypes = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch academic gown types data with caching
+  const { data: gownTypes, isLoading, refetch: refetchGownTypes } = useDataFetching(
+    ['academicGownTypes'],
+    async () => {
       const data = await systemMaintenanceAPI.getAllAcademicGownTypes();
-      setGownTypes(data);
-    } catch (error) {
-      toast.error("Failed to fetch academic gown types");
-      console.error("Error fetching academic gown types:", error);
-    } finally {
-      setIsLoading(false);
+      return data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchGownTypes();
-  }, []);
+  // Create mutation
+  const createMutation = useDataMutation(
+    ['academicGownTypes'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.createAcademicGownType(data);
+      await refetchGownTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Academic gown type created successfully");
+        setIsCreateDialogOpen(false);
+        handleDialogClose("create");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to create academic gown type");
+      },
+    }
+  );
+
+  // Update mutation
+  const updateMutation = useDataMutation(
+    ['academicGownTypes'],
+    async (data) => {
+      const result = await systemMaintenanceAPI.updateAcademicGownType(selectedId, {
+        ...data,
+        _id: selectedId,
+        gownTypeId: data.gownTypeId,
+      });
+      await refetchGownTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Academic gown type updated successfully");
+        setIsEditDialogOpen(false);
+        handleDialogClose("edit");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update academic gown type");
+      },
+    }
+  );
+
+  // Delete mutation
+  const deleteMutation = useDataMutation(
+    ['academicGownTypes'],
+    async (id) => {
+      const result = await systemMaintenanceAPI.deleteAcademicGownType(id);
+      await refetchGownTypes();
+      return result;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Academic gown type deleted successfully");
+        setDeleteDialog({ isOpen: false, gownTypeToDelete: null });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete academic gown type");
+      },
+    }
+  );
 
   // Column definitions
   const columns = [
@@ -162,44 +216,23 @@ export default function AcademicGownTypes() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      setIsDeleting(true);
-      await systemMaintenanceAPI.deleteAcademicGownType(
-        deleteDialog.gownTypeToDelete._id
-      );
-      await fetchGownTypes();
-      toast.success("Academic gown type deleted successfully");
-      setDeleteDialog({ isOpen: false, gownTypeToDelete: null });
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to delete academic gown type"
-      );
-    } finally {
-      setIsDeleting(false);
+    if (deleteDialog.gownTypeToDelete) {
+      await deleteMutation.mutateAsync(deleteDialog.gownTypeToDelete._id);
     }
   };
 
   const handleDeleteCancel = () => {
-    if (!isDeleting) {
+    if (!deleteMutation.isPending) {
       setDeleteDialog({ isOpen: false, gownTypeToDelete: null });
     }
   };
 
   const handleSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
       if (isEditing && selectedId) {
-        await systemMaintenanceAPI.updateAcademicGownType(selectedId, {
-          ...data,
-          _id: selectedId,
-          gownTypeId: data.gownTypeId,
-        });
-        toast.success("Academic gown type updated successfully");
-        setIsEditDialogOpen(false);
+        await updateMutation.mutateAsync(data);
       } else {
-        await systemMaintenanceAPI.createAcademicGownType(data);
-        toast.success("Academic gown type created successfully");
-        setIsCreateDialogOpen(false);
+        await createMutation.mutateAsync(data);
       }
       setIsEditing(false);
       setFormData({
@@ -209,11 +242,8 @@ export default function AcademicGownTypes() {
         rawMaterialsUsed: [{ category: "", type: "", quantity: "", unit: "" }],
       });
       setSelectedId(null);
-      fetchGownTypes();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -278,7 +308,7 @@ export default function AcademicGownTypes() {
         />
 
         <DataTable
-          data={gownTypes}
+          data={gownTypes || []}
           columns={columns}
           isLoading={isLoading}
           actionCategories={actionCategories}
@@ -325,24 +355,24 @@ export default function AcademicGownTypes() {
                   formData={formData}
                   setFormData={setFormData}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={createMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("create")}
-                disabled={isSubmitting}
+                onClick={() => !createMutation.isPending && handleDialogClose("create")}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="academicGownTypeForm"
-                disabled={isSubmitting}
+                disabled={createMutation.isPending}
               >
-                {isSubmitting ? (
+                {createMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Creating...
@@ -373,24 +403,24 @@ export default function AcademicGownTypes() {
                   setFormData={setFormData}
                   isEdit={true}
                   onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={updateMutation.isPending}
                 />
               </div>
             </ScrollArea>
             <AlertDialogFooter className="pt-4">
               <AlertDialogCancel
                 type="button"
-                onClick={() => !isSubmitting && handleDialogClose("edit")}
-                disabled={isSubmitting}
+                onClick={() => !updateMutation.isPending && handleDialogClose("edit")}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
                 form="academicGownTypeForm"
-                disabled={isSubmitting}
+                disabled={updateMutation.isPending}
               >
-                {isSubmitting ? (
+                {updateMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner loading-sm mr-2"></span>
                     Updating...
@@ -414,7 +444,7 @@ export default function AcademicGownTypes() {
               ? `Are you sure you want to delete the academic gown type "${deleteDialog.gownTypeToDelete.productType}"? This action cannot be undone.`
               : "Are you sure you want to delete this academic gown type? This action cannot be undone."
           }
-          isDeleting={isDeleting}
+          isDeleting={deleteMutation.isPending}
         />
       </div>
     </PrivateLayout>
