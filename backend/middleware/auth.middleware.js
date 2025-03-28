@@ -51,8 +51,8 @@ export const authenticateUser = async (req, res, next) => {
     // Clear the invalid cookie
     res.clearCookie("access_token", {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       path: '/'
     });
 
