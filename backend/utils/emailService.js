@@ -28,7 +28,7 @@ export const sendVerificationEmail = async (
   uniqueString
 ) => {
   try {
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:3000";
+    const backendUrl = process.env.NODE_ENV === "production" ? process.env.BACKEND_URL : "http://localhost:3000";
     const mailOptions = {
       from: {
         name: "MarSUKAT",
