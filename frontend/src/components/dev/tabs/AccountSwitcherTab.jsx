@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, UserCheck, RefreshCw } from "lucide-react";
+import { Loader2, UserCheck, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -23,10 +23,11 @@ import {
 import { devAPI } from "@/lib/api";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 
-const AccountSwitcherTab = ({ currentUser }) => {
+function AccountSwitcherTab({ currentUser }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
@@ -72,6 +73,35 @@ const AccountSwitcherTab = ({ currentUser }) => {
       });
     } finally {
       setSwitching(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    // Confirm before deleting
+    if (!window.confirm(`Are you sure you want to delete user: ${selectedUser}?`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await devAPI.deleteUser(selectedUser);
+      toast.success("User deleted successfully");
+      
+      // Refresh the user list
+      await fetchUsers();
+      
+      // Clear selection
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast.error("Failed to delete user", {
+        description:
+          error.response?.data?.message || "An unexpected error occurred",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -184,23 +214,37 @@ const AccountSwitcherTab = ({ currentUser }) => {
             </Card>
           )}
 
-          <Button
-            onClick={handleSwitchUser}
-            disabled={!selectedUser || switching}
-            className="w-full"
-          >
-            {switching ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Switching...
-              </>
-            ) : (
-              <>
-                <UserCheck className="mr-2 h-4 w-4" />
-                Switch User
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSwitchUser}
+              disabled={!selectedUser || switching || deleting}
+              className="flex-1"
+            >
+              {switching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching...
+                </>
+              ) : (
+                <>
+                  <UserCheck className="mr-2 h-4 w-4" />
+                  Switch User
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={handleDeleteUser}
+              disabled={!selectedUser || switching || deleting}
+              variant="destructive"
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </CardContent>
         <CardFooter className="pt-0">
           <Button
@@ -217,6 +261,6 @@ const AccountSwitcherTab = ({ currentUser }) => {
       </Card>
     </div>
   );
-};
+}
 
 export default AccountSwitcherTab;

@@ -321,3 +321,46 @@ export const approveAllOrders = async (req, res) => {
     });
   }
 };
+
+/**
+ * Delete a user by email
+ * This should ONLY be enabled in development environments
+ */
+export const deleteUser = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required"
+      });
+    }
+
+    // Find and delete the user by email
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    await user.deleteOne();
+
+    res.status(200).json({
+      message: `Successfully deleted user: ${user.name} (${user.role})`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("Dev delete user error:", error);
+    res.status(500).json({
+      message: "An error occurred while deleting user",
+      error: error.message
+    });
+  }
+};

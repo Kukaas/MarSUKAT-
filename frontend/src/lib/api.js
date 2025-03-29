@@ -63,6 +63,15 @@ export const devAPI = {
     }
   },
 
+  deleteUser: async (email) => {
+    try {
+      const response = await api.delete("/dev/delete-user", { data: { email } });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   createTestOrder: async (studentEmail) => {
     try {
       const response = await api.post("/dev/create-test-order", { studentEmail });

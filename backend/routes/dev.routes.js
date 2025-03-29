@@ -6,6 +6,7 @@ import {
   deleteAllOrders,
   createMassOrders,
   approveAllOrders,
+  deleteUser,
 } from "../controllers/dev.controller.js";
 import { developmentOnly } from "../middleware/dev.middleware.js";
 
@@ -21,5 +22,6 @@ router.post("/create-test-order", createTestOrder);
 router.delete("/delete-all-orders", deleteAllOrders);
 router.post("/create-mass-orders", createMassOrders);
 router.post("/approve-all-orders", approveAllOrders);
+router.delete("/delete-user", deleteUser);
 
 export default router;
