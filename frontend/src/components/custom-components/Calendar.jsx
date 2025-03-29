@@ -48,10 +48,6 @@ export default function Calendar({ events = [], onEventClick, onDateSelect }) {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold mb-4">
-        {format(date, "MMMM yyyy")}
-      </h2>
-
       <div className="w-full">
         <CalendarComponent
           mode="single"
@@ -75,15 +71,16 @@ export default function Calendar({ events = [], onEventClick, onDateSelect }) {
           classNames={{
             months: "w-full",
             month: "w-full",
-            caption: "flex justify-center pt-1 relative items-center",
-            caption_label: "text-base font-medium",
-            nav: "space-x-1 flex items-center",
+            caption: "flex justify-between items-center h-12 px-2",
+            caption_label: "text-lg font-medium",
+            nav: "flex items-center gap-4",
             nav_button: cn(
-              "h-9 w-9 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity"
+              "h-8 w-8 hover:bg-accent/50 rounded-md flex items-center justify-center",
+              "transition-colors duration-200"
             ),
-            nav_button_previous: "absolute left-1",
-            nav_button_next: "absolute right-1",
-            table: "w-full border-collapse",
+            nav_button_previous: "",
+            nav_button_next: "",
+            table: "w-full border-collapse mt-1",
             head_row: "flex w-full",
             head_cell: cn(
               "text-muted-foreground font-normal text-[0.9rem]",

@@ -3,11 +3,11 @@ import StudentOrder from "../models/studentOrder.model.js";
 
 // Available time slots for measurements with max students per slot
 export const TIME_SLOTS = [
-  { time: "7:30 AM", maxStudents: 8 },
-  { time: "8:30 AM", maxStudents: 8 },
-  { time: "9:30 AM", maxStudents: 7 },
-  { time: "10:30 AM", maxStudents: 7 },
-];
+  { time: "7:30 AM", maxStudents: 8 },  // 8 students
+  { time: "8:30 AM", maxStudents: 8 },  // 8 students
+  { time: "9:30 AM", maxStudents: 7 },  // 7 students
+  { time: "10:30 AM", maxStudents: 7 }  // 7 students
+];                                      // Total: 30 students
 
 export const MAX_STUDENTS_PER_DAY = 30;
 
@@ -125,19 +125,11 @@ export const getNextAvailableSchedule = async (startDate) => {
         continue; // Try next time slot
       }
 
-      // Check if this specific slot is already taken
-      const existingAppointment = await StudentOrder.findOne({
-        "measurementSchedule.date": currentDate,
-        "measurementSchedule.time": timeSlot.time,
-        status: { $in: ["Approved", "Measured"] },
-      });
-
-      if (!existingAppointment) {
-        return {
-          date: new Date(currentDate),
-          time: timeSlot.time,
-        };
-      }
+      // Return the first available slot
+      return {
+        date: new Date(currentDate),
+        time: timeSlot.time,
+      };
     }
 
     // Move to next day if no slots available today

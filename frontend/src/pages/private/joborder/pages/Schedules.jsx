@@ -1,7 +1,7 @@
 import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
-import Calendar from "../../../../components/custom-components/Calendar";
-import { scheduleAPI } from "../../../../lib/api";
+import Calendar from "@/components/custom-components/Calendar";
+import { scheduleAPI } from "@/lib/api";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -88,15 +88,12 @@ export function Schedules() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [expandedEvents, setExpandedEvents] = useState(new Set());
-
-  // Fetch schedules with caching
-  const { data: schedules, isLoading } = useDataFetching(
+  const { data: schedules = [], isLoading } = useDataFetching(
     ['schedules'],
     async () => {
       const data = await scheduleAPI.getAllSchedules();
       return data.map((schedule) => ({
         id: schedule.id,
-        title: `${schedule.name} - ${schedule.department}`,
         start: new Date(schedule.date),
         time: schedule.time,
         department: schedule.department,
@@ -107,8 +104,8 @@ export function Schedules() {
       }));
     },
     {
-      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
     }
   );
 
@@ -129,64 +126,52 @@ export function Schedules() {
     });
   };
 
+  const isToday = selectedDate?.toDateString() === new Date().toDateString();
+
   return (
     <PrivateLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-8">
         <SectionHeader
-          title="Measurement Schedules"
+          title="Schedule"
           description="View all student measurement schedules"
         />
 
         {isLoading ? (
           <Card className="p-6">
-            <LoadingSpinner message="Loading Schedules" />
+            <LoadingSpinner message="Loading schedule..." />
           </Card>
-        ) : schedules?.length > 0 ? (
-          <div className="grid lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)] gap-6">
+        ) : schedules.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-[1.5fr,1fr] gap-6">
             <div className="min-w-0">
-              <Card className="p-4 sm:p-6">
+              <Card className="p-4 sm:p-6 shadow-sm h-full">
                 <Calendar
                   events={schedules}
                   onEventClick={handleEventClick}
-                  onDateSelect={(date) => setSelectedDate(date)}
+                  onDateSelect={setSelectedDate}
                 />
               </Card>
             </div>
 
             <div className="min-w-0">
-              <Card className="p-4 sm:p-6 sticky top-6">
-                <h2 className="text-xl font-semibold mb-6">
-                  {selectedDate ? (
-                    <>
-                      {selectedDate.toDateString() === new Date().toDateString()
-                        ? "Today's Schedules"
-                        : `Schedules for ${formatDate(selectedDate, "long")}`}
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {selectedEvents.length} student
-                        {selectedEvents.length !== 1 ? "s" : ""} scheduled
-                      </p>
-                    </>
-                  ) : (
-                    "Today's Schedules"
+              <Card className="p-4 sm:p-6 shadow-sm md:sticky md:top-6 h-full flex flex-col">
+                <h2 className="text-lg font-medium mb-6 flex items-baseline justify-between shrink-0">
+                  <span>{selectedDate ? (isToday ? "Today" : formatDate(selectedDate, "long")) : "Today"}</span>
+                  {selectedEvents.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {selectedEvents.length} scheduled
+                    </span>
                   )}
                 </h2>
 
                 {selectedDate ? (
                   selectedEvents.length > 0 ? (
-                    <ScrollArea className="h-[calc(100vh-300px)]">
-                      <div className="space-y-3 pr-4">
+                    <ScrollArea className="max-h-[calc(100vh-480px)] -mr-6 pr-6">
+                      <div className="space-y-2 pr-4">
                         {selectedEvents
-                          .sort((a, b) => {
-                            const timeA = new Date(`1970/01/01 ${a.time}`);
-                            const timeB = new Date(`1970/01/01 ${b.time}`);
-                            return timeA - timeB;
-                          })
+                          .sort((a, b) => new Date(`1970/01/01 ${a.time}`) - new Date(`1970/01/01 ${b.time}`))
                           .map((event) => {
-                            const eventId =
-                              event.orderId ||
-                              `${event.studentNumber}-${event.time}`;
+                            const eventId = event.orderId || `${event.studentNumber}-${event.time}`;
                             const isExpanded = expandedEvents.has(eventId);
-
                             return (
                               <ScheduleItem
                                 key={eventId}
@@ -206,20 +191,22 @@ export function Schedules() {
                     />
                   )
                 ) : (
-                  <div className="text-center text-muted-foreground py-8">
-                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                    <p>Select a date from the calendar to view schedules</p>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <CalendarIcon className="h-10 w-10 mx-auto mb-3 text-primary/10" />
+                      <p className="text-xs text-muted-foreground">Select a date</p>
+                    </div>
                   </div>
                 )}
               </Card>
             </div>
           </div>
         ) : (
-          <Card className="p-8 text-center">
-            <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <h3 className="text-lg font-semibold mb-2">No Schedules Found</h3>
-            <p className="text-muted-foreground">
-              There are no measurement schedules at the moment.
+          <Card className="p-12 text-center shadow-sm">
+            <CalendarIcon className="h-10 w-10 mx-auto mb-3 " />
+            <h3 className="text-xl font-medium mb-1">No Schedule</h3>
+            <p className="text-sm text-muted-foreground">
+              No measurement schedules available
             </p>
           </Card>
         )}
