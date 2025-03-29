@@ -3,13 +3,17 @@ import StudentOrder from "../models/studentOrder.model.js";
 
 // Available time slots for measurements with max students per slot
 export const TIME_SLOTS = [
-  { time: "7:30 AM", maxStudents: 8 },  // 8 students
-  { time: "8:30 AM", maxStudents: 8 },  // 8 students
-  { time: "9:30 AM", maxStudents: 7 },  // 7 students
-  { time: "10:30 AM", maxStudents: 7 }  // 7 students
-];                                      // Total: 30 students
+  { time: "7:30 AM", maxStudents: 4 },  // First slot
+  { time: "7:50 AM", maxStudents: 4 },  // Second slot
+  { time: "8:10 AM", maxStudents: 4 },  // Third slot
+  { time: "8:30 AM", maxStudents: 4 },  // Fourth slot
+  { time: "8:50 AM", maxStudents: 4 },  // Fifth slot
+  { time: "9:10 AM", maxStudents: 4 },  // Sixth slot
+  { time: "9:30 AM", maxStudents: 4 },  // Seventh slot
+  { time: "10:30 AM", maxStudents: 4 }  // Last slot
+];                                      // Total: 32 students
 
-export const MAX_STUDENTS_PER_DAY = 30;
+export const MAX_STUDENTS_PER_DAY = 32;
 
 // Check if date is a weekday (Monday-Thursday)
 export const isWeekday = (date) => {

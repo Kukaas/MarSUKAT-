@@ -114,7 +114,7 @@ export default function Schedule() {
 
                 {selectedDate ? (
                   selectedEvents.length > 0 ? (
-                    <ScrollArea className="flex-1 -mr-6 pr-6">
+                    <ScrollArea className="max-h-[calc(100vh-480px)] -mr-6 pr-6">
                       <div className="space-y-2 pr-4">
                         {selectedEvents
                           .sort((a, b) => new Date(`1970/01/01 ${a.time}`) - new Date(`1970/01/01 ${b.time}`))

@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import StudentOrder from "../models/studentOrder.model.js";
+import { getNextAvailableSchedule } from "../utils/scheduleUtils.js";
 
 /**
  * Developer-only endpoint to switch between user accounts
@@ -102,7 +103,7 @@ export const getAvailableUsers = async (req, res) => {
 };
 
 /**
- * Create a test order for a student
+ * Create test order
  * This should ONLY be enabled in development environments
  */
 export const createTestOrder = async (req, res) => {
@@ -154,27 +155,6 @@ export const createTestOrder = async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
-    // Find all active JobOrder users to notify them
-    const jobOrderUsers = await User.find({
-      role: "JobOrder",
-      isActive: true,
-    });
-
-    // Create notification
-    const notification = {
-      title: "New Test Order Received",
-      message: `${student.name} (${student.studentNumber}) from ${student.department} submitted a test payment of ₱${testReceipt.amount}`,
-      read: false,
-    };
-
-    // Add notification to each JobOrder user
-    const notificationPromises = jobOrderUsers.map(async (user) => {
-      user.notifications.push(notification);
-      return user.save();
-    });
-
-    await Promise.all(notificationPromises);
-
     res.status(201).json({
       message: "Test order created successfully",
       order: savedOrder
@@ -184,6 +164,160 @@ export const createTestOrder = async (req, res) => {
     res.status(400).json({ 
       message: "Error creating test order",
       error: error.message 
+    });
+  }
+};
+
+/**
+ * Delete all student orders
+ * This should ONLY be enabled in development environments
+ */
+export const deleteAllOrders = async (req, res) => {
+  try {
+    await StudentOrder.deleteMany({});
+    
+    res.status(200).json({
+      message: "All orders deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete all orders error:", error);
+    res.status(500).json({
+      message: "An error occurred while deleting orders",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Create multiple test orders
+ * This should ONLY be enabled in development environments
+ */
+export const createMassOrders = async (req, res) => {
+  try {
+    const { count = 1, studentEmail } = req.body;
+
+    if (!studentEmail) {
+      return res.status(400).json({
+        message: "Student email is required"
+      });
+    }
+
+    // Find the student user by email
+    const student = await User.findOne({ 
+      email: studentEmail,
+      role: "Student" 
+    }).select("-password");
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    const savedOrders = [];
+
+    // Create and save orders one by one to ensure unique orderIds
+    for (let i = 0; i < count; i++) {
+      const testReceipt = {
+        type: "Down Payment",
+        orNumber: `TEST-${Date.now()}-${i}`,
+        datePaid: new Date(),
+        image: {
+          filename: "test-receipt.jpg",
+          contentType: "image/jpeg",
+          data: "data:image/jpeg;base64,/9j/4AAQSkZJRg==" // Minimal base64 image data
+        },
+        amount: 500
+      };
+
+      const newOrder = new StudentOrder({
+        userId: student._id,
+        name: student.name,
+        email: student.email,
+        studentNumber: student.studentNumber,
+        level: student.level,
+        department: student.department,
+        gender: student.studentGender,
+        receipts: [testReceipt]
+      });
+
+      // Save each order individually to ensure unique orderId generation
+      const savedOrder = await newOrder.save();
+      savedOrders.push(savedOrder);
+    }
+
+    res.status(201).json({
+      message: `${savedOrders.length} test orders created successfully`,
+      orders: savedOrders
+    });
+  } catch (error) {
+    console.error("Mass order creation error:", error);
+    res.status(400).json({ 
+      message: "Error creating mass orders",
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * Approve all pending orders and schedule them
+ * This should ONLY be enabled in development environments
+ */
+export const approveAllOrders = async (req, res) => {
+  try {
+    // Find all pending orders
+    const pendingOrders = await StudentOrder.find({ 
+      status: "Pending",
+      isArchived: false
+    });
+
+    if (pendingOrders.length === 0) {
+      return res.status(200).json({
+        message: "No pending orders found to approve"
+      });
+    }
+
+    const approvedOrders = [];
+    const errors = [];
+
+    // Process each order
+    for (const order of pendingOrders) {
+      try {
+        // Get next available schedule for this order
+        const schedule = await getNextAvailableSchedule(new Date());
+        
+        // Update order
+        order.measurementSchedule = schedule;
+        order.status = "Approved";
+
+        // Verify the latest receipt
+        if (order.receipts.length > 0) {
+          order.receipts[order.receipts.length - 1].isVerified = true;
+        }
+
+        // Save the order
+        const savedOrder = await order.save();
+        approvedOrders.push(savedOrder);
+
+      } catch (error) {
+        errors.push({
+          orderId: order.orderId,
+          error: error.message
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: `${approvedOrders.length} orders approved successfully`,
+      approvedCount: approvedOrders.length,
+      failedCount: errors.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (error) {
+    console.error("Mass order approval error:", error);
+    res.status(500).json({
+      message: "An error occurred while approving orders",
+      error: error.message
     });
   }
 };

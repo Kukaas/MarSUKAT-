@@ -70,6 +70,33 @@ export const devAPI = {
     } catch (error) {
       throw error;
     }
+  },
+
+  deleteAllOrders: async () => {
+    try {
+      const response = await api.delete("/dev/delete-all-orders");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createMassOrders: async (count, studentEmail) => {
+    try {
+      const response = await api.post("/dev/create-mass-orders", { count, studentEmail });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  approveAllOrders: async () => {
+    try {
+      const response = await api.post("/dev/approve-all-orders");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

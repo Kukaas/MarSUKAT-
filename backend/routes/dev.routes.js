@@ -3,6 +3,9 @@ import {
   switchUser,
   getAvailableUsers,
   createTestOrder,
+  deleteAllOrders,
+  createMassOrders,
+  approveAllOrders,
 } from "../controllers/dev.controller.js";
 import { developmentOnly } from "../middleware/dev.middleware.js";
 
@@ -15,5 +18,8 @@ router.use(developmentOnly);
 router.post("/switch-user", switchUser);
 router.get("/available-users", getAvailableUsers);
 router.post("/create-test-order", createTestOrder);
+router.delete("/delete-all-orders", deleteAllOrders);
+router.post("/create-mass-orders", createMassOrders);
+router.post("/approve-all-orders", approveAllOrders);
 
 export default router;
