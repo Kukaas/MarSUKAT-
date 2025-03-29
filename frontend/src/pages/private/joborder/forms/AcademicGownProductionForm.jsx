@@ -55,6 +55,9 @@ export function AcademicGownProductionForm({
     sizes: [],
   });
   const [selectedProductType, setSelectedProductType] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProductTypes, setIsLoadingProductTypes] = useState(false);
+  const [isLoadingSizes, setIsLoadingSizes] = useState(false);
   const formRef = useRef(null);
 
   // Scroll to top when inventory issues appear
@@ -81,6 +84,7 @@ export function AcademicGownProductionForm({
   // Fetch all product types on component mount
   useEffect(() => {
     const fetchProductTypes = async () => {
+      setIsLoading(true);
       try {
         const data = await systemMaintenanceAPI.getAllAcademicGownTypes();
         setProductTypes(data);
@@ -97,6 +101,8 @@ export function AcademicGownProductionForm({
         );
       } catch (error) {
         console.error("Error fetching product types:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchProductTypes();
@@ -106,17 +112,25 @@ export function AcademicGownProductionForm({
   useEffect(() => {
     const level = form.watch("level");
     if (level && productTypes.length > 0) {
-      const levelProducts = productTypes.filter((item) => item.level === level);
-      const uniqueProductTypes = [
-        ...new Set(levelProducts.map((item) => item.productType)),
-      ];
-      setFilteredOptions((prev) => ({
-        ...prev,
-        productTypes: uniqueProductTypes.map((type) => ({
-          value: type,
-          label: type,
-        })),
-      }));
+      setIsLoadingProductTypes(true);
+      try {
+        const levelProducts = productTypes.filter((item) => item.level === level);
+        const uniqueProductTypes = [
+          ...new Set(levelProducts.map((item) => item.productType)),
+        ];
+        setFilteredOptions((prev) => ({
+          ...prev,
+          productTypes: uniqueProductTypes.map((type) => ({
+            value: type,
+            label: type,
+          })),
+        }));
+        // Reset product type and size when level changes
+        form.setValue("productType", "");
+        form.setValue("size", "");
+      } finally {
+        setIsLoadingProductTypes(false);
+      }
     }
   }, [form.watch("level"), productTypes]);
 
@@ -126,16 +140,23 @@ export function AcademicGownProductionForm({
     const productType = form.watch("productType");
 
     if (level && productType && productTypes.length > 0) {
-      const matchingProducts = productTypes.filter(
-        (item) => item.level === level && item.productType === productType
-      );
-      setFilteredOptions((prev) => ({
-        ...prev,
-        sizes: matchingProducts.map((item) => ({
-          value: item.size,
-          label: item.size,
-        })),
-      }));
+      setIsLoadingSizes(true);
+      try {
+        const matchingProducts = productTypes.filter(
+          (item) => item.level === level && item.productType === productType
+        );
+        setFilteredOptions((prev) => ({
+          ...prev,
+          sizes: matchingProducts.map((item) => ({
+            value: item.size,
+            label: item.size,
+          })),
+        }));
+        // Reset size when product type changes
+        form.setValue("size", "");
+      } finally {
+        setIsLoadingSizes(false);
+      }
     }
   }, [form.watch("level"), form.watch("productType"), productTypes]);
 
@@ -245,6 +266,7 @@ export function AcademicGownProductionForm({
               icon={GraduationCap}
               required
               disabled={isSubmitting}
+              isLoading={isLoading}
             />
 
             <FormSelect
@@ -256,6 +278,7 @@ export function AcademicGownProductionForm({
               icon={GraduationCap}
               required
               disabled={isSubmitting || !form.watch("level")}
+              isLoading={isLoadingProductTypes}
             />
 
             <FormSelect
@@ -267,6 +290,7 @@ export function AcademicGownProductionForm({
               icon={Ruler}
               required
               disabled={isSubmitting || !form.watch("productType")}
+              isLoading={isLoadingSizes}
             />
 
             <FormInput
@@ -345,7 +369,9 @@ export function AcademicGownProductionForm({
               )
             ) : (
               <EmptyState 
-                message="Select a level, gown type, and size to view required raw materials."
+                message={isLoading || isLoadingProductTypes || isLoadingSizes ? 
+                  "Loading..." : 
+                  "Select a level, gown type, and size to view required raw materials."}
               />
             )}
           </div>

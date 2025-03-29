@@ -52,7 +52,9 @@ export function UniformInventoryForm({
 }) {
   const [productTypes, setProductTypes] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [sizes, setSizes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProductTypes, setIsLoadingProductTypes] = useState(false);
+  const [isLoadingSizes, setIsLoadingSizes] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState({
     productTypes: [],
     sizes: [],
@@ -76,6 +78,7 @@ export function UniformInventoryForm({
   // Fetch all product types on component mount
   useEffect(() => {
     const fetchProductTypes = async () => {
+      setIsLoading(true);
       try {
         const data = await systemMaintenanceAPI.getAllProductTypes();
         setProductTypes(data);
@@ -92,6 +95,8 @@ export function UniformInventoryForm({
         );
       } catch (error) {
         console.error("Error fetching product types:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchProductTypes();
@@ -101,20 +106,30 @@ export function UniformInventoryForm({
   useEffect(() => {
     const level = form.watch("level");
     if (level && productTypes.length > 0) {
-      // Filter product types by selected level
-      const levelProducts = productTypes.filter((item) => item.level === level);
+      setIsLoadingProductTypes(true);
+      try {
+        // Filter product types by selected level
+        const levelProducts = productTypes.filter((item) => item.level === level);
 
-      // Get unique product types for the selected level
-      const uniqueProductTypes = [
-        ...new Set(levelProducts.map((item) => item.productType)),
-      ];
-      setFilteredOptions((prev) => ({
-        ...prev,
-        productTypes: uniqueProductTypes.map((type) => ({
-          value: type,
-          label: type,
-        })),
-      }));
+        // Get unique product types for the selected level
+        const uniqueProductTypes = [
+          ...new Set(levelProducts.map((item) => item.productType)),
+        ];
+        setFilteredOptions((prev) => ({
+          ...prev,
+          productTypes: uniqueProductTypes.map((type) => ({
+            value: type,
+            label: type,
+          })),
+        }));
+
+        // Reset dependent fields
+        form.setValue("productType", "");
+        form.setValue("size", "");
+        form.setValue("price", "");
+      } finally {
+        setIsLoadingProductTypes(false);
+      }
     } else {
       setFilteredOptions((prev) => ({
         ...prev,
@@ -131,21 +146,30 @@ export function UniformInventoryForm({
     const productType = form.watch("productType");
 
     if (level && productType && productTypes.length > 0) {
-      // Filter sizes by selected level and product type
-      const matchingProducts = productTypes.filter(
-        (item) => item.level === level && item.productType === productType
-      );
+      setIsLoadingSizes(true);
+      try {
+        // Filter sizes by selected level and product type
+        const matchingProducts = productTypes.filter(
+          (item) => item.level === level && item.productType === productType
+        );
 
-      // Get sizes for the selected combination
-      const availableSizes = matchingProducts.map((item) => ({
-        value: item.size,
-        label: item.size,
-      }));
+        // Get sizes for the selected combination
+        const availableSizes = matchingProducts.map((item) => ({
+          value: item.size,
+          label: item.size,
+        }));
 
-      setFilteredOptions((prev) => ({
-        ...prev,
-        sizes: availableSizes,
-      }));
+        setFilteredOptions((prev) => ({
+          ...prev,
+          sizes: availableSizes,
+        }));
+
+        // Reset dependent fields
+        form.setValue("size", "");
+        form.setValue("price", "");
+      } finally {
+        setIsLoadingSizes(false);
+      }
     } else {
       setFilteredOptions((prev) => ({
         ...prev,
@@ -226,6 +250,7 @@ export function UniformInventoryForm({
               icon={GraduationCap}
               required
               disabled={isSubmitting}
+              isLoading={isLoading}
             />
 
             <FormSelect
@@ -237,6 +262,7 @@ export function UniformInventoryForm({
               icon={Shirt}
               required
               disabled={isSubmitting || !form.watch("level")}
+              isLoading={isLoadingProductTypes}
             />
 
             <FormSelect
@@ -248,6 +274,7 @@ export function UniformInventoryForm({
               icon={Ruler}
               required
               disabled={isSubmitting || !form.watch("productType")}
+              isLoading={isLoadingSizes}
             />
 
             <FormInput
@@ -268,7 +295,7 @@ export function UniformInventoryForm({
               step="0.01"
               placeholder="Enter quantity"
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || !form.watch("size")}
             />
 
             <FormSelect
@@ -278,7 +305,7 @@ export function UniformInventoryForm({
               options={statusOptions}
               icon={AlertCircle}
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || !form.watch("size")}
             />
           </div>
 

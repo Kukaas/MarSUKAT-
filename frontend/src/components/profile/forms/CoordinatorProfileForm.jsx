@@ -10,18 +10,19 @@ import { toast } from "sonner";
 const genderOptions = [
   { value: "Male", label: "Male" },
   { value: "Female", label: "Female" },
-  { value: "Other", label: "Other" },
 ];
 
 export const CoordinatorProfileForm = ({ form }) => {
   const [departmentLevels, setDepartmentLevels] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [levelOptions, setLevelOptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const selectedLevel = form.watch("level");
 
   // Fetch active department levels
   useEffect(() => {
     const fetchDepartmentLevels = async () => {
+      setIsLoading(true);
       try {
         const data = await systemMaintenanceAPI.getActiveDepartmentLevels();
         setDepartmentLevels(data);
@@ -38,6 +39,8 @@ export const CoordinatorProfileForm = ({ form }) => {
         setLevelOptions(uniqueLevels);
       } catch (error) {
         toast.error("Failed to fetch department levels");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -107,6 +110,7 @@ export const CoordinatorProfileForm = ({ form }) => {
             placeholder="Select your level"
             options={levelOptions}
             icon={Users2}
+            isLoading={isLoading}
           />
           <FormSelect
             form={form}
@@ -116,6 +120,7 @@ export const CoordinatorProfileForm = ({ form }) => {
             options={departmentOptions}
             icon={Building2}
             disabled={!selectedLevel}
+            isLoading={isLoading && selectedLevel}
           />
           <FormSelect
             form={form}

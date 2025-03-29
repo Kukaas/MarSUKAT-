@@ -47,6 +47,7 @@ const SignUp = () => {
   const [departmentLevels, setDepartmentLevels] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [levelOptions, setLevelOptions] = useState([]);
+  const [isLoadingDepartmentLevels, setIsLoadingDepartmentLevels] = useState(false);
   const navigate = useNavigate();
 
   const form = useForm({
@@ -72,6 +73,7 @@ const SignUp = () => {
   useEffect(() => {
     const fetchDepartmentLevels = async () => {
       try {
+        setIsLoadingDepartmentLevels(true);
         const data = await systemMaintenanceAPI.getActiveDepartmentLevels();
         setDepartmentLevels(data);
 
@@ -89,6 +91,8 @@ const SignUp = () => {
         }
       } catch (error) {
         toast.error("Failed to fetch department levels");
+      } finally {
+        setIsLoadingDepartmentLevels(false);
       }
     };
 
@@ -354,6 +358,7 @@ const SignUp = () => {
               placeholder="Select level"
               options={levelOptions}
               icon={Users}
+              isLoading={isLoadingDepartmentLevels}
             />
             <FormSelect
               form={form}
@@ -363,6 +368,7 @@ const SignUp = () => {
               options={departmentOptions}
               icon={Building2}
               disabled={!form.watch("level")}
+              isLoading={isLoadingDepartmentLevels}
             />
           </>
         );
@@ -397,6 +403,7 @@ const SignUp = () => {
               placeholder="Select level"
               options={levelOptions}
               icon={Users}
+              isLoading={isLoadingDepartmentLevels}
             />
             <FormSelect
               form={form}
@@ -406,6 +413,7 @@ const SignUp = () => {
               options={departmentOptions}
               icon={Building2}
               disabled={!form.watch("level")}
+              isLoading={isLoadingDepartmentLevels}
             />
             <FormSelect
               form={form}

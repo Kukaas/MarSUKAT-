@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { RawMaterialInventoryDetails } from "../components/details/raw-material-inventory-details";
-import { RawMaterialInventoryForm } from "../forms/RawMaterialInventoryForm";
+import RawMaterialInventoryForm from "../forms/RawMaterialInventoryForm";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { DeleteConfirmation } from "@/components/custom-components/DeleteConfirmation";
 import StatusBadge from "@/components/custom-components/StatusBadge";

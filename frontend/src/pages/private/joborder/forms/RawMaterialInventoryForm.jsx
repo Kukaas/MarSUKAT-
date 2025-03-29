@@ -31,16 +31,18 @@ const formSchema = z.object({
     .nullable(),
 });
 
-export function RawMaterialInventoryForm({
+const RawMaterialInventoryForm = ({
   formData,
   setFormData,
   isEdit = false,
   onSubmit,
   isSubmitting = false,
-}) {
+}) => {
   const [allMaterialTypes, setAllMaterialTypes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [materialTypes, setMaterialTypes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMaterialTypes, setIsLoadingMaterialTypes] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -72,6 +74,7 @@ export function RawMaterialInventoryForm({
   // Fetch all material types and extract unique categories
   useEffect(() => {
     const fetchMaterialTypes = async () => {
+      setIsLoading(true);
       try {
         const data = await systemMaintenanceAPI.getAllRawMaterialTypes();
         // Sort the raw data first by name
@@ -91,6 +94,8 @@ export function RawMaterialInventoryForm({
         setCategories(uniqueCategories);
       } catch (error) {
         console.error("Error fetching material types:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchMaterialTypes();
@@ -100,16 +105,21 @@ export function RawMaterialInventoryForm({
   useEffect(() => {
     const category = form.watch("category");
     if (category && allMaterialTypes.length > 0) {
-      const filteredTypes = allMaterialTypes
-        .filter((type) => type.category === category)
-        .map((type) => ({
-          value: type._id,
-          label: type.name.trim(), // Trim whitespace from labels
-          unit: type.unit,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label));
+      setIsLoadingMaterialTypes(true);
+      try {
+        const filteredTypes = allMaterialTypes
+          .filter((type) => type.category === category)
+          .map((type) => ({
+            value: type._id,
+            label: type.name.trim(), // Trim whitespace from labels
+            unit: type.unit,
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label));
 
-      setMaterialTypes(filteredTypes);
+        setMaterialTypes(filteredTypes);
+      } finally {
+        setIsLoadingMaterialTypes(false);
+      }
     } else {
       setMaterialTypes([]);
     }
@@ -174,6 +184,7 @@ export function RawMaterialInventoryForm({
               icon={Tag}
               required
               disabled={isSubmitting}
+              isLoading={isLoading}
               onChange={(value) => {
                 form.setValue("category", value);
                 form.setValue("rawMaterialType", "");
@@ -190,6 +201,7 @@ export function RawMaterialInventoryForm({
               icon={Package}
               required
               disabled={isSubmitting || !form.watch("category")}
+              isLoading={isLoadingMaterialTypes}
               onChange={(value) => {
                 form.setValue("rawMaterialType", value);
                 const selectedType = materialTypes.find(
@@ -217,7 +229,7 @@ export function RawMaterialInventoryForm({
               step="0.01"
               placeholder="Enter quantity"
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || !form.watch("rawMaterialType")}
             />
 
             <FormSelect
@@ -227,7 +239,7 @@ export function RawMaterialInventoryForm({
               options={statusOptions}
               icon={AlertCircle}
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || !form.watch("rawMaterialType")}
             />
           </div>
 
@@ -245,4 +257,6 @@ export function RawMaterialInventoryForm({
       </form>
     </Form>
   );
-}
+};
+
+export default RawMaterialInventoryForm;

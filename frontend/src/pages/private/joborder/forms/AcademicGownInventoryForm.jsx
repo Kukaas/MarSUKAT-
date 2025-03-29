@@ -39,6 +39,7 @@ export function AcademicGownInventoryForm({
   const [sizes, setSizes] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
   const [initialImage, setInitialImage] = useState(formData?.image || null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -56,6 +57,7 @@ export function AcademicGownInventoryForm({
   // Fetch options on component mount
   useEffect(() => {
     const fetchOptions = async () => {
+      setIsLoading(true);
       try {
         const [levelsData, sizesData, gownTypesData] = await Promise.all([
           systemMaintenanceAPI.getAllLevels(),
@@ -97,6 +99,8 @@ export function AcademicGownInventoryForm({
         );
       } catch (error) {
         console.error("Error fetching options:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -168,6 +172,7 @@ export function AcademicGownInventoryForm({
               icon={GraduationCap}
               required
               disabled={isSubmitting}
+              isLoading={isLoading}
             />
 
             <FormSelect
@@ -179,6 +184,7 @@ export function AcademicGownInventoryForm({
               icon={Box}
               required
               disabled={isSubmitting}
+              isLoading={isLoading}
             />
 
             <FormSelect
@@ -190,6 +196,7 @@ export function AcademicGownInventoryForm({
               icon={Ruler}
               required
               disabled={isSubmitting}
+              isLoading={isLoading}
             />
 
             <FormInput
