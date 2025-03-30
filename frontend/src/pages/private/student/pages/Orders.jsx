@@ -59,6 +59,7 @@ export default function Orders() {
   const [viewMode, setViewMode] = useState("grid");
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
+  const [isValidatingReceipt, setIsValidatingReceipt] = useState(false);
 
   // Replace fetchOrders with useDataFetching
   const { data: orders = [], isLoading, refetch: refetchOrders } = useDataFetching(
@@ -338,6 +339,7 @@ export default function Orders() {
                     onSubmit={handleCreateOrder}
                     isSubmitting={createMutation.isPending}
                     formData={{ userId: user?._id }}
+                    onValidationStateChange={setIsValidatingReceipt}
                   />
                 </div>
               </ScrollArea>
@@ -352,7 +354,7 @@ export default function Orders() {
               <AlertDialogAction
                 type="submit"
                 form="orderForm"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || isValidatingReceipt}
               >
                 {createMutation.isPending ? (
                   <>

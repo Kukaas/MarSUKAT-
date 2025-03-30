@@ -39,7 +39,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import OrderForm from "../forms/OrderForm";
+import { OrderForm } from "../forms/OrderForm";
 import { orderAPI } from "../api/orderApi";
 import { toast } from "sonner";
 import ReceiptForm from "../forms/ReceiptForm";
