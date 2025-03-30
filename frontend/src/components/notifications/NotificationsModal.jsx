@@ -95,7 +95,7 @@ function NotificationsModal({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-[800px] p-0 h-[90vh] md:h-[600px] flex flex-col">
+      <DialogContent className="max-w-[95vw] md:max-w-[800px] p-0 h-[82vh] md:h-[600px] flex flex-col">
         <div className="w-full h-full flex flex-col">
           <DialogHeader className="px-3 md:px-6 py-3 md:py-4 border-b">
             <DialogTitle className="text-lg md:text-2xl font-semibold tracking-tight mb-2">

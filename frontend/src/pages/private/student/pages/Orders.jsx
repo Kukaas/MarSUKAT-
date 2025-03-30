@@ -324,7 +324,7 @@ export default function Orders() {
 
         {/* Create Order Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[90vh] flex flex-col gap-0">
+          <AlertDialogContent className="sm:max-w-[600px] h-[82vh] sm:h-[90vh] flex flex-col gap-0">
             <AlertDialogHeader className="flex-none">
               <AlertDialogTitle>Create New Order</AlertDialogTitle>
               <AlertDialogDescription>

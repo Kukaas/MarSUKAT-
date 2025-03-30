@@ -25,7 +25,7 @@ const ViewDetailsDialog = ({
         className={cn(
           "flex flex-col gap-0 p-0 bg-background",
           maxWidth,
-          "h-[85vh]",
+          "h-[82vh] sm:h-[90vh]",
           className
         )}
       >

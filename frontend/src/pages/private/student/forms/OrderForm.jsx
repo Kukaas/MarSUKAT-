@@ -57,7 +57,7 @@ export function OrderForm({
       studentNumber: formData?.studentNumber || user?.studentNumber || "",
       level: formData?.level || user?.level || "",
       department: formData?.department || user?.department || "",
-      gender: formData?.gender || user?.gender || "Male",
+      gender: formData?.gender || user?.gender || user?.studentGender || "",
       receipt: {
         type: formData?.receipts?.[0]?.type || "Down Payment",
         orNumber: formData?.receipts?.[0]?.orNumber || "",
@@ -79,7 +79,7 @@ export function OrderForm({
         studentNumber: user.studentNumber || "",
         level: user.level || "",
         department: user.department || "",
-        gender: user.gender || "Male",
+        gender: user.gender || user.studentGender || "",
         receipt: {
           type: "Down Payment",
           orNumber: "",

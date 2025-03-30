@@ -19,26 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Update the LoadingSpinner styling to match the grid layout
-const LoadingSpinner = () => (
-  <div className="col-span-full min-h-[200px] relative bg-background rounded-md border">
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-      <div className="relative">
-        <div className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse"></div>
-        <Loader2 className="w-8 h-8 animate-spin text-primary relative" />
-      </div>
-      <div className="flex flex-col items-center gap-1">
-        <p className="text-base font-medium text-muted-foreground">
-          Loading Data
-        </p>
-        <p className="text-sm text-muted-foreground/60">
-          Please wait while we fetch your information
-        </p>
-      </div>
-    </div>
-  </div>
-);
+import { LoadingSpinner } from "./LoadingSpinner";
 
 const EmptyState = ({ message = "No items to display." }) => (
   <div className="col-span-full min-h-[300px] md:min-h-[200px] relative bg-background rounded-md border">
@@ -67,7 +48,9 @@ const GridView = ({
           gridClassName
         )}
       >
-        <LoadingSpinner />
+        <div className="col-span-full">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }

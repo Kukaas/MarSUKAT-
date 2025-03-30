@@ -7,7 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Image, X, Upload, Camera } from "lucide-react";
+import { Image, X, Upload, Camera, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ImageUpload = ({
@@ -155,8 +155,8 @@ const ImageUpload = ({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={disabled}
                   >
-                    <Camera className="h-4 w-4 mr-2" />
-                    Change Image
+                    <Camera className="h-4 w-4" />
+                    <span className="hidden md:inline">Change</span>
                   </Button>
                   <Button
                     type="button"
@@ -166,8 +166,8 @@ const ImageUpload = ({
                     onClick={() => handleRemoveImage(field)}
                     disabled={disabled}
                   >
-                    <X className="h-4 w-4 mr-2" />
-                    Remove
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden md:inline">Remove</span>
                   </Button>
                 </div>
               )}

@@ -61,7 +61,7 @@ const LoadingSpinner = () => (
           <p className="text-base font-medium text-muted-foreground">
             Loading Data
           </p>
-          <p className="text-sm text-muted-foreground/60">
+          <p className="text-sm text-muted-foreground/60 items-center">
             Please wait while we fetch your information
           </p>
         </div>

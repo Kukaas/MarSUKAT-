@@ -152,7 +152,7 @@ export function ImageViewer({ isOpen, onClose, imageUrl, title }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[50vw] h-[85vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="max-w-[95vw] sm:max-w-[50vw] h-[82vh] sm:h-[90vh] p-0 gap-0 flex flex-col">
         <DialogHeader className="p-4 sm:p-6 pb-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
@@ -242,13 +242,6 @@ export function ImageViewer({ isOpen, onClose, imageUrl, title }) {
                 )}
               </div>
             </div>
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              className="w-full sm:w-auto"
-            >
-              Close
-            </Button>
           </div>
         </div>
       </DialogContent>
