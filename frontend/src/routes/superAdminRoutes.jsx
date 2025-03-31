@@ -13,6 +13,7 @@ import { StudentUser } from "../pages/private/superadmin/pages/StudentUser";
 import ProductManagement from "../pages/private/superadmin/pages/ProductManagement";
 import StaffUsers from "@/pages/private/superadmin/pages/StaffUsers";
 import AcademicGownTypes from "@/pages/private/superadmin/pages/AcademicGownTypes";
+import Employees from "@/pages/private/superadmin/pages/Employees";
 export const superAdminRoutes = [
   {
     path: "/superadmin/dashboard/:id",
@@ -21,6 +22,10 @@ export const superAdminRoutes = [
   {
     path: "/superadmin/staff-users",
     element: <StaffUsers />,
+  },
+  {
+    path: "/superadmin/employees",
+    element: <Employees />,
   },
   {
     path: "/superadmin/maintenance/levels",

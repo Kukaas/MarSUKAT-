@@ -100,6 +100,12 @@ export const menuItems = {
       description: "Create a new staff user",
     },
     {
+      title: "Employees",
+      icon: <Users />,
+      path: () => "/superadmin/employees",
+      description: "Manage employees",
+    },
+    {
       title: "Maintenance",
       icon: <Wrench />,
       type: "accordion",
