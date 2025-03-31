@@ -11,6 +11,8 @@ import Contact from "../pages/public/Contact";
 import Faq from "../pages/public/Faq";
 import CreateSuperAdmin from "../pages/private/superadmin/pages/CreateSuperAdmin";
 import NotFound from "../pages/public/NotFound";
+import { Helmet } from 'react-helmet-async';
+import { getTitleFromPath } from '../utils/getTitleFromPath';
 
 export const publicRoutes = [
   {
@@ -35,7 +37,15 @@ export const publicRoutes = [
   },
   {
     path: "/login",
-    element: <Login />,
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/login")}</title>
+          <meta name="description" content="Secure login portal for Marinduque State University's production management system" />
+        </Helmet>
+        <Login />
+      </>
+    ),
   },
   {
     path: "/signup",
@@ -43,7 +53,15 @@ export const publicRoutes = [
   },
   {
     path: "/",
-    element: <Home />,
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/")}</title>
+          <meta name="description" content="Marinduque State University's official production monitoring and inventory management portal" />
+        </Helmet>
+        <Home />
+      </>
+    ),
   },
   {
     path: "/forgot-password",
@@ -55,7 +73,15 @@ export const publicRoutes = [
   },
   {
     path: "/about",
-    element: <About />,
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/about")}</title>
+          <meta name="description" content="Learn about MarSUKAT - Marinduque State University's integrated solution for academic resource management" />
+        </Helmet>
+        <About />
+      </>
+    ),
   },
   {
     path: "/contact-us",

@@ -61,11 +61,15 @@ const roleBasedRoutes = {
   },
 };
 
+// Helper function to remove parameter segments from path
+const removeParamsFromPath = (path) => {
+  return path.replace(/\/:[^/]+/g, ''); // Remove parameter segments like /:userId
+};
+
 // Helper function to normalize paths for comparison
 const normalizePath = (path) => {
-  // Remove trailing slash
+  path = removeParamsFromPath(path);
   path = path.replace(/\/$/, "");
-  // Remove any ID parameters (e.g., /student/dashboard/123 -> /student/dashboard)
   return path.replace(/\/[0-9]+(?=\/|$)/g, "");
 };
 

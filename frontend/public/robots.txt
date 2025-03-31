@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://marsukat.vercel.app/sitemap.xml
