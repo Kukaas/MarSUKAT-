@@ -1,4 +1,3 @@
-import { Navigate } from "react-router-dom";
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
 import SignUp from "../pages/public/SignUp";
@@ -41,7 +40,7 @@ export const publicRoutes = [
       <>
         <Helmet>
           <title>{getTitleFromPath("/login")}</title>
-          <meta name="description" content="Secure login portal for Marinduque State University's production management system" />
+          <meta name="description" content="Secure login portal for MarSUKAT - Access production monitoring, inventory management, and student services for Marinduque State University" />
         </Helmet>
         <Login />
       </>
@@ -49,7 +48,15 @@ export const publicRoutes = [
   },
   {
     path: "/signup",
-    element: <SignUp />,
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/signup")}</title>
+          <meta name="description" content="Register for MarSUKAT - Join Marinduque State University's comprehensive system for production monitoring, inventory management, and student services" />
+        </Helmet>
+        <SignUp />
+      </>
+    ),
   },
   {
     path: "/",
@@ -57,7 +64,7 @@ export const publicRoutes = [
       <>
         <Helmet>
           <title>{getTitleFromPath("/")}</title>
-          <meta name="description" content="Marinduque State University's official production monitoring and inventory management portal" />
+          <meta name="description" content="MarSUKAT - Comprehensive system for Marinduque State University featuring production monitoring, inventory management, and reporting tools. Access student ordering, measurement scheduling, and rental tracking services." />
         </Helmet>
         <Home />
       </>
@@ -85,11 +92,27 @@ export const publicRoutes = [
   },
   {
     path: "/contact-us",
-    element: <Contact />,
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/contact-us")}</title>
+          <meta name="description" content="Get in touch with MarSUKAT support team at Marinduque State University for assistance with production monitoring, inventory management, and student services" />
+        </Helmet>
+        <Contact />
+      </>
+    ),
   },
   {
     path: "/faq",
-    element: <Faq />,
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/faq")}</title>
+          <meta name="description" content="Frequently Asked Questions about MarSUKAT - Learn more about MSU's production monitoring, inventory management, and student services platform" />
+        </Helmet>
+        <Faq />
+      </>
+    ),
   },
   {
     path: "*",
