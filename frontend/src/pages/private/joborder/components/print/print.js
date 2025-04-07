@@ -31,10 +31,36 @@ export const handlePrint = (salesData, selectedMonth, selectedYear, MONTHS, form
             .header img { width: 100px; margin: 0 auto 10px; display: block; }
             .header div { font-size: 20px; font-weight: bold; color: #555; }
             .title { font-size: 28px; font-weight: bold; margin-top: 20px; color: #800000; }
+            .subtitle { font-size: 20px; font-weight: bold; margin-top: 10px; color: #555; }
             table { width: 100%; margin-top: 20px; border-collapse: collapse; }
             th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
             th { background-color: #800000; color: #fff; }
             .section-title { font-size: 22px; font-weight: bold; margin-top: 30px; color: #800000; }
+            .summary-box { 
+              background-color: #f9f9f9; 
+              border: 1px solid #ddd; 
+              border-radius: 8px; 
+              padding: 15px; 
+              margin-top: 20px;
+              display: flex;
+              justify-content: space-between;
+            }
+            .summary-item {
+              text-align: center;
+              flex: 1;
+            }
+            .summary-value {
+              font-size: 24px;
+              font-weight: bold;
+              color: #800000;
+            }
+            .summary-label {
+              font-size: 14px;
+              color: #555;
+            }
+            @media print {
+              .page-break { page-break-after: always; }
+            }
           </style>
         </head>
         <body class="p-8">
@@ -43,30 +69,25 @@ export const handlePrint = (salesData, selectedMonth, selectedYear, MONTHS, form
             <div>Republic of the Philippines</div>
             <div>Marinduque State University</div>
             <div>Panfilio M. Manguera Sr. Road, Tanza, Boac, Marinduque</div>
-            <div class="title">Sales Report for ${MONTHS[selectedMonth - 1]} ${selectedYear}</div>
+            <div class="title">Sales Report</div>
+            <div class="subtitle">${MONTHS[selectedMonth - 1]} ${selectedYear}</div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Total Sales</td>
-                <td>${formatCurrency(monthlyData?.totalSales)}</td>
-              </tr>
-              <tr>
-                <td>Total Orders</td>
-                <td>${salesData?.totalOrders || 0}</td>
-              </tr>
-              <tr>
-                <td>Average Order Value</td>
-                <td>${formatCurrency(salesData?.averageOrderValue)}</td>
-              </tr>
-            </tbody>
-          </table>
+          
+          <div class="summary-box">
+            <div class="summary-item">
+              <div class="summary-value">${formatCurrency(monthlyData?.totalSales || 0)}</div>
+              <div class="summary-label">Total Sales</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">${salesData?.totalOrders || 0}</div>
+              <div class="summary-label">Total Orders</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">${formatCurrency(salesData?.averageOrderValue || 0)}</div>
+              <div class="summary-label">Average Order Value</div>
+            </div>
+          </div>
+
           <div class="section-title">Department Breakdown</div>
           <table>
             <thead>
@@ -86,6 +107,7 @@ export const handlePrint = (salesData, selectedMonth, selectedYear, MONTHS, form
               `).join('')}
             </tbody>
           </table>
+          
           <div class="section-title">Product Type Breakdown</div>
           <table>
             <thead>
@@ -105,6 +127,11 @@ export const handlePrint = (salesData, selectedMonth, selectedYear, MONTHS, form
               `).join('')}
             </tbody>
           </table>
+          
+          <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+            <p>MarSUKAT - Marinduque State University</p>
+          </div>
         </body>
       </html>
     `);
@@ -152,10 +179,36 @@ export const handleYearlyPrint = async (selectedYear, salesReportAPI, formatCurr
               .header img { width: 100px; margin: 0 auto 10px; display: block; }
               .header div { font-size: 20px; font-weight: bold; color: #555; }
               .title { font-size: 28px; font-weight: bold; margin-top: 20px; color: #800000; }
+              .subtitle { font-size: 20px; font-weight: bold; margin-top: 10px; color: #555; }
               table { width: 100%; margin-top: 20px; border-collapse: collapse; }
               th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
               th { background-color: #800000; color: #fff; }
               .section-title { font-size: 22px; font-weight: bold; margin-top: 30px; color: #800000; }
+              .summary-box { 
+                background-color: #f9f9f9; 
+                border: 1px solid #ddd; 
+                border-radius: 8px; 
+                padding: 15px; 
+                margin-top: 20px;
+                display: flex;
+                justify-content: space-between;
+              }
+              .summary-item {
+                text-align: center;
+                flex: 1;
+              }
+              .summary-value {
+                font-size: 24px;
+                font-weight: bold;
+                color: #800000;
+              }
+              .summary-label {
+                font-size: 14px;
+                color: #555;
+              }
+              @media print {
+                .page-break { page-break-after: always; }
+              }
             </style>
           </head>
           <body class="p-8">
@@ -164,8 +217,26 @@ export const handleYearlyPrint = async (selectedYear, salesReportAPI, formatCurr
               <div>Republic of the Philippines</div>
               <div>Marinduque State University</div>
               <div>Panfilio M. Manguera Sr. Road, Tanza, Boac, Marinduque</div>
-              <div class="title">Yearly Sales Report for ${selectedYear}</div>
+              <div class="title">Yearly Sales Report</div>
+              <div class="subtitle">${selectedYear}</div>
             </div>
+            
+            <div class="summary-box">
+              <div class="summary-item">
+                <div class="summary-value">${formatCurrency(yearlyData.totalSales || 0)}</div>
+                <div class="summary-label">Total Sales</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${yearlyData.totalOrders || 0}</div>
+                <div class="summary-label">Total Orders</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${formatCurrency(yearlyData.averageOrderValue || 0)}</div>
+                <div class="summary-label">Average Order Value</div>
+              </div>
+            </div>
+
+            <div class="section-title">Summary</div>
             <table>
               <thead>
                 <tr>
@@ -176,7 +247,7 @@ export const handleYearlyPrint = async (selectedYear, salesReportAPI, formatCurr
               <tbody>
                 <tr>
                   <td>Total Sales</td>
-                  <td>${formatCurrency(yearlyData.totalSales)}</td>
+                  <td>${formatCurrency(yearlyData.totalSales || 0)}</td>
                 </tr>
                 <tr>
                   <td>Total Orders</td>
@@ -184,10 +255,11 @@ export const handleYearlyPrint = async (selectedYear, salesReportAPI, formatCurr
                 </tr>
                 <tr>
                   <td>Average Order Value</td>
-                  <td>${formatCurrency(yearlyData.averageOrderValue)}</td>
+                  <td>${formatCurrency(yearlyData.averageOrderValue || 0)}</td>
                 </tr>
               </tbody>
             </table>
+            
             <div class="section-title">Department Breakdown</div>
             <table>
               <thead>
@@ -207,6 +279,7 @@ export const handleYearlyPrint = async (selectedYear, salesReportAPI, formatCurr
                 `).join('')}
               </tbody>
             </table>
+            
             <div class="section-title">Product Type Breakdown</div>
             <table>
               <thead>
@@ -226,6 +299,11 @@ export const handleYearlyPrint = async (selectedYear, salesReportAPI, formatCurr
                 `).join('')}
               </tbody>
             </table>
+            
+            <div class="mt-8 text-center text-sm text-gray-500">
+              <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+              <p>MarSUKAT - Marinduque State University</p>
+            </div>
           </body>
         </html>
       `);
