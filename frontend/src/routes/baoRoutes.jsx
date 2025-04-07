@@ -5,6 +5,7 @@ import SchoolUniformInventory from "@/pages/private/bao/pages/SchoolUniformInven
 import SalesReport from "@/pages/private/bao/pages/SalesReport";
 import AcademicGownProduction from "@/pages/private/bao/pages/AcademicGownProduction";
 import AcademicGownInventory from "@/pages/private/bao/pages/AcademicGownInventory";
+import AccomplismentReport from "@/pages/private/bao/pages/AccomplismentReport";
 export const baoRoutes = [
   {
     path: "/bao/dashboard/:id",
@@ -33,5 +34,9 @@ export const baoRoutes = [
   {
     path: "/bao/reports/sales",
     element: <SalesReport />,
+  },
+  {
+    path: "/bao/reports/accomplishments",
+    element: <AccomplismentReport />,
   },
 ];

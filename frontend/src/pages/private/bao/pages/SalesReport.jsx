@@ -6,12 +6,17 @@ import { ProductTypeSalesChart } from "../../joborder/components/charts/ProductT
 import { salesReportAPI } from "../../joborder/api/salesReportApi";
 import { toast } from "sonner";
 import SectionHeader from "@/components/custom-components/SectionHeader";
-import { Button } from "@/components/ui/button";
-import { FileDown, Package, DollarSign, TrendingUp, CalendarDays, CalendarRange, Clock } from "lucide-react";
-import CustomSelect from "@/components/custom-components/CustomSelect";
+import { 
+  Package, 
+  DollarSign, 
+  TrendingUp,
+} from "lucide-react";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { handlePrint, handleYearlyPrint } from "../../joborder/components/print/print";
 import { useDataFetching } from "@/hooks/useDataFetching";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import FilterBar from "@/components/custom-components/FilterBar";
 
 const MONTHS = [
   "January",
@@ -42,12 +47,6 @@ const SalesReport = () => {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [timePeriod, setTimePeriod] = useState("month");
 
-  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: MONTHS[i]
-  }));
-
   // Use React Query for data fetching with caching
   const { 
     data: salesData, 
@@ -76,27 +75,20 @@ const SalesReport = () => {
           }))
         };
       } else {
-        // Fetch data for the last 5 years
-        const currentYear = parseInt(selectedYear);
-        const yearPromises = Array.from({ length: 5 }, (_, i) => 
-          salesReportAPI.getYearlySalesSummary((currentYear - i).toString())
-        );
-        
-        const yearData = await Promise.all(yearPromises);
-        
-        // Transform the data to show yearly comparison
+        // Fetch yearly data
+        const data = await salesReportAPI.getYearlySalesSummary(selectedYear);
         return {
-          ...yearData[0], // Use the most recent year's data for other metrics
-          monthlyData: yearData.map((year, index) => ({
-            month: currentYear - index,
-            totalSales: year.totalSales
+          ...data,
+          monthlyData: data.monthlyData?.map(item => ({
+            month: item.month,
+            totalSales: item.sales
           })),
-          departmentBreakdown: yearData[0].department.map(dept => ({
+          departmentBreakdown: data.department.map(dept => ({
             name: dept.name,
             totalSales: dept.totalSales,
             orderCount: dept.orderCount
           })),
-          productTypeBreakdown: yearData[0].productType.map(product => ({
+          productTypeBreakdown: data.productType.map(product => ({
             name: product.name,
             totalSales: product.totalSales,
             quantity: product.quantity
@@ -113,101 +105,119 @@ const SalesReport = () => {
     }
   );
 
+  const handleMonthlyPrint = () => {
+    handlePrint(salesData, selectedMonth, selectedYear, MONTHS, formatCurrency);
+  };
+
+  const handleYearlyPrintClick = () => {
+    handleYearlyPrint(selectedYear, salesReportAPI, formatCurrency);
+  };
+
+  // Check if filters are different from defaults
+  const isCustomFilterActive = () => {
+    return (
+      selectedYear !== new Date().getFullYear().toString() || 
+      selectedMonth !== (new Date().getMonth() + 1).toString() ||
+      timePeriod !== "month"
+    );
+  };
+
+  // Custom reset function
+  const handleResetFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setTimePeriod("month");
+  };
+
+  // Period type selector for the top of the filter
+  const periodTypeSelector = (
+    <div>
+      <label className="text-xs font-medium mb-1 block">Time Period</label>
+      <div className="flex gap-1 mb-2">
+        <Button 
+          size="sm"
+          variant={timePeriod === "month" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("month")}
+        >
+          Monthly
+        </Button>
+        <Button 
+          size="sm"
+          variant={timePeriod === "year" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("year")}
+        >
+          Yearly
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Custom viewing content with period label
+  const customViewingContent = (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="font-medium">Viewing:</span>
+      <Badge variant="secondary" className="font-normal">
+        {timePeriod === "month"
+          ? `${MONTHS[parseInt(selectedMonth) - 1]} ${selectedYear}`
+          : `Year ${selectedYear}`}
+      </Badge>
+    </div>
+  );
+
   return (
     <PrivateLayout>
-      <div className="container mx-auto py-8 space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <SectionHeader
-            title="BAO Sales Report"
-            description="View and analyze BAO sales performance across different metrics"
+      <div className="space-y-6">
+        <SectionHeader
+          title="BAO Sales Report"
+          description="View and analyze BAO sales performance across different metrics"
+        />
+
+        <FilterBar
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          onYearChange={setSelectedYear}
+          onMonthChange={timePeriod === "month" ? setSelectedMonth : undefined}
+          printTooltip={`Print ${timePeriod === "month" ? "Monthly" : "Yearly"} Sales Report`}
+          onPrintClick={timePeriod === "month" ? handleMonthlyPrint : handleYearlyPrintClick}
+          isCustomFilterActive={isCustomFilterActive}
+          customViewingContent={customViewingContent}
+          periodTypeSelector={periodTypeSelector}
+          filterTitle="Report Filters"
+          resetButtonText="Reset All"
+          onResetFilters={handleResetFilters}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatsCard 
+            title="Total Orders"
+            value={salesData?.totalOrders || 0}
+            icon={<Package className="h-4 w-4 text-muted-foreground" />}
+            description="Orders this period"
+            isLoading={isLoading}
           />
-          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-            <Button
-              className="w-full md:w-auto flex items-center justify-center"
-              onClick={() => handlePrint(salesData, selectedMonth, selectedYear, MONTHS, formatCurrency)}
-            >
-              <FileDown className="w-4 h-4 mr-2" />
-              Print Monthly Report
-            </Button>
-            <Button
-              className="w-full md:w-auto flex items-center justify-center"
-              onClick={() => handleYearlyPrint(selectedYear, salesReportAPI, formatCurrency)}
-            >
-              <FileDown className="w-4 h-4 mr-2" />
-              Print Yearly Report
-            </Button>
-          </div>
+          <StatsCard 
+            title="Average Order Value"
+            value={formatCurrency(salesData?.averageOrderValue)}
+            icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+            description="Per order average"
+            isLoading={isLoading}
+          />
+          <StatsCard 
+            title="Total Revenue"
+            value={formatCurrency(salesData?.totalSales)}
+            icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+            description={`Total sales this ${timePeriod}`}
+            isLoading={isLoading}
+          />
         </div>
 
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="w-full md:w-1/3">
-              <CustomSelect
-                name="year"
-                label="Year"
-                placeholder="Select year"
-                options={years.map(year => ({ value: year, label: year }))}
-                value={selectedYear}
-                onChange={setSelectedYear}
-                icon={CalendarDays}
-              />
-            </div>
-            {timePeriod === "month" && (
-              <div className="w-full md:w-1/3">
-                <CustomSelect
-                  name="month"
-                  label="Month"
-                  placeholder="Select month"
-                  options={months}
-                  value={selectedMonth}
-                  onChange={setSelectedMonth}
-                  icon={CalendarRange}
-                />
-              </div>
-            )}
-            <div className="w-full md:w-1/3">
-              <CustomSelect
-                name="timePeriod"
-                label="Time Period"
-                placeholder="Select time period"
-                options={[
-                  { value: "month", label: "Monthly" },
-                  { value: "year", label: "Yearly" }
-                ]}
-                value={timePeriod}
-                onChange={setTimePeriod}
-                icon={Clock}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatsCard 
-              title="Total Orders"
-              value={salesData?.totalOrders || 0}
-              icon={<Package className="h-4 w-4 text-muted-foreground" />}
-              description="Orders this period"
-            />
-            <StatsCard 
-              title="Average Order Value"
-              value={formatCurrency(salesData?.averageOrderValue)}
-              icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-              description="Per order average"
-            />
-            <StatsCard 
-              title="Total Revenue"
-              value={formatCurrency(salesData?.totalSales)}
-              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-              description={`Total sales this ${timePeriod}`}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-8">
-            <SalesOverviewChart data={salesData} loading={isLoading} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <DepartmentSalesChart data={salesData?.departmentBreakdown} loading={isLoading} />
-              <ProductTypeSalesChart data={salesData?.productTypeBreakdown} loading={isLoading} />
-            </div>
+        <div className="grid grid-cols-1 gap-8">
+          <SalesOverviewChart data={salesData} loading={isLoading} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <DepartmentSalesChart data={salesData?.departmentBreakdown} loading={isLoading} />
+            <ProductTypeSalesChart data={salesData?.productTypeBreakdown} loading={isLoading} />
           </div>
         </div>
       </div>
