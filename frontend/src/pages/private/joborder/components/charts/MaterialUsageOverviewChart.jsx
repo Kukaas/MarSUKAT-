@@ -28,14 +28,24 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
   const [materialColors, setMaterialColors] = useState({});
 
   useEffect(() => {
-    if (!data || !data.monthlyData || data.monthlyData.length === 0) {
+    if (!data) {
+      // Just show loading state, don't reset everything
+      return;
+    }
+
+    // Initialize data structure if monthlyData is missing or empty
+    const monthlyData = data.monthlyData || [];
+    
+    if (monthlyData.length === 0) {
+      // If no monthly data, set empty states
       setAvailableUnits([]);
       setChartData([]);
       setCombinedChartData([]);
-      setMaterialLabel("All Materials");
       setAvailableMaterials([]);
       return;
     }
+
+    console.log("Processing material data:", monthlyData); // Debug log
 
     // Get the material label from the selected material
     if (selectedMaterial && selectedMaterial !== "all") {
@@ -57,14 +67,14 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
     const materialsByUnit = {};
 
     // First pass: identify all unique materials and units
-    data.monthlyData.forEach(monthData => {
+    monthlyData.forEach(monthData => {
+      if (!monthData.materials) return; // Skip if no materials
+      
       monthData.materials.forEach(material => {
-        const materialKey = `${material.category}-${material.type}`;
+        // Skip invalid materials
+        if (!material || !material.category || !material.type) return;
         
-        // Skip if we have a selected material and this isn't it
-        if (selectedMaterial && selectedMaterial !== "all" && materialKey !== selectedMaterial) {
-          return;
-        }
+        const materialKey = `${material.category}-${material.type}`;
         
         if (material.unit) {
           uniqueUnits.add(material.unit);
@@ -86,6 +96,15 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
         }
       });
     });
+    
+    // If no materials found, set empty states
+    if (uniqueMaterials.size === 0) {
+      setAvailableUnits([]);
+      setChartData({});
+      setAvailableMaterials([]);
+      setCombinedChartData([]);
+      return;
+    }
     
     // Create empty dataset structure for each material
     const processedData = {};
@@ -118,7 +137,7 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
     });
     
     // Create a single "All Materials" entry for primary unit if showing all
-    if (showAllMaterials && uniqueUnits.size > 0) {
+    if (uniqueUnits.size > 0) {
       // Try to find the most common unit
       const primaryUnit = Array.from(uniqueUnits)[0];
       
@@ -146,21 +165,19 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
     }
 
     // Fill with actual data
-    data.monthlyData.forEach(monthData => {
-      const monthIndex = monthData.month;
+    monthlyData.forEach(monthData => {
+      if (!monthData || !monthData.month || !monthData.materials) return;
+      
+      const monthIndex = parseInt(monthData.month);
+      if (isNaN(monthIndex) || monthIndex < 1 || monthIndex > 12) return;
       
       monthData.materials.forEach(material => {
-        if (!material.unit) return;
+        if (!material || !material.unit || !material.category || !material.type) return;
         
         const materialKey = `${material.category}-${material.type}`;
         
-        // Skip if we have a selected material and this isn't it
-        if (selectedMaterial && selectedMaterial !== "all" && materialKey !== selectedMaterial) {
-          return;
-        }
-        
         // Calculate total quantity used
-        const totalUsed = material.quantity;
+        const totalUsed = parseFloat(material.quantity) || 0;
         
         // Update specific material data
         if (processedData[materialKey] && processedData[materialKey][monthIndex]) {
@@ -173,18 +190,15 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
           }
         }
         
-        // Also update the single "All Materials" entry if showing all
-        if (showAllMaterials) {
-          const allMaterialsKey = 'all-materials';
+        // Always update the "All Materials" entry
+        const allMaterialsKey = 'all-materials';
+        if (processedData[allMaterialsKey] && processedData[allMaterialsKey][monthIndex]) {
+          processedData[allMaterialsKey][monthIndex].quantity += totalUsed;
           
-          if (processedData[allMaterialsKey] && processedData[allMaterialsKey][monthIndex]) {
-            processedData[allMaterialsKey][monthIndex].quantity += totalUsed;
-            
-            // Update total for the All Materials entry
-            const allMaterialsItem = materialList.find(m => m.key === allMaterialsKey);
-            if (allMaterialsItem) {
-              allMaterialsItem.total += totalUsed;
-            }
+          // Update total for the All Materials entry
+          const allMaterialsItem = materialList.find(m => m.key === allMaterialsKey);
+          if (allMaterialsItem) {
+            allMaterialsItem.total += totalUsed;
           }
         }
       });
@@ -197,7 +211,7 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
     Object.keys(processedData).forEach(materialKey => {
       // Convert month data to array and sort by month
       const materialMonthData = Object.values(processedData[materialKey])
-        .sort((a, b) => MONTHS.indexOf(a.name) - MONTHS.indexOf(b.name));
+        .sort((a, b) => a.month - b.month);
       
       formattedChartData[materialKey] = materialMonthData;
     });
@@ -208,86 +222,72 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
     });
 
     // Create combined chart data for multi-line view
-    if (showAllMaterials && materialList.length > 0) {
-      // Get all real materials (excluding the "all-materials" entry)
-      const realMaterials = materialList.filter(m => m.key !== 'all-materials');
+    // Get all real materials (excluding the "all-materials" entry)
+    const realMaterials = materialList.filter(m => m.key !== 'all-materials');
+    
+    // Create a combined dataset that has one entry per month
+    // with a property for each material's quantity
+    const combined = [];
+    
+    // Initialize with all months
+    MONTHS.forEach((month, index) => {
+      combined.push({
+        name: month,
+        month: index + 1,
+      });
+    });
+    
+    // Add each material's data to the appropriate month
+    realMaterials.forEach((material, materialIndex) => {
+      const materialKey = material.key;
+      const materialData = formattedChartData[materialKey];
       
-      // Create a combined dataset that has one entry per month
-      // with a property for each material's quantity
-      const combined = [];
-      
-      // Initialize with all months
-      MONTHS.forEach((month, index) => {
-        combined.push({
-          name: month,
-          month: index + 1,
+      if (materialData) {
+        materialData.forEach(monthData => {
+          const monthIndex = monthData.month - 1;
+          if (monthIndex >= 0 && monthIndex < 12 && combined[monthIndex]) {
+            // Use the material key to store this material's data
+            combined[monthIndex][materialKey] = monthData.quantity;
+            // Also store the material name for reference
+            combined[monthIndex][`${materialKey}_name`] = material.name;
+            combined[monthIndex][`${materialKey}_unit`] = material.unit;
+          }
         });
-      });
-      
-      // Add each material's data to the appropriate month
-      realMaterials.forEach(material => {
-        const materialKey = material.key;
-        const materialData = formattedChartData[materialKey];
-        
-        if (materialData) {
-          materialData.forEach(monthData => {
-            const monthIndex = MONTHS.indexOf(monthData.name);
-            if (monthIndex !== -1 && combined[monthIndex]) {
-              // Use the material key to store this material's data
-              combined[monthIndex][materialKey] = monthData.quantity;
-              // Also store the material name for reference
-              combined[monthIndex][`${materialKey}_name`] = material.name;
-              combined[monthIndex][`${materialKey}_unit`] = material.unit;
-            }
-          });
-        }
-      });
-      
-      setCombinedChartData(combined);
-      setMaterialColors(
-        realMaterials.reduce((colors, material, index) => {
-          colors[material.key] = index;
-          return colors;
-        }, {})
-      );
-    } else {
-      setCombinedChartData([]);
-    }
-
-    // Check if we have no data after filtering
-    const hasData = Object.values(formattedChartData).some(materialData => 
-      materialData.some(monthData => monthData.quantity > 0)
+      }
+    });
+    
+    setCombinedChartData(combined);
+    
+    // Assign colors to materials
+    setMaterialColors(
+      realMaterials.reduce((colors, material, index) => {
+        colors[material.key] = index;
+        return colors;
+      }, {})
     );
 
-    if (!hasData) {
-      // Show empty chart with a message
-      setAvailableUnits([]);
-      setChartData({});
-      setAvailableMaterials([]);
-      setCombinedChartData([]);
-    } else {
-      setAvailableUnits(Array.from(uniqueUnits));
-      setChartData(formattedChartData);
-      
-      // Sort the material list to put All Materials first
-      const sortedMaterials = materialList.sort((a, b) => {
-        if (a.key === 'all-materials') return -1;
-        if (b.key === 'all-materials') return 1;
-        // Alphabetical sort by name for the rest
-        return a.name.localeCompare(b.name);
-      });
-      
-      setAvailableMaterials(sortedMaterials);
-    }
+    // Set states
+    setAvailableUnits(Array.from(uniqueUnits));
+    setChartData(formattedChartData);
+    
+    // Sort the material list to put All Materials first
+    const sortedMaterials = materialList.sort((a, b) => {
+      if (a.key === 'all-materials') return -1;
+      if (b.key === 'all-materials') return 1;
+      // Alphabetical sort by name for the rest
+      return a.name.localeCompare(b.name);
+    });
+    
+    setAvailableMaterials(sortedMaterials);
   }, [data, selectedMaterial]);
 
   // Select a material to display in the chart
-  const [selectedChartMaterial, setSelectedChartMaterial] = useState("all");
+  const [selectedChartMaterial, setSelectedChartMaterial] = useState("all-materials");
   
   // When available materials change, default to "all" or the only available material
   useEffect(() => {
     if (availableMaterials.length === 0) {
-      setSelectedChartMaterial("all");
+      setSelectedChartMaterial("all-materials");
     } else if (availableMaterials.length === 1) {
       setSelectedChartMaterial(availableMaterials[0].key);
     } else {
@@ -295,22 +295,42 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
       const allMaterialsEntry = availableMaterials.find(m => m.key === 'all-materials');
       if (allMaterialsEntry) {
         setSelectedChartMaterial(allMaterialsEntry.key);
-      } else if (selectedMaterial !== "all") {
-        setSelectedChartMaterial(selectedMaterial);
+      } else if (selectedMaterial && selectedMaterial !== "all") {
+        // Try to match selected material
+        const matchingMaterial = availableMaterials.find(m => m.key === selectedMaterial);
+        if (matchingMaterial) {
+          setSelectedChartMaterial(selectedMaterial);
+        } else {
+          setSelectedChartMaterial(availableMaterials[0].key);
+        }
       } else {
         setSelectedChartMaterial(availableMaterials[0].key);
       }
     }
   }, [availableMaterials, selectedMaterial]);
 
+  // Handle empty or loading state
+  if (loading) {
+    return (
+      <CustomChart
+        data={[]}
+        loading={true}
+        subtitle="Loading material usage data..."
+        icon={Package}
+        emptyMessage="Loading data..."
+        initialChartType="line"
+      />
+    );
+  }
+
   if (!data || !data.monthlyData || data.monthlyData.length === 0 || availableMaterials.length === 0) {
     return (
       <CustomChart
         data={[]}
-        loading={loading}
+        loading={false}
         subtitle={materialLabel !== "All Materials" ? `Tracking: ${materialLabel}` : undefined}
         icon={Package}
-        emptyMessage={loading ? "Loading data..." : "No material usage data available for the selected filters"}
+        emptyMessage="No material usage data available for the selected period"
         initialChartType="line"
       />
     );
@@ -393,7 +413,7 @@ export default function MaterialUsageOverviewChart({ data, loading, selectedMate
       </CardHeader>
       
       <CardContent>
-        {selectedChartMaterial === 'all-materials' ? (
+        {selectedChartMaterial === 'all-materials' && combinedChartData.length > 0 ? (
           <MultiLineChart
             data={combinedChartData}
             materials={realMaterials}

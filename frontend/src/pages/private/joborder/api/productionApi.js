@@ -40,6 +40,28 @@ export const productionAPI = {
     return response.data;
   },
 
+  getRawMaterialsYearlyUsageStats: async (year, category, type) => {
+    try {
+      const response = await api.get("/school-uniform-productions/raw-materials-yearly-usage", {
+        params: { year, category, type },
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.get("/school-uniform-productions/raw-materials-yearly-usage", {
+            params: { year, category, type }
+          });
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
   getMaterialUsageReport: async (startDate, endDate, category, type) => {
     const response = await api.get("/school-uniform-productions/material-usage-report", {
       params: { startDate, endDate, category, type },
