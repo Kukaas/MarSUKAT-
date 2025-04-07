@@ -1,5 +1,4 @@
 import api from "@/lib/api";
-import axios from "axios";
 
 export const productionAPI = {
   getAllSchoolUniformProductions: async () => {

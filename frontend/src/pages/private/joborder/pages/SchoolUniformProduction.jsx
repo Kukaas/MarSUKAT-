@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Table2,
   BarChart3,
+  Download,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,10 +38,19 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ProductionOverviewChart } from "../components/charts/ProductionOverviewChart";
 import { ProductTypeProductionChart } from "../components/charts/ProductTypeProductionChart";
 import { LevelProductionChart } from "../components/charts/LevelProductionChart";
-import CustomSelect from "@/components/custom-components/CustomSelect";
-import StatsCard from "@/components/custom-components/StatsCard";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
+import StatsCard from "@/components/custom-components/StatsCard";
+import FilterBar from "@/components/custom-components/FilterBar";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const MONTHS = [
   "January",
@@ -58,7 +68,9 @@ const MONTHS = [
 ];
 
 export const SchoolUniformProduction = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -78,7 +90,85 @@ export const SchoolUniformProduction = () => {
   const [inventoryIssues, setInventoryIssues] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [timePeriod, setTimePeriod] = useState("month");
   const [activeTab, setActiveTab] = useState("table");
+
+  // Custom viewing content with period label
+  const customViewingContent = (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="font-medium">Viewing:</span>
+      <Badge variant="secondary" className="font-normal">
+        {timePeriod === "month"
+          ? `${MONTHS[parseInt(selectedMonth) - 1]} ${selectedYear}`
+          : `Year ${selectedYear}`}
+      </Badge>
+    </div>
+  );
+
+  // Check if custom filters are applied
+  const isCustomFilterActive = () => {
+    return (
+      selectedYear !== new Date().getFullYear().toString() || 
+      selectedMonth !== (new Date().getMonth() + 1).toString() ||
+      timePeriod !== "month"
+    );
+  };
+
+  // Reset filters function
+  const handleResetFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setTimePeriod("month");
+  };
+
+  // Period type selector for the top of the filter
+  const periodTypeSelector = (
+    <div>
+      <label className="text-xs font-medium mb-1 block">Time Period</label>
+      <div className="flex gap-1 mb-2">
+        <Button 
+          size="sm"
+          variant={timePeriod === "month" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("month")}
+        >
+          Monthly
+        </Button>
+        <Button 
+          size="sm"
+          variant={timePeriod === "year" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("year")}
+        >
+          Yearly
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Additional action button for export
+  const additionalActions = (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1 px-3 text-sm font-normal"
+            onClick={() => {
+              toast.info("Export functionality coming soon");
+            }}
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Export as Excel</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   // Define tab configuration
   const tabConfig = [
@@ -86,11 +176,15 @@ export const SchoolUniformProduction = () => {
     { value: "analytics", label: "Analytics", icon: BarChart3 },
   ];
 
-  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: MONTHS[i]
-  }));
+  const handleAuthError = async (error) => {
+    if (error.message === "Session expired. Please log in again.") {
+      toast.error("Your session has expired. Please log in again.");
+      await logout();
+      navigate("/login", { state: { from: location.pathname } });
+    } else {
+      toast.error(error.message || "An error occurred");
+    }
+  };
 
   const handleDialogClose = (type) => {
     if (type === "create") {
@@ -109,17 +203,44 @@ export const SchoolUniformProduction = () => {
 
   // Fetch productions data with caching
   const { data: productionsData, isLoading, refetch: refetchProductions } = useDataFetching(
-    ['schoolUniformProductions', selectedYear, selectedMonth],
+    ['schoolUniformProductions', selectedYear, selectedMonth, timePeriod],
     async () => {
-      const [productions, stats] = await Promise.all([
-        productionAPI.getAllSchoolUniformProductions(),
-        productionAPI.getProductionStats(selectedYear, selectedMonth)
-      ]);
-      return { productions, stats };
+      let productionsPromise = productionAPI.getAllSchoolUniformProductions(selectedYear);
+      let statsPromise;
+      
+      if (timePeriod === "month") {
+        statsPromise = productionAPI.getProductionStats(selectedYear, selectedMonth);
+      } else {
+        statsPromise = productionAPI.getSchoolUniformYearlyStats(selectedYear);
+      }
+      
+      const [productions, stats] = await Promise.all([productionsPromise, statsPromise]);
+      
+      // Filter productions based on selected time period
+      let filteredProductions = productions;
+      if (timePeriod === "month") {
+        // Filter by selected month
+        filteredProductions = productions.filter(production => {
+          const productionDate = new Date(production.productionDateFrom);
+          return (
+            productionDate.getFullYear() === parseInt(selectedYear) &&
+            productionDate.getMonth() + 1 === parseInt(selectedMonth)
+          );
+        });
+      } else {
+        // Filter by selected year only
+        filteredProductions = productions.filter(production => {
+          const productionDate = new Date(production.productionDateFrom);
+          return productionDate.getFullYear() === parseInt(selectedYear);
+        });
+      }
+      
+      return { productions: filteredProductions, stats };
     },
     {
       staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
       cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      onError: handleAuthError,
     }
   );
 
@@ -150,7 +271,7 @@ export const SchoolUniformProduction = () => {
           setInventoryIssues(error.response.data.inventoryIssues);
           return;
         }
-        toast.error(error.response?.data?.message || "Failed to create production");
+        handleAuthError(error);
       },
     }
   );
@@ -168,9 +289,7 @@ export const SchoolUniformProduction = () => {
         toast.success("Production deleted successfully");
         setDeleteDialog({ isOpen: false, itemToDelete: null });
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || "Failed to delete production");
-      },
+      onError: handleAuthError,
     }
   );
 
@@ -340,42 +459,33 @@ export const SchoolUniformProduction = () => {
           description="Manage school uniform production in the system"
         />
 
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="w-full md:w-1/2">
-              <CustomSelect
-                name="year"
-                label="Year"
-                placeholder="Select year"
-                options={years.map(year => ({ value: year, label: year }))}
-                value={selectedYear}
-                onChange={setSelectedYear}
-              />
-            </div>
-            <div className="w-full md:w-1/2">
-              <CustomSelect
-                name="month"
-                label="Month"
-                placeholder="Select month"
-                options={months}
-                value={selectedMonth}
-                onChange={setSelectedMonth}
-              />
-            </div>
-          </div>
+        <FilterBar
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          onYearChange={setSelectedYear}
+          onMonthChange={timePeriod === "month" ? setSelectedMonth : undefined}
+          customViewingContent={customViewingContent}
+          isCustomFilterActive={isCustomFilterActive}
+          onResetFilters={handleResetFilters}
+          showPrintButton={false}
+          additionalActions={additionalActions}
+          filterTitle="Production Filters"
+          resetButtonText="Reset All"
+          periodTypeSelector={periodTypeSelector}
+        />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <StatsCard 
               title="Total Production"
               value={statsData?.totalProduction || 0}
               icon={<Shirt className="h-4 w-4 text-muted-foreground" />}
-              description="Units produced"
+            description={`Units produced this ${timePeriod}`}
             />
             <StatsCard 
               title="Average Production"
-              value={statsData?.totalProduction || 0}
+            value={statsData?.averageProduction || 0}
               icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-              description="Total units this period"
+            description={`${timePeriod === "month" ? "Monthly" : "Yearly"} average`}
             />
           </div>
 
@@ -422,7 +532,6 @@ export const SchoolUniformProduction = () => {
               </div>
             </TabPanel>
           </CustomTabs>
-        </div>
 
         {/* Create Dialog */}
         <AlertDialog open={isCreateDialogOpen}>
