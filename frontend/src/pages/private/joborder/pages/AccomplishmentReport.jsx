@@ -331,7 +331,7 @@ export const AccomplishmentReport = () => {
                 Add a new accomplishment report for an employee
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[200px] pr-4">
               <div className="py-2">
                 <AccomplishmentReportForm
                   formData={formData}
@@ -378,7 +378,7 @@ export const AccomplishmentReport = () => {
                 Modify the accomplishment report details
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[200px] pr-4">
               <div className="py-2">
                 <AccomplishmentReportForm
                   formData={formData}
