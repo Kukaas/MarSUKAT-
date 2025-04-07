@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
 import { useDataFetching } from "@/hooks/useDataFetching";
+import FilterBar from "@/components/custom-components/FilterBar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DollarSign,
   Shirt,
@@ -26,6 +29,7 @@ import {
   CalendarRange,
   CalendarCheck,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const MONTHS = [
   "January",
@@ -71,6 +75,97 @@ export function Dashboard() {
     value: (i + 1).toString(),
     label: MONTHS[i],
   }));
+
+  // Custom viewing content with period label
+  const customViewingContent = (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="font-medium">Viewing:</span>
+      <Badge variant="secondary" className="font-normal">
+        {timeframe === "week" 
+          ? `Week ${selectedWeek}, ${MONTHS[parseInt(selectedMonth) - 1]} ${selectedYear}`
+          : timeframe === "month"
+            ? `${MONTHS[parseInt(selectedMonth) - 1]} ${selectedYear}`
+            : `Year ${selectedYear}`}
+      </Badge>
+    </div>
+  );
+
+  // Check if custom filters are applied
+  const isCustomFilterActive = () => {
+    return (
+      selectedYear !== new Date().getFullYear().toString() || 
+      selectedMonth !== (new Date().getMonth() + 1).toString() ||
+      selectedWeek !== "1" ||
+      timeframe !== "month"
+    );
+  };
+
+  // Reset filters function
+  const handleResetFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setSelectedWeek("1");
+    setTimeframe("month");
+  };
+
+  // Period type selector for the top of the filter
+  const periodTypeSelector = (
+    <div>
+      <label className="text-xs font-medium mb-1 block">Time Period</label>
+      <div className="grid grid-cols-3 gap-1 mb-2">
+        <Button 
+          size="sm"
+          variant={timeframe === "week" ? "default" : "outline"}
+          className="h-8 text-xs"
+          onClick={() => setTimeframe("week")}
+        >
+          Weekly
+        </Button>
+        <Button 
+          size="sm"
+          variant={timeframe === "month" ? "default" : "outline"}
+          className="h-8 text-xs"
+          onClick={() => setTimeframe("month")}
+        >
+          Monthly
+        </Button>
+        <Button 
+          size="sm"
+          variant={timeframe === "year" ? "default" : "outline"}
+          className="h-8 text-xs"
+          onClick={() => setTimeframe("year")}
+        >
+          Yearly
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Additional filters for week selection
+  const additionalFilters = timeframe === "week" ? (
+    <div>
+      <label className="text-xs font-medium mb-1 block">Week</label>
+      <Select 
+        value={selectedWeek} 
+        onValueChange={setSelectedWeek}
+      >
+        <SelectTrigger className="h-8 text-xs">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-3 w-3 text-muted-foreground" />
+              <SelectValue placeholder="Select week" />
+                </div>
+                  </SelectTrigger>
+                    <SelectContent className="max-h-[220px] overflow-y-auto">
+                    {WEEKS.map((week, index) => (
+                        <SelectItem key={index} value={week.value}>
+                          {week.label}
+                        </SelectItem>
+                    ))}
+              </SelectContent>
+          </Select>
+       
+    </div>
+  ) : null;
 
   // Use React Query for data fetching with caching
   const { data: dashboardData, isLoading, error } = useDataFetching(
@@ -126,70 +221,20 @@ export function Dashboard() {
           />
         </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-md flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              Filter Data
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div>
-                <CustomSelect
-                  name="timeframe"
-                  label="Time Period"
-                  placeholder="Select time period"
-                  options={[
-                    { value: "week", label: "Weekly" },
-                    { value: "month", label: "Monthly" },
-                    { value: "year", label: "Yearly" },
-                  ]}
-                  value={timeframe}
-                  onChange={setTimeframe}
-                  icon={Clock}
-                />
-              </div>
-              <div>
-                <CustomSelect
-                  name="year"
-                  label="Year"
-                  placeholder="Select year"
-                  options={years}
-                  value={selectedYear}
-                  onChange={setSelectedYear}
-                  icon={CalendarDays}
-                />
-              </div>
-              {timeframe !== "year" && (
-                <div>
-                  <CustomSelect
-                    name="month"
-                    label="Month"
-                    placeholder="Select month"
-                    options={months}
-                    value={selectedMonth}
-                    onChange={setSelectedMonth}
-                    icon={CalendarRange}
-                  />
-                </div>
-              )}
-              {timeframe === "week" && (
-                <div>
-                  <CustomSelect
-                    name="week"
-                    label="Week"
-                    placeholder="Select week"
-                    options={WEEKS}
-                    value={selectedWeek}
-                    onChange={setSelectedWeek}
-                    icon={CalendarCheck}
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <FilterBar
+          selectedYear={selectedYear}
+          selectedMonth={timeframe !== "year" ? selectedMonth : undefined}
+          onYearChange={setSelectedYear}
+          onMonthChange={timeframe !== "year" ? setSelectedMonth : undefined}
+          customViewingContent={customViewingContent}
+          isCustomFilterActive={isCustomFilterActive}
+          onResetFilters={handleResetFilters}
+          showPrintButton={false}
+          filterTitle="Dashboard Filters"
+          resetButtonText="Reset All"
+          periodTypeSelector={periodTypeSelector}
+          additionalFilters={additionalFilters}
+        />
 
         <div className="flex flex-col gap-8">
           {isLoading ? (
