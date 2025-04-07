@@ -48,17 +48,23 @@ export const productionAPI = {
     return response.data;
   },
 
-  getAllAcademicGownProductions: async () => {
+  getAllAcademicGownProductions: async (year) => {
     try {
-      const response = await api.get("/academic-gown-productions");
+      let url = '/academic-gown-productions';
+      if (year) {
+        url += `?year=${year}`;
+      }
+      const response = await api.get(url);
       return response.data;
     } catch (error) {
       if (error.response?.status === 401) {
-        // Try to refresh the token first
         try {
           await api.post("/auth/refresh-token");
-          // Retry the original request
-          const retryResponse = await api.get("/academic-gown-productions");
+          let url = '/academic-gown-productions';
+          if (year) {
+            url += `?year=${year}`;
+          }
+          const retryResponse = await api.get(url);
           return retryResponse.data;
         } catch (refreshError) {
           throw new Error("Session expired. Please log in again.");
@@ -199,6 +205,28 @@ export const productionAPI = {
           await api.post("/auth/refresh-token");
           const retryResponse = await api.get("/academic-gown-productions/material-usage-report", {
             params: { startDate, endDate, category, type }
+          });
+          return retryResponse.data;
+        } catch (refreshError) {
+          throw new Error("Session expired. Please log in again.");
+        }
+      }
+      throw error;
+    }
+  },
+
+  getAcademicGownYearlyStats: async (year) => {
+    try {
+      const response = await api.get("/academic-gown-productions/stats", {
+        params: { year }
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        try {
+          await api.post("/auth/refresh-token");
+          const retryResponse = await api.get("/academic-gown-productions/stats", {
+            params: { year }
           });
           return retryResponse.data;
         } catch (refreshError) {

@@ -16,7 +16,21 @@ const MONTHS = [
 // @access  Private
 export const getAllAcademicGownProductions = async (req, res) => {
   try {
-    const productions = await AcademicGownProduction.find();
+    const { year } = req.query;
+    let query = {};
+
+    // Filter by year if provided
+    if (year && !isNaN(parseInt(year))) {
+      const startDate = new Date(parseInt(year), 0, 1);
+      const endDate = new Date(parseInt(year) + 1, 0, 1);
+      
+      query.productionDateFrom = {
+        $gte: startDate,
+        $lt: endDate
+      };
+    }
+
+    const productions = await AcademicGownProduction.find(query);
     res.status(200).json(productions);
   } catch (error) {
     res.status(500).json({ message: error.message });

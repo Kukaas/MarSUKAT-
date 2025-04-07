@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import FilterBar from "@/components/custom-components/FilterBar";
 
 const MONTHS = [
   "January",
@@ -69,7 +70,6 @@ export const SalesReport = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [timePeriod, setTimePeriod] = useState("month");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -125,6 +125,84 @@ export const SalesReport = () => {
     handleYearlyPrint(selectedYear, salesReportAPI, formatCurrency);
   };
 
+  // Check if filters are different from defaults
+  const isCustomFilterActive = () => {
+    return (
+      selectedYear !== new Date().getFullYear().toString() || 
+      selectedMonth !== (new Date().getMonth() + 1).toString() ||
+      timePeriod !== "month"
+    );
+  };
+
+  // Custom reset function
+  const handleResetFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setTimePeriod("month");
+  };
+
+  // Additional filters for the filter popover
+  const additionalFilters = (
+    <div>
+      <label className="text-xs font-medium mb-1 block">Time Period</label>
+      <div className="flex gap-1 mb-2">
+        <Button 
+          size="sm"
+          variant={timePeriod === "month" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("month")}
+        >
+          Monthly
+        </Button>
+        <Button 
+          size="sm"
+          variant={timePeriod === "year" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("year")}
+        >
+          Yearly
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Create a periodTypeSelector for the top of filters
+  const periodTypeSelector = (
+    <div>
+      <label className="text-xs font-medium mb-1 block">Time Period</label>
+      <div className="flex gap-1 mb-2">
+        <Button 
+          size="sm"
+          variant={timePeriod === "month" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("month")}
+        >
+          Monthly
+        </Button>
+        <Button 
+          size="sm"
+          variant={timePeriod === "year" ? "default" : "outline"}
+          className="flex-1 h-8 text-xs"
+          onClick={() => setTimePeriod("year")}
+        >
+          Yearly
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Custom viewing content with period label
+  const customViewingContent = (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="font-medium">Viewing:</span>
+      <Badge variant="secondary" className="font-normal">
+        {timePeriod === "month"
+          ? `${MONTHS[parseInt(selectedMonth) - 1]} ${selectedYear}`
+          : `Year ${selectedYear}`}
+      </Badge>
+    </div>
+  );
+
   return (
     <PrivateLayout>
       <div className="space-y-6">
@@ -133,167 +211,20 @@ export const SalesReport = () => {
           description="View and analyze sales performance across different metrics"
         />
 
-        {/* Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="text-sm text-muted-foreground flex items-center">
-              <div className="flex flex-wrap items-center gap-1">
-                <span className="font-medium">Viewing:</span>
-                <Badge variant="secondary" className="font-normal">
-                  {timePeriod === "month"
-                    ? `${MONTHS[parseInt(selectedMonth) - 1]} ${selectedYear}`
-                    : `Year ${selectedYear}`}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Filter Dropdown */}
-            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 gap-1 px-3 text-sm font-normal"
-                >
-                  <Filter className="h-3.5 w-3.5" />
-                  <span>Filter</span>
-                  {(selectedYear !== new Date().getFullYear().toString() || 
-                    selectedMonth !== (new Date().getMonth() + 1).toString() ||
-                    timePeriod !== "month") && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 rounded-full">
-                      •
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-3" align="end">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm">Report Filters</h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => {
-                        setSelectedYear(new Date().getFullYear().toString());
-                        setSelectedMonth((new Date().getMonth() + 1).toString());
-                        setTimePeriod("month");
-                      }}
-                    >
-                      Reset All
-                    </Button>
-                  </div>
-                  
-                  {/* Period Type First */}
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Time Period</label>
-                    <div className="flex gap-1 mb-2">
-                      <Button 
-                        size="sm"
-                        variant={timePeriod === "month" ? "default" : "outline"}
-                        className="flex-1 h-8 text-xs"
-                        onClick={() => setTimePeriod("month")}
-                      >
-                        Monthly
-                      </Button>
-                      <Button 
-                        size="sm"
-                        variant={timePeriod === "year" ? "default" : "outline"}
-                        className="flex-1 h-8 text-xs"
-                        onClick={() => setTimePeriod("year")}
-                      >
-                        Yearly
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Time Period Selection */}
-                  <div className="space-y-3">
-                    {timePeriod === "month" && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">Month</label>
-                        <Select 
-                          value={selectedMonth} 
-                          onValueChange={setSelectedMonth}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <div className="flex items-center gap-2">
-                              <CalendarDays className="h-3 w-3 text-muted-foreground" />
-                              <SelectValue placeholder="Select month" />
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {months.map((month) => (
-                              <SelectItem key={month.value} value={month.value}>
-                                {month.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <label className="text-xs font-medium mb-1 block">Year</label>
-                      <Select 
-                        value={selectedYear} 
-                        onValueChange={setSelectedYear}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <div className="flex items-center gap-2">
-                            <CalendarRange className="h-3 w-3 text-muted-foreground" />
-                            <SelectValue placeholder="Select year" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {years.map((year) => (
-                            <SelectItem key={year} value={year}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <Button 
-                      type="button" 
-                      size="sm"
-                      className="w-full h-8"
-                      onClick={() => setIsFilterOpen(false)}
-                    >
-                      Apply Filters
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={timePeriod === "month" ? handleMonthlyPrint : handleYearlyPrintClick}
-                    disabled={isLoading}
-                    className="h-9 gap-1 px-3 text-sm font-normal"
-                  >
-                    <Printer className="h-3.5 w-3.5" />
-                    <span>Print</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Print {timePeriod === "month" ? "Monthly" : "Yearly"} Sales Report</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
+        <FilterBar
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          onYearChange={setSelectedYear}
+          onMonthChange={timePeriod === "month" ? setSelectedMonth : undefined}
+          printTooltip={`Print ${timePeriod === "month" ? "Monthly" : "Yearly"} Sales Report`}
+          onPrintClick={timePeriod === "month" ? handleMonthlyPrint : handleYearlyPrintClick}
+          isCustomFilterActive={isCustomFilterActive}
+          customViewingContent={customViewingContent}
+          periodTypeSelector={periodTypeSelector}
+          filterTitle="Report Filters"
+          resetButtonText="Reset All"
+          onResetFilters={handleResetFilters}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard 
