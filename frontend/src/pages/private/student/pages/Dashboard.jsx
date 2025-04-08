@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import EmptyState from "@/components/custom-components/EmptyState";
+import { Card, CardContent} from "@/components/ui/card";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -10,42 +7,12 @@ import {
   Clock,
   CreditCard,
   Info,
-  Package,
-  Bell,
-  Calendar,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { dashboardAPI } from "../api/dashboardApi";
-import { toast } from "sonner";
-import { AvailableProducts } from "../components/AvailableProducts";
-import { formatDate } from "@/lib/utils";
 import { Announcements } from "../components/Announcements";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
-const getPriorityStyles = (priority) => {
-  switch (priority) {
-    case "high":
-      return "border-l-red-500 bg-red-50 dark:bg-red-900/10";
-    case "medium":
-      return "border-l-orange-500 bg-orange-50 dark:bg-orange-900/10";
-    case "low":
-    default:
-      return "border-l-primary bg-card/50";
-  }
-};
-
-const getPriorityIcon = (priority) => {
-  switch (priority) {
-    case "high":
-      return <AlertCircle className="h-5 w-5 text-red-500" />;
-    case "medium":
-      return <AlertCircle className="h-5 w-5 text-orange-500" />;
-    default:
-      return <Bell className="h-5 w-5 text-primary" />;
-  }
-};
 
 export default function Dashboard() {
   const { user } = useAuth();
