@@ -419,4 +419,18 @@ export const menuItems = {
       ],
     },
   ],
+  Coordinator: [
+    {
+      title: "Dashboard",
+      icon: <LayoutDashboard />,
+      path: (id) => `/coordinator/dashboard/${id}`,
+      description: "Overview of system",
+    },
+    {
+      title: "Rentals Request",
+      icon: <KeyRound />,
+      path: () => "/coordinator/rental-request",
+      description: "Manage rental requests",
+    },
+  ],
 };

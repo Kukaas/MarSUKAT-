@@ -16,6 +16,8 @@ export const getDashboardPath = (role, userId) => {
       return "/staff/dashboard";
     case "superadmin":
       return `/superadmin/dashboard/${id}`;
+    case "coordinator":
+      return `/coordinator/dashboard/${id}`;
     default:
       return "/login";
   }
@@ -28,6 +30,7 @@ export const rolePathMap = {
   joborder: "/job-order",
   staff: "/staff",
   superadmin: "/superadmin",
+  coordinator: "/coordinator",
 };
 
 // Navigate to role-specific dashboard

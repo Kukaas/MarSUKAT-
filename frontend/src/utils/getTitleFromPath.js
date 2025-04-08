@@ -59,6 +59,10 @@ const roleBasedRoutes = {
     "sales": "Sales Management",
     "accomplishments": "Accomplishments Management",
   },
+  coordinator: {
+    dashboard: "Coordinator Dashboard",
+    "rental-request": "Rental Request",
+  },
 };
 
 // Helper function to remove parameter segments from path

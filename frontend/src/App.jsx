@@ -12,6 +12,7 @@ import { baoRoutes } from "./routes/baoRoutes";
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { coordinatorRoutes } from "./routes/coordinatorRoutes";
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -88,6 +89,15 @@ export default function App() {
 
             {/* BAO Routes */}
             {baoRoutes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={<PrivateRoute>{route.element}</PrivateRoute>}
+              />
+            ))}
+
+            {/*Coordinator Routes */}
+            {coordinatorRoutes.map((route) => (
               <Route
                 key={route.path}
                 path={route.path}
