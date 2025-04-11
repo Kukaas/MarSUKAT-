@@ -1,5 +1,3 @@
-import api from "./api";
-
 const OCR_API_KEY = import.meta.env.VITE_OCR_API_KEY;
 
 export const validateReceipt = async (imageData, orNumber) => {

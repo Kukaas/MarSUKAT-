@@ -13,6 +13,7 @@ import { Announcements } from "../components/Announcements";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { AvailableProducts } from "../components/AvailableProducts";
 
 export default function Dashboard() {
   const { user } = useAuth();
