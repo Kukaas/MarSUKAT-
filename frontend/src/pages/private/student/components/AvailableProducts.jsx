@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, ChevronLeft, ChevronRight, X, Heart } from "lucide-react";
+import { Package, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import EmptyState from "@/components/custom-components/EmptyState";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { dashboardAPI } from "../api/dashboardApi";
@@ -114,10 +114,6 @@ function ProductCard({ product }) {
       : [...favorites, product._id];
 
     localStorage.setItem("favoriteProducts", JSON.stringify(newFavorites));
-
-    // Trigger storage event for other tabs
-    window.dispatchEvent(new Event("storage"));
-
     setIsFavorite(!isFavorite);
   };
 
@@ -268,7 +264,7 @@ function ProductCard({ product }) {
 
 export function AvailableProducts() {
   // Use React Query for data fetching with caching
-  const { data: products = [], isLoading, error } = useDataFetching(
+  const { data: products = [], isLoading } = useDataFetching(
     ['activeProducts'],
     () => dashboardAPI.getActiveProducts(),
     {
@@ -297,11 +293,12 @@ export function AvailableProducts() {
     });
   }, [products]);
 
-  // Add event listener for localStorage changes
+  // Update storage event handler
   useEffect(() => {
-    const handleStorageChange = () => {
-      // Force re-render to update product order
-      window.dispatchEvent(new Event('storage'));
+    const handleStorageChange = (e) => {
+      if (e.key === "favoriteProducts") {
+        // Removed favoriteUpdate update logic
+      }
     };
 
     window.addEventListener("storage", handleStorageChange);
