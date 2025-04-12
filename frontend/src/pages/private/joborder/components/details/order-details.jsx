@@ -114,11 +114,6 @@ const getAvailableStatuses = (currentStatus) => {
 };
 
 function OrderContent({ order, onUpdate }) {
-  const getReceiptsByType = (type) => {
-    if (!order?.receipts || order.receipts.length === 0) return null;
-    return order.receipts.find((receipt) => receipt.type === type) || null;
-  };
-
   const [openSections, setOpenSections] = useState({
     receipts: order?.status === "Pending",
     studentInfo: false,
@@ -137,10 +132,6 @@ function OrderContent({ order, onUpdate }) {
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
 
   const availableStatuses = getAvailableStatuses(order?.status);
-
-  const downPayment = getReceiptsByType("Down Payment");
-  const partialPayment = getReceiptsByType("Partial Payment");
-  const fullPayment = getReceiptsByType("Full Payment");
 
   // Status update mutation
   const statusUpdateMutation = useDataMutation(
@@ -300,14 +291,6 @@ function OrderContent({ order, onUpdate }) {
       isOpen: true,
       type: "verify",
       data: { id: receiptId, type: receipt.type, amount: receipt.amount },
-    });
-  };
-
-  const openRejectConfirmation = () => {
-    setConfirmDialog({
-      isOpen: true,
-      type: "reject",
-      data: null,
     });
   };
 

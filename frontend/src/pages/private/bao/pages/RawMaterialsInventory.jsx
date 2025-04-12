@@ -1,4 +1,3 @@
-import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import { Eye, Box, Tag, Ruler, AlertCircle, Package, BarChart3 } from "lucide-react";
@@ -8,7 +7,6 @@ import { RawMaterialInventoryDetailsDialog } from "../../joborder/components/det
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import StatusBadge from "@/components/custom-components/StatusBadge";
 import { inventoryAPI } from "../../joborder/api/inventoryApi";
-import CustomSelect from "@/components/custom-components/CustomSelect";
 import MaterialUsageOverviewChart from "../../joborder/components/charts/MaterialUsageOverviewChart";
 import { MaterialForecastChart } from "../../joborder/components/charts/MaterialForecastChart";
 import { MaterialUsageTable } from "../../joborder/components/tables/MaterialUsageTable";
@@ -17,7 +15,6 @@ import { productionAPI } from "../../joborder/api/productionApi";
 import { format } from "date-fns";
 import { useDataFetching } from "@/hooks/useDataFetching";
 import FilterBar from "@/components/custom-components/FilterBar";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -27,14 +24,10 @@ const MONTHS = [
 ];
 
 const RawMaterialsInventory = () => {
-  const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
-  const [selectedMaterial, setSelectedMaterial] = useState("");
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)));
   const [endDate, setEndDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState("inventory");
@@ -62,12 +55,6 @@ const RawMaterialsInventory = () => {
     }
   }, [selectedYear, selectedMonth, timePeriod]);
 
-  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: MONTHS[i]
-  }));
-
   // Define tab configuration
   const tabConfig = [
     { value: "inventory", label: "Inventory Items", icon: Package },
@@ -90,28 +77,6 @@ const RawMaterialsInventory = () => {
       },
     }
   );
-
-  // Extract categories and material types from inventory data
-  const categories = inventoryData ? [...new Set(inventoryData.map(item => item.category))].map(category => ({
-    value: category,
-    label: category
-  })) : [];
-
-  const materialTypes = inventoryData ? inventoryData
-    .map(item => ({
-      category: item.category,
-      type: item.rawMaterialType.name,
-      id: `${item.category}-${item.rawMaterialType.name}`
-    }))
-    .filter((material, index, self) => 
-      index === self.findIndex(m => m.id === material.id)
-    )
-    .map(material => ({
-      value: material.id,
-      label: `${material.category} - ${material.type}`,
-      category: material.category,
-      type: material.type
-    })) : [];
 
   // Fetch yearly data for the overview chart - always fetch this
   const { 
@@ -402,7 +367,6 @@ const RawMaterialsInventory = () => {
                 <MaterialUsageOverviewChart 
                   data={overviewStats} 
                   loading={isOverviewLoading} 
-                  selectedMaterial={selectedMaterial}
                 />
               </div>
               

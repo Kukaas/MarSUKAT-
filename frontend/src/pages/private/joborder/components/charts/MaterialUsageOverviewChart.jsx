@@ -3,7 +3,6 @@ import { CustomChart } from "@/components/custom-components/CustomChart";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CustomSelect from "@/components/custom-components/CustomSelect";
-import { cn } from "@/lib/utils";
 import MultiLineChart from "../../../../../components/custom-components/MultiLineChart";
 
 const MONTHS = [

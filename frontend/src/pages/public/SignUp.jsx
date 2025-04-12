@@ -169,7 +169,7 @@ const SignUp = () => {
           break;
       }
 
-      const response = await authAPI.signup(signupData);
+      await authAPI.signup(signupData);
 
       toast.success("Account created successfully!", {
         description: "Please check your email to verify your account.",

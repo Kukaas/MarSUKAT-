@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import { toast } from "sonner";
-import CustomSelect from "@/components/custom-components/CustomSelect";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { CustomChart } from "@/components/custom-components/CustomChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,16 +60,6 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedWeek, setSelectedWeek] = useState("1");
   const [timeframe, setTimeframe] = useState("month");
-
-  const years = Array.from({ length: 5 }, (_, i) => ({
-    value: (new Date().getFullYear() - i).toString(),
-    label: (new Date().getFullYear() - i).toString(),
-  }));
-  
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: MONTHS[i],
-  }));
 
   // Custom viewing content with period label
   const customViewingContent = (

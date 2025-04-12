@@ -1,4 +1,3 @@
-import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import {
@@ -30,7 +29,6 @@ import { Badge } from "@/components/ui/badge";
 import FilterBar from "@/components/custom-components/FilterBar";
 
 export default function AccomplismentReport() {
-  const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   

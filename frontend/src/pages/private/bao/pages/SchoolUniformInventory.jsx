@@ -1,4 +1,3 @@
-import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import {
@@ -18,7 +17,6 @@ import { inventoryAPI } from "../../joborder/api/inventoryApi";
 import { useDataFetching } from "@/hooks/useDataFetching";
 
 const SchoolUniformInventory = () => {
-  const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 

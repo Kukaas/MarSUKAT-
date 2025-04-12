@@ -1,4 +1,3 @@
-import { useAuth } from "@/context/AuthContext";
 import PrivateLayout from "../../PrivateLayout";
 import { DataTable } from "@/components/custom-components/DataTable";
 import {
@@ -49,7 +48,6 @@ const MONTHS = [
 ];
 
 const SchoolUniformProduction = () => {
-  const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
