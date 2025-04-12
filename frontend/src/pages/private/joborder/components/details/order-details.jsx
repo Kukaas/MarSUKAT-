@@ -93,7 +93,7 @@ const SectionTitle = ({ children }) => (
 const getAvailableStatuses = (currentStatus) => {
   switch (currentStatus) {
     case "Pending":
-      return ["Pending", "Approved", "Reject"];
+      return ["Pending", "Approved", "Rejected"];
     case "Approved":
       return ["Approved", "Measure"];
     case "Measured":
@@ -291,6 +291,14 @@ function OrderContent({ order, onUpdate }) {
       isOpen: true,
       type: "verify",
       data: { id: receiptId, type: receipt.type, amount: receipt.amount },
+    });
+  };
+
+  const openRejectConfirmation = () => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "reject",
+      data: null,
     });
   };
 
