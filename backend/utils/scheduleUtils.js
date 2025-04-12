@@ -10,15 +10,29 @@ export const TIME_SLOTS = [
   { time: "8:50 AM", maxStudents: 4 },  // Fifth slot
   { time: "9:10 AM", maxStudents: 4 },  // Sixth slot
   { time: "9:30 AM", maxStudents: 4 },  // Seventh slot
-  { time: "10:30 AM", maxStudents: 4 }  // Last slot
-];                                      // Total: 32 students
+  { time: "9:50 AM", maxStudents: 4 },
+  { time: "10:10 AM", maxStudents: 4 },
+  { time: "10:30 AM", maxStudents: 4 },
+  { time: "10:50 AM", maxStudents: 4 },
+  { time: "11:10 AM", maxStudents: 4 },
+  { time: "11:30 AM", maxStudents: 4 }
+];                                      // Total: 52 students
 
-export const MAX_STUDENTS_PER_DAY = 32;
+export const MAX_STUDENTS_PER_DAY = 52;
 
 // Check if date is a weekday (Monday-Thursday)
 export const isWeekday = (date) => {
   const day = date.getDay();
   return day >= 1 && day <= 4; // Monday (1) to Thursday (4)
+};
+
+// Get next valid weekday
+const getNextValidWeekday = (date) => {
+  const nextDate = new Date(date);
+  do {
+    nextDate.setDate(nextDate.getDate() + 1);
+  } while (!isWeekday(nextDate));
+  return nextDate;
 };
 
 // Format time slot
@@ -67,10 +81,13 @@ const hasReachedDailyLimit = async (date) => {
 
 // Get next available schedule
 export const getNextAvailableSchedule = async (startDate) => {
-  // Always start from tomorrow for new schedules
-  const currentDate = new Date(startDate);
+  let currentDate = new Date(startDate);
   currentDate.setDate(currentDate.getDate() + 1);
   currentDate.setHours(0, 0, 0, 0);
+
+  if (!isWeekday(currentDate)) {
+    currentDate = getNextValidWeekday(currentDate);
+  }
 
   // Check for "No Measurement" announcement with case-insensitive search
   const noMeasurementAnnouncement = await Announcement.findOne({
@@ -82,19 +99,14 @@ export const getNextAvailableSchedule = async (startDate) => {
   if (noMeasurementAnnouncement) {
     // Start searching from the day after announcement ends
     const endDate = new Date(noMeasurementAnnouncement.endDate);
-    currentDate.setTime(endDate.getTime() + 24 * 60 * 60 * 1000); // Add one day to end date
-
-    // Ensure we're not starting on a weekend
-    while (!isWeekday(currentDate)) {
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    currentDate = getNextValidWeekday(endDate);
   }
 
   // Look for next 30 days maximum
   for (let i = 0; i < 30; i++) {
     // Skip to next day if current date is not a weekday
     if (!isWeekday(currentDate)) {
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate = getNextValidWeekday(currentDate);
       continue;
     }
 
@@ -107,14 +119,14 @@ export const getNextAvailableSchedule = async (startDate) => {
 
     // Skip this date if there's a "No Measurement" announcement
     if (dateSpecificAnnouncement) {
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate = getNextValidWeekday(currentDate);
       continue;
     }
 
     // Check if date has reached maximum students
     const reachedLimit = await hasReachedDailyLimit(currentDate);
     if (reachedLimit) {
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate = getNextValidWeekday(currentDate);
       continue;
     }
 
@@ -137,7 +149,7 @@ export const getNextAvailableSchedule = async (startDate) => {
     }
 
     // Move to next day if no slots available today
-    currentDate.setDate(currentDate.getDate() + 1);
+    currentDate = getNextValidWeekday(currentDate);
   }
 
   throw new Error("No available slots found in the next 30 days");

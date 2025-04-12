@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
 export default function Calendar({ events = [], onEventClick, onDateSelect }) {
   const [date, setDate] = useState(new Date());

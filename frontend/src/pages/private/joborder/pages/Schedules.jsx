@@ -2,7 +2,6 @@ import { useState } from "react";
 import PrivateLayout from "../../PrivateLayout";
 import Calendar from "@/components/custom-components/Calendar";
 import { scheduleAPI } from "@/lib/api";
-import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/lib/utils";
@@ -88,13 +87,17 @@ export function Schedules() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [expandedEvents, setExpandedEvents] = useState(new Set());
+  
   const { data: schedules = [], isLoading } = useDataFetching(
     ['schedules'],
     async () => {
       const data = await scheduleAPI.getAllSchedules();
       return data.map((schedule) => ({
         id: schedule.id,
-        start: new Date(schedule.date),
+        // Convert to proper Date object while handling timezone
+        start: new Date(new Date(schedule.date).toLocaleString('en-US', {
+          timeZone: 'Asia/Manila'
+        })),
         time: schedule.time,
         department: schedule.department,
         studentNumber: schedule.studentNumber,

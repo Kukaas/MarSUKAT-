@@ -5,20 +5,16 @@ import { scheduleAPI } from "../../../../lib/api";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/lib/utils";
-import { useAuth } from "@/context/AuthContext";
-import { Badge } from "@/components/ui/badge";
 import {
   Calendar as CalendarIcon,
   Clock,
   FileText,
-  CheckCircle2,
-  AlertCircle,
-  Clock4,
 } from "lucide-react";
 import SectionHeader from "@/components/custom-components/SectionHeader";
 import EmptyState from "@/components/custom-components/EmptyState";
 import { LoadingSpinner } from "@/components/custom-components/LoadingSpinner";
 import { useDataFetching } from "@/hooks/useDataFetching";
+import { useAuth } from "@/context/AuthContext";
 
 
 const ScheduleItem = ({ event }) => (
@@ -43,7 +39,6 @@ export default function Schedule() {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const { user } = useAuth();
 
-  // Fetch schedule with React Query
   const { data: schedules = [], isLoading } = useDataFetching(
     ['schedule', user?._id],
     async () => {
@@ -51,11 +46,14 @@ export default function Schedule() {
       const data = await scheduleAPI.getMySchedule(user._id);
       
       if (!data.length) return [];
-
+  
       return data.map((schedule) => ({
         id: schedule.id,
         title: `Measurement Schedule`,
-        start: new Date(schedule.date),
+        // Convert to proper Date object while handling timezone
+        start: new Date(new Date(schedule.date).toLocaleString('en-US', {
+          timeZone: 'Asia/Manila'
+        })),
         time: schedule.time,
         department: schedule.department,
         studentNumber: schedule.studentNumber,
@@ -65,8 +63,8 @@ export default function Schedule() {
     },
     {
       enabled: !!user?._id,
-      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
     }
   );
 

@@ -24,7 +24,7 @@ import {
   Shirt,
   Plus,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageViewer } from "@/components/custom-components/ImageViewer";
 import { StatusMessage } from "@/components/custom-components/StatusMessage";
@@ -39,7 +39,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { OrderForm } from "../forms/OrderForm";
 import { orderAPI } from "../api/orderApi";
 import { toast } from "sonner";
 import ReceiptForm from "../forms/ReceiptForm";
@@ -149,21 +148,6 @@ function OrderContent({ order, onOrderUpdate }) {
       [sectionId]: !prev[sectionId],
     }));
   };
-
-  // Helper function to filter receipts by type
-  const getReceiptsByType = (type) => {
-    if (!order?.receipt) return null;
-    if (order.receipt.type === type) return order.receipt;
-    return null;
-  };
-
-  // Get receipts for each type
-  const downPayment = getReceiptsByType("Down Payment");
-  const partialPayment = getReceiptsByType("Partial Payment");
-  const fullPayment = getReceiptsByType("Full Payment");
-
-  // Add helper function to check if order is rejected
-  const isRejected = order?.status === "Rejected";
 
   // Add handler for receipt submission
   const handleAddReceipt = async (data) => {
