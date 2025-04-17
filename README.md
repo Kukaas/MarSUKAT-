@@ -76,19 +76,22 @@ npm install
 
 Frontend (.env):
 ```env
+VITE_SUPER_ADMIN_ACCESS_KEY=admin_access_password
 VITE_API_URL=http://localhost:3000/api/v1
+VITE_API_URL_NETWORK=your_ip_network
+VITE_NODE_ENV=development
+VITE_OCR_API_KEY=your_OCR_key
 ```
 
 Backend (.env):
 ```env
-NODE_ENV=development
-PORT=3000
 MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
+PORT=3000
+NODE_ENV=development
 AUTH_EMAIL=your_email@gmail.com
-AUTH_PASSWORD=your_email_password
-CLIENT_URL=http://localhost:5173
+AUTH_PASSWORD=your_email_app_password
+JWT_SECRET=your_jwt_secret_key
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_key
 ```
 
 5. Start Development Servers
