@@ -78,11 +78,6 @@ const createProfileSchema = (role) => {
   }
 };
 
-const genderOptions = [
-  { value: "Male", label: "Male" },
-  { value: "Female", label: "Female" },
-  { value: "Other", label: "Other" },
-];
 
 const UpdateProfileTab = ({
   onSubmitSuccess,
@@ -260,25 +255,6 @@ const UpdateProfileTab = ({
       toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const getProfileForm = () => {
-    switch (user?.role) {
-      case "Student":
-        return <StudentProfileForm form={form} />;
-      case "Coordinator":
-        return <CoordinatorProfileForm form={form} />;
-      case "JobOrder":
-        return <JobOrderProfileForm form={form} />;
-      case "CommercialJob":
-        return <CommercialJobProfileForm form={form} />;
-      case "SuperAdmin":
-        return <SuperAdminProfileForm form={form} />;
-      case "BAO":
-        return <BAOProfileForm form={form} />;
-      default:
-        return null;
     }
   };
 

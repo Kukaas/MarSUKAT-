@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
-import { useState } from "react";
 
 const InfoCard = ({ icon: Icon, label, value, className }) => (
   <Card

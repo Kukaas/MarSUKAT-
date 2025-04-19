@@ -115,7 +115,7 @@ const ProfileModal = ({ open, onOpenChange }) => {
             </TabsList>
           </div>
 
-          <ScrollArea className="h-[calc(95vh-280px)] sm:h-[420px]">
+          <ScrollArea className="h-[calc(120vh-300px)] sm:h-[400px]">
             <div className="p-6">
               <TabsContent value="profile" className="mt-0">
                 <ProfileTab user={auth.user} />
