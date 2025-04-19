@@ -99,7 +99,7 @@ const getAvailableStatuses = (currentStatus) => {
     case "Measured":
       return ["Measured", "For Pickup"];
     case "For Pickup":
-      return ["For Pickup", "Claimed"];
+      return ["For Pickup"];
     case "For Verification":
       return ["For Verification"];
     case "Payment Verified":

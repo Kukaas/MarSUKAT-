@@ -1,10 +1,10 @@
 import StudentOrder from "../models/studentOrder.model.js";
 import User from "../models/user.model.js";
-import Announcement from "../models/announcement.model.js";
 import mongoose from "mongoose";
 import { getNextAvailableSchedule } from "../utils/scheduleUtils.js";
 import SalesReport from "../models/salesReport.model.js";
 import UniformInventory from "../models/uniformInventory.model.js";
+import { sendMeasurementDetailsEmail, sendPaymentReminderEmail, sendPickupEmail, sendScheduleEmail } from "../utils/emailService.js";
 
 // @desc    Get all orders
 // @route   GET /api/student-orders
@@ -209,6 +209,9 @@ export const updateStudentOrder = async (req, res) => {
 
             student.notifications.push(notification);
             await student.save();
+
+            // Send schedule email
+            await sendScheduleEmail(student.email, student.name, order.orderId, schedule);
           }
         } catch (error) {
           return res.status(400).json({
@@ -217,6 +220,29 @@ export const updateStudentOrder = async (req, res) => {
           });
         }
       }
+
+      if (newStatus === "For Pickup") {
+        // Notify the student about the pickup
+        const student = await User.findById(order.userId);
+        if (student) {
+          const notification = {
+            title: "Order Ready for Pickup",
+            message: `Your order ${order.orderId} is ready for pickup. Please check your email for details.`,
+            read: false,
+          };
+
+          student.notifications.push(notification);
+          await student.save();
+        }
+
+        await sendPaymentReminderEmail(
+          student.email,
+          student.name,
+          order.orderId,
+          order.totalPrice 
+        );
+      }
+
       if (newStatus === "Claimed") {
         try {
           // Validate order items exist
@@ -511,9 +537,6 @@ export const addOrderItemsAndMeasure = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Debug log
-    console.log("Current order status:", order.status);
-
     // Validate order status - make case insensitive comparison
     if (order.status.toLowerCase() !== "approved") {
       return res.status(400).json({
@@ -541,6 +564,14 @@ export const addOrderItemsAndMeasure = async (req, res) => {
       student.notifications.push(notification);
       await student.save();
     }
+
+    await sendMeasurementDetailsEmail(
+      student.email,
+      student.name,
+      order.orderId,
+      order.orderItems,
+      order.totalPrice
+    );
 
     res.status(200).json(updatedOrder);
   } catch (error) {
@@ -594,6 +625,7 @@ export const verifyReceipt = async (req, res) => {
             read: false,
           };
 
+          await sendScheduleEmail(student.email, student.name, order.orderId, schedule);
           student.notifications.push(notification);
           await student.save();
         }
@@ -629,6 +661,11 @@ export const verifyReceipt = async (req, res) => {
 
         student.notifications.push(notification);
         await student.save();
+        await sendPickupEmail(
+          student.email,
+          student.name,
+          order.orderId,
+        )
       }
     }
 

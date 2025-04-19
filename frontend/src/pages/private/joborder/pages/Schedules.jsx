@@ -205,13 +205,11 @@ export function Schedules() {
             </div>
           </div>
         ) : (
-          <Card className="p-12 text-center shadow-sm">
-            <CalendarIcon className="h-10 w-10 mx-auto mb-3 " />
-            <h3 className="text-xl font-medium mb-1">No Schedule</h3>
-            <p className="text-sm text-muted-foreground">
-              No measurement schedules available
-            </p>
-          </Card>
+          <EmptyState 
+            icon={CalendarX}
+            message="No measurement schedules available"
+            className="border-none"
+            />
         )}
       </div>
     </PrivateLayout>

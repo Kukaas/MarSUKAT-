@@ -96,7 +96,7 @@ const VerificationError = () => {
                   className={
                     errorType === ERROR_TYPES.EXPIRED
                       ? "w-full border-gray-200 hover:bg-gray-50 transition-all"
-                      : "w-full bg-gray-900 hover:bg-gray-800 shadow transition-all group"
+                      : "w-full bg-gray-900 hover:bg-gray-800 shadow transition-all group text-white"
                   }
                   size="lg"
                 >
@@ -110,7 +110,7 @@ const VerificationError = () => {
               <Link to="/" className="block">
                 <Button
                   variant="outline"
-                  className="w-full border-gray-200 hover:bg-gray-50 transition-all"
+                  className="w-full border-gray-20 transition-all"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Home className="w-4 h-4" />
