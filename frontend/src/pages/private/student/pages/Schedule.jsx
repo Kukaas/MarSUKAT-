@@ -140,13 +140,11 @@ export default function Schedule() {
             </div>
           </div>
         ) : (
-          <Card className="p-8 sm:p-12 text-center max-w-sm mx-auto shadow-sm">
-            <CalendarIcon className="h-10 w-10 mx-auto mb-3 text-primary/10" />
-            <h3 className="text-base font-medium mb-1">No Schedule</h3>
-            <p className="text-xs text-muted-foreground">
-              Submit an order to get your schedule
-            </p>
-          </Card>
+          <EmptyState
+            icon={CalendarIcon}
+            message="Submit an order to get a schedule"
+            className="border-none py-12"
+          />
         )}
       </div>
     </PrivateLayout>

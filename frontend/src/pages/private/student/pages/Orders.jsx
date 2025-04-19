@@ -56,7 +56,6 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [isValidatingReceipt, setIsValidatingReceipt] = useState(false);
