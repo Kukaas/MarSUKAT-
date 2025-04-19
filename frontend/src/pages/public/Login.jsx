@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,14 +14,18 @@ import FormInput from "@/components/custom-components/FormInput";
 import PasswordInput from "@/components/custom-components/PasswordInput";
 import { authAPI } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import ReCaptcha from "@/components/custom-components/ReCaptcha";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  recaptchaToken: z.string().optional(),
 });
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState("");
+  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -34,13 +38,29 @@ const Login = () => {
     defaultValues: {
       email: "",
       password: "",
+      recaptchaToken: "",
     },
   });
 
+  const handleRecaptchaChange = (token) => {
+    setRecaptchaToken(token);
+    form.setValue("recaptchaToken", token);
+  };
+
   const onSubmit = async (data) => {
     try {
+      if (!recaptchaToken) {
+        toast.error("Please complete the reCAPTCHA");
+        return;
+      }
+
       setIsLoading(true);
-      const response = await authAPI.login(data);
+      const loginData = {
+        email: data.email,
+        password: data.password,
+        recaptchaToken: recaptchaToken
+      };
+      const response = await authAPI.login(loginData);
 
       // Login will now only handle user state, cookies are handled by the server
       await login(response);
@@ -49,8 +69,9 @@ const Login = () => {
         description: "Welcome back to MarSUKAT.",
       });
 
-      // Reset form and navigate to the return URL
       form.reset();
+      setRecaptchaToken("");
+      
       navigate(returnUrl, { replace: true });
     } catch (error) {
       const errorMessage =
@@ -73,6 +94,12 @@ const Login = () => {
         toast.error("Login failed", {
           description: "An unexpected error occurred. Please try again later.",
         });
+      }
+
+      // Only reset reCAPTCHA on error, not on success
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+        setRecaptchaToken("");
       }
     } finally {
       setIsLoading(false);
@@ -134,6 +161,12 @@ const Login = () => {
                           >
                             Forgot password?
                           </Link>
+                        </div>
+                        <div className="mt-4 w-full">
+                          <ReCaptcha 
+                            ref={recaptchaRef}
+                            onChange={handleRecaptchaChange}
+                          />
                         </div>
 
                         <Button

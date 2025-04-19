@@ -59,6 +59,7 @@ export const devAPI = {
       const response = await api.post("/dev/switch-user", { email });
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -68,6 +69,7 @@ export const devAPI = {
       const response = await api.delete("/dev/delete-user", { data: { email } });
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -77,6 +79,7 @@ export const devAPI = {
       const response = await api.post("/dev/create-test-order", { studentEmail });
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -86,6 +89,7 @@ export const devAPI = {
       const response = await api.delete("/dev/delete-all-orders");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -95,6 +99,7 @@ export const devAPI = {
       const response = await api.post("/dev/create-mass-orders", { count, studentEmail });
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -104,6 +109,7 @@ export const devAPI = {
       const response = await api.post("/dev/approve-all-orders");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   }
@@ -116,6 +122,7 @@ export const systemMaintenanceAPI = {
       const response = await api.get("/department-levels/active");
       return response.data.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -128,6 +135,7 @@ export const otpAPI = {
       const response = await api.post("/otp/request", { email });
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -137,6 +145,7 @@ export const otpAPI = {
       const response = await api.post("/otp/verify", data);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -149,6 +158,7 @@ export const authAPI = {
       const response = await api.post("/auth/signup", userData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -158,6 +168,7 @@ export const authAPI = {
       const response = await api.post("/auth/login", credentials);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -167,6 +178,7 @@ export const authAPI = {
       const response = await api.post("/auth/logout");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -176,6 +188,7 @@ export const authAPI = {
       const response = await api.get(`/auth/verify/${userId}/${uniqueString}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -186,6 +199,7 @@ export const authAPI = {
       const response = await api.post("/auth/refresh-token");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -196,6 +210,7 @@ export const authAPI = {
       const response = await api.get("/auth/me");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -205,6 +220,7 @@ export const authAPI = {
       const response = await api.post("/superadmin/create", adminData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -215,6 +231,7 @@ export const authAPI = {
       const response = await api.put("/auth/change-password", passwordData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -228,6 +245,7 @@ export const userAPI = {
       const response = await api.get("/users/staff");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -237,6 +255,7 @@ export const userAPI = {
       const response = await api.get(`/users/staff/${id}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -246,6 +265,7 @@ export const userAPI = {
       const response = await api.post("/users/staff", staffUserData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -255,6 +275,7 @@ export const userAPI = {
       const response = await api.put(`/users/staff/${id}`, staffUserData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -264,6 +285,7 @@ export const userAPI = {
       const response = await api.put(`/users/staff/${staffUserId}/activate`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -273,6 +295,7 @@ export const userAPI = {
       const response = await api.put(`/users/staff/${staffUserId}/deactivate`, reason);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -282,6 +305,7 @@ export const userAPI = {
       const response = await api.delete(`/users/staff/${staffUserId}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -292,6 +316,7 @@ export const userAPI = {
       const response = await api.get("/users/students");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -301,6 +326,7 @@ export const userAPI = {
       const response = await api.get(`/users/students/${id}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -310,6 +336,7 @@ export const userAPI = {
       const response = await api.put(`/users/students/${id}`, studentData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -319,6 +346,7 @@ export const userAPI = {
       const response = await api.put(`/users/students/${id}/verify`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -328,6 +356,7 @@ export const userAPI = {
       const response = await api.put(`/users/students/${id}/activate`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -337,6 +366,7 @@ export const userAPI = {
       const response = await api.put(`/users/students/${id}/deactivate`, { reason });
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -346,6 +376,7 @@ export const userAPI = {
       const response = await api.delete(`/users/students/${id}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -356,6 +387,7 @@ export const userAPI = {
       const response = await api.get("/users/job-orders");
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -365,6 +397,7 @@ export const userAPI = {
       const response = await api.get(`/users/job-orders/${id}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -374,6 +407,7 @@ export const userAPI = {
       const response = await api.post("/users/job-orders", jobOrderData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -383,6 +417,7 @@ export const userAPI = {
       const response = await api.put(`/users/job-orders/${id}`, jobOrderData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -394,6 +429,7 @@ export const userAPI = {
       );
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -405,6 +441,7 @@ export const userAPI = {
       );
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -414,6 +451,7 @@ export const userAPI = {
       const response = await api.delete(`/users/job-orders/${jobOrderId}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -424,6 +462,7 @@ export const userAPI = {
       const response = await api.get(`/users/${userId}/profile`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -433,6 +472,7 @@ export const userAPI = {
       const response = await api.put(`/users/${userId}/profile`, profileData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -446,6 +486,7 @@ export const scheduleAPI = {
       const response = await api.get('/student-orders/schedules/all');
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -456,6 +497,7 @@ export const scheduleAPI = {
       const response = await api.get(`/student-orders/schedules/user/${userId}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   }
@@ -468,6 +510,7 @@ export const notificationAPI = {
       const response = await api.get('/users/notifications');
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -477,6 +520,7 @@ export const notificationAPI = {
       const response = await api.put(`/users/notifications/${notificationId}/read`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -486,6 +530,7 @@ export const notificationAPI = {
       const response = await api.put('/users/notifications/read-all');
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   }
@@ -498,6 +543,7 @@ export const employeeAPI = {
       const response = await api.get('/employees');
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -507,6 +553,7 @@ export const employeeAPI = {
       const response = await api.get('/employees/active');
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -516,6 +563,7 @@ export const employeeAPI = {
       const response = await api.get(`/employees/${id}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -525,6 +573,7 @@ export const employeeAPI = {
       const response = await api.post('/employees', employeeData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -534,6 +583,7 @@ export const employeeAPI = {
       const response = await api.put(`/employees/${id}`, employeeData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -543,6 +593,7 @@ export const employeeAPI = {
       const response = await api.patch(`/employees/${id}/status`, statusData);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   },
@@ -552,6 +603,7 @@ export const employeeAPI = {
       const response = await api.delete(`/employees/${id}`);
       return response.data;
     } catch (error) {
+      console.error(error)
       throw error;
     }
   }

@@ -11,6 +11,7 @@ import {
 } from "../utils/emailService.js";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
+import { verifyRecaptcha } from "../utils/verifyCaptcha.js";
 
 // Rate limiting helper
 const loginAttempts = new Map();
@@ -261,7 +262,15 @@ export const verifyEmail = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, recaptchaToken } = req.body;
+
+    // Verify reCAPTCHA token
+    const isRecaptchaValid = await verifyRecaptcha(recaptchaToken);
+    if (!isRecaptchaValid) {
+      return res.status(400).json({ 
+        message: "reCAPTCHA verification failed. Please try again." 
+      });
+    }
 
     // Check for account lockout
     if (isAccountLocked(email)) {
