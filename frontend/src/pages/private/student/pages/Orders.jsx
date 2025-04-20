@@ -49,6 +49,7 @@ const STATUS_ICONS = {
   "Payment Verified": CheckCircle2,
   "For Verification": Clock,
   Cancelled: XCircle,
+  Rejected: XCircle,
 };
 
 export default function Orders() {
