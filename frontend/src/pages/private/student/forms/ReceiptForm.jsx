@@ -88,12 +88,12 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
   // Validate receipt when both image and OR number are provided
   useEffect(() => {
     const validateReceiptData = async () => {
-      // Skip validation if already validated successfully and image hasn't changed
-      if (validationStatus === 'valid' && !receiptImage?.data) {
+      // Skip validation if already validated successfully or if the image or OR number hasn't changed
+      if (validationStatus === 'valid') {
         return;
       }
 
-      if (receiptImage?.data && orNumber && !isValidating) {
+      if (receiptImage?.data && orNumber && orNumber.trim() !== '' && !isValidating) {
         setIsValidating(true);
         setValidationStatus(null);
         try {
@@ -105,8 +105,6 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
             });
             toast.error("Invalid receipt. Please check that:\n- The OR number matches the receipt\n- The uploaded image is a valid receipt\n- The receipt image is clear and readable");
             setValidationStatus('invalid');
-            // Clear the image when validation fails
-            form.setValue("image", null);
           } else {
             form.clearErrors("orNumber");
             toast.success("Receipt validated successfully!");
@@ -116,8 +114,6 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
           console.error("Receipt validation error:", error);
           toast.error("Failed to validate receipt. Please ensure the image is clear and try again.");
           setValidationStatus('invalid');
-          // Clear the image when validation fails
-          form.setValue("image", null);
         } finally {
           setIsValidating(false);
         }
@@ -125,14 +121,14 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
     };
 
     validateReceiptData();
-  }, [receiptImage, orNumber]);
+  }, [receiptImage?.data, orNumber, form, isValidating, validationStatus]);
 
-  // Reset validation status when OR number changes
+  // Reset validation status when OR number or image changes
   useEffect(() => {
-    if (validationStatus === 'valid' && !receiptImage?.data) {
+    if (validationStatus) {
       setValidationStatus(null);
     }
-  }, [orNumber, receiptImage]);
+  }, [orNumber, receiptImage?.data]);
 
   const paymentTypes = [
     { value: "Partial Payment", label: "Partial Payment" },
@@ -142,18 +138,24 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
   const handleFormSubmit = async (data) => {
     // Only validate if not already validated successfully
     if (receiptImage?.data && orNumber && validationStatus !== 'valid') {
+      setIsValidating(true);
       try {
         const result = await validateReceipt(receiptImage.data, orNumber);
         if (!result.isValid) {
           toast.error("Invalid receipt. Please check that:\n- The OR number matches the receipt\n- The uploaded image is a valid receipt\n- The receipt image is clear and readable");
+          setIsValidating(false);
           return;
         }
+        setValidationStatus('valid');
       } catch (error) {
         console.error("Receipt validation error:", error);
         toast.error("Failed to validate receipt. Please ensure the image is clear and try again.");
+        setIsValidating(false);
         return;
       }
+      setIsValidating(false);
     }
+    
     // Proceed with form submission
     onSubmit({ receipt: data });
   };

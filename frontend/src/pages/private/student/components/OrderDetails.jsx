@@ -140,6 +140,7 @@ function OrderContent({ order, onOrderUpdate }) {
   // Add new state for receipt dialog
   const [isAddReceiptDialogOpen, setIsAddReceiptDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isValidatingReceipt, setIsValidatingReceipt] = useState(false);
 
   // Toggle section
   const toggleSection = (sectionId) => {
@@ -164,6 +165,11 @@ function OrderContent({ order, onOrderUpdate }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Add handler for receipt validation state change
+  const handleValidationStateChange = (validating) => {
+    setIsValidatingReceipt(validating);
   };
 
   const renderReceiptSection = (receipts) => {
@@ -735,6 +741,7 @@ function OrderContent({ order, onOrderUpdate }) {
                     order={order}
                     onSubmit={handleAddReceipt}
                     isSubmitting={isSubmitting}
+                    onValidationStateChange={handleValidationStateChange}
                   />
                 </div>
               </ScrollArea>
@@ -751,7 +758,7 @@ function OrderContent({ order, onOrderUpdate }) {
               <AlertDialogAction
                 type="submit"
                 form="receiptForm"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isValidatingReceipt}
               >
                 {isSubmitting ? (
                   <>
