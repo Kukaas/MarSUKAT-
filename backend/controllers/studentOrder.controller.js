@@ -781,3 +781,62 @@ export const getArchivedStudentOrders = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Update order items for measured order
+// @route   PUT /api/student-orders/:id/update-items
+// @access  Private/JobOrder
+export const updateOrderItems = async (req, res) => {
+  try {
+    const { orderItems } = req.body;
+
+    if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+      return res.status(400).json({ message: "Order items are required" });
+    }
+
+    const order = await StudentOrder.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Validate order status - only allow updates for "Measured" status
+    if (order.status !== "Measured") {
+      return res.status(400).json({
+        message: "Order must be in 'Measured' status to update items",
+        currentStatus: order.status,
+      });
+    }
+
+    // Update order items and recalculate total price
+    order.orderItems = orderItems;
+    order.calculateTotalPrice();
+
+    const updatedOrder = await order.save();
+
+    // Notify the student
+    const student = await User.findById(order.userId);
+    if (student) {
+      const notification = {
+        title: "Measurement Updated",
+        message: `Your measurements have been updated for order ${order.orderId}. Updated total amount: ₱${order.totalPrice}`,
+        read: false,
+      };
+
+      student.notifications.push(notification);
+      await student.save();
+    }
+
+    // Resend the email with updated details
+    await sendMeasurementDetailsEmail(
+      student.email,
+      student.name,
+      order.orderId,
+      order.orderItems,
+      order.totalPrice
+    );
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error("Error updating order items:", error);
+    res.status(400).json({ message: error.message });
+  }
+};

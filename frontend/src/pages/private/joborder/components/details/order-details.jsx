@@ -130,6 +130,8 @@ function OrderContent({ order, onUpdate }) {
   });
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
+  // Add state for edit mode
+  const [isEditing, setIsEditing] = useState(false);
 
   const availableStatuses = getAvailableStatuses(order?.status);
 
@@ -220,6 +222,31 @@ function OrderContent({ order, onUpdate }) {
     }
   );
 
+  // Add the update order items mutation
+  const updateOrderItemsMutation = useDataMutation(
+    ['activeOrders', 'archivedOrders'],
+    async ({ orderId, orderItems }) => {
+      const result = await jobOrderAPI.updateOrderItems(
+        orderId,
+        orderItems.map((item) => ({
+          ...item,
+          level: order.level,
+        }))
+      );
+      return result;
+    },
+    {
+      onSuccess: (updatedOrder) => {
+        toast.success("Measurements updated successfully");
+        onUpdate && onUpdate(updatedOrder);
+        setIsEditing(false);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to update measurements");
+      },
+    }
+  );
+
   const toggleSection = (sectionId) => {
     setOpenSections((prev) => ({
       ...prev,
@@ -278,6 +305,15 @@ function OrderContent({ order, onUpdate }) {
     }
   };
 
+  const handleMeasurementUpdate = async (data) => {
+    if (order?._id) {
+      await updateOrderItemsMutation.mutateAsync({
+        orderId: order._id,
+        orderItems: data.orderItems,
+      });
+    }
+  };
+
   const openStatusConfirmation = () => {
     setConfirmDialog({
       isOpen: true,
@@ -291,14 +327,6 @@ function OrderContent({ order, onUpdate }) {
       isOpen: true,
       type: "verify",
       data: { id: receiptId, type: receipt.type, amount: receipt.amount },
-    });
-  };
-
-  const openRejectConfirmation = () => {
-    setConfirmDialog({
-      isOpen: true,
-      type: "reject",
-      data: null,
     });
   };
 
@@ -844,54 +872,89 @@ function OrderContent({ order, onUpdate }) {
     <>
       {order?.orderItems?.length > 0 ? (
         <div className="space-y-3">
-          {order.orderItems.map((item, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Shirt className="h-5 w-5 text-primary" />
-                    <span className="font-medium">
-                      {item.productType || "N/A"}
+          {!isEditing && (
+            <>
+              {order.orderItems.map((item, index) => (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Shirt className="h-5 w-5 text-primary" />
+                        <span className="font-medium">
+                          {item.productType || "N/A"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="text-muted-foreground">Size:</div>
+                        <div className="font-medium">{item.size || "N/A"}</div>
+                        <div className="text-muted-foreground">Quantity:</div>
+                        <div className="font-medium">{item.quantity || 0}</div>
+                        <div className="text-muted-foreground">Unit Price:</div>
+                        <div className="font-medium">
+                          ₱{(item.unitPrice || 0).toFixed(2)}
+                        </div>
+                        <div className="text-muted-foreground">Total:</div>
+                        <div className="font-medium text-primary">
+                          ₱
+                          {((item.unitPrice || 0) * (item.quantity || 0)).toFixed(
+                            2
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center text-base font-semibold">
+                    <span>Overall Total:</span>
+                    <span className="text-primary text-lg">
+                      ₱
+                      {order.orderItems
+                        .reduce(
+                          (total, item) =>
+                            total + (item.unitPrice || 0) * (item.quantity || 0),
+                          0
+                        )
+                        .toFixed(2)}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-muted-foreground">Size:</div>
-                    <div className="font-medium">{item.size || "N/A"}</div>
-                    <div className="text-muted-foreground">Quantity:</div>
-                    <div className="font-medium">{item.quantity || 0}</div>
-                    <div className="text-muted-foreground">Unit Price:</div>
-                    <div className="font-medium">
-                      ₱{(item.unitPrice || 0).toFixed(2)}
-                    </div>
-                    <div className="text-muted-foreground">Total:</div>
-                    <div className="font-medium text-primary">
-                      ₱
-                      {((item.unitPrice || 0) * (item.quantity || 0)).toFixed(
-                        2
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </CardContent>
+              </Card>
+              
+              {/* Add Edit Button - Only show if status is Measured */}
+              {order.status === "Measured" && (
+                <Button 
+                  className="w-full mt-2" 
+                  variant="outline" 
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Ruler className="h-4 w-4 mr-2" />
+                  Edit Measurements
+                </Button>
+              )}
+            </>
+          )}
+          
+          {isEditing && (
+            <Card className="mt-4">
+              <CardContent className="p-4 space-y-4">
+                <h3 className="text-lg font-semibold mb-4">Update Measurements</h3>
+                <StatusMessage
+                  type="warning"
+                  title="Editing Measurements"
+                  message="The student will be notified about these changes and will receive an updated email."
+                />
+                <OrderMeasurementForm
+                  onSubmit={handleMeasurementUpdate}
+                  isSubmitting={updateOrderItemsMutation.isPending}
+                  studentLevel={order.level}
+                  initialData={{ orderItems: order.orderItems }}
+                />
               </CardContent>
             </Card>
-          ))}
-          <Card className="bg-muted/50">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center text-base font-semibold">
-                <span>Overall Total:</span>
-                <span className="text-primary text-lg">
-                  ₱
-                  {order.orderItems
-                    .reduce(
-                      (total, item) =>
-                        total + (item.unitPrice || 0) * (item.quantity || 0),
-                      0
-                    )
-                    .toFixed(2)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+          )}
         </div>
       ) : (
         <Card>

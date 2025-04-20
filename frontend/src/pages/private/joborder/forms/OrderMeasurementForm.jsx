@@ -35,6 +35,7 @@ export function OrderMeasurementForm({
   onSubmit,
   isSubmitting = false,
   studentLevel,
+  initialData = null,
 }) {
   const [filteredOptions, setFilteredOptions] = useState({
     productTypes: [],
@@ -46,18 +47,37 @@ export function OrderMeasurementForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      orderItems: [
-        {
-          level: studentLevel,
-          quantity: "",
-          unitPrice: 0,
-          productType: "",
-          size: "",
-        },
-      ],
+      orderItems: initialData?.orderItems 
+        ? initialData.orderItems.map(item => ({
+            level: item.level || studentLevel,
+            productType: item.productType || "",
+            size: item.size || "",
+            quantity: item.quantity || "",
+            unitPrice: item.unitPrice || 0,
+          }))
+        : [
+            {
+              level: studentLevel,
+              quantity: "",
+              unitPrice: 0,
+              productType: "",
+              size: "",
+            },
+          ],
     },
     mode: "onTouched",
   });
+
+  // Initialize form with initial data if provided
+  useEffect(() => {
+    if (initialData?.orderItems?.length > 0) {
+      // Set order items state with unique IDs
+      const items = initialData.orderItems.map(() => ({ 
+        id: Date.now() + Math.random() 
+      }));
+      setOrderItems(items);
+    }
+  }, [initialData]);
 
   // Fetch product types with React Query
   const { data: productTypes = [], isLoading: isLoadingProducts } = useDataFetching(
@@ -80,11 +100,54 @@ export function OrderMeasurementForm({
         sizes: [],
       });
 
+      // Initialize selected products after data is loaded
+      if (initialData?.orderItems?.length > 0 && data.length > 0) {
+        const initSelectedProducts = initialData.orderItems.map(item => {
+          const matchingProduct = data.find(
+            prod => 
+              prod.level === studentLevel && 
+              prod.productType === item.productType && 
+              prod.size === item.size
+          );
+          
+          return matchingProduct || {
+            price: item.unitPrice,
+            level: item.level || studentLevel,
+            productType: item.productType,
+            size: item.size
+          };
+        });
+        
+        setSelectedProducts(initSelectedProducts);
+      }
+
       return data;
     },
     {
-      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-      cacheTime: 30 * 60 * 1000, // Cache is kept for 30 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      onSuccess: (data) => {
+        // Handle initial data setup after successful loading
+        if (initialData?.orderItems?.length > 0) {
+          const initSelectedProducts = initialData.orderItems.map(item => {
+            const matchingProduct = data.find(
+              prod => 
+                prod.level === studentLevel && 
+                prod.productType === item.productType && 
+                prod.size === item.size
+            );
+            
+            return matchingProduct || {
+              price: item.unitPrice,
+              level: item.level || studentLevel,
+              productType: item.productType,
+              size: item.size
+            };
+          });
+          
+          setSelectedProducts(initSelectedProducts);
+        }
+      }
     }
   );
 
@@ -104,7 +167,7 @@ export function OrderMeasurementForm({
 
   // Add order item
   const addOrderItem = () => {
-    const newIndex = orderItems.length;
+    orderItems.length;
     setOrderItems([...orderItems, { id: Date.now() }]);
 
     const currentItems = form.getValues("orderItems");
@@ -184,7 +247,7 @@ export function OrderMeasurementForm({
                     icon={Shirt}
                     required
                     disabled={isSubmitting || isLoadingProducts}
-                    onChange={(value) => {
+                    onChange={() => {
                       form.setValue(`orderItems.${index}.size`, "");
                       form.setValue(`orderItems.${index}.unitPrice`, 0);
 
@@ -323,8 +386,11 @@ export function OrderMeasurementForm({
         )}
 
         <div className="flex justify-end">
+          
           <Button type="submit" disabled={isSubmitting || isLoadingProducts}>
-            {isSubmitting ? "Saving Measurements..." : "Save Measurements"}
+            {isSubmitting ? 
+              initialData ? "Updating Measurements..." : "Saving Measurements..." 
+              : initialData ? "Update Measurements" : "Save Measurements"}
           </Button>
         </div>
       </form>

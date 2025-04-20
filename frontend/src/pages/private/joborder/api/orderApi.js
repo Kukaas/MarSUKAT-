@@ -50,6 +50,13 @@ export const jobOrderAPI = {
     return response.data;
   },
   
+  updateOrderItems: async (id, orderItems) => {
+    const response = await api.put(`/student-orders/${id}/update-items`, {
+      orderItems,
+    });
+    return response.data;
+  },
+  
   toggleArchive: async (id) => {
     const response = await api.put(`/student-orders/${id}/archive`);
     return response.data;
