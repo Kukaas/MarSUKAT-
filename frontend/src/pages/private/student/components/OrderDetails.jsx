@@ -730,7 +730,7 @@ function OrderContent({ order, onOrderUpdate }) {
             </AlertDialogHeader>
             <div className="flex-1 min-h-0">
               <ScrollArea className="h-full">
-                <div className="px-1 py-4">
+                <div className="px-5 py-4">
                   <ReceiptForm
                     order={order}
                     onSubmit={handleAddReceipt}
