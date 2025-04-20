@@ -14,6 +14,7 @@ import ProductManagement from "../pages/private/superadmin/pages/ProductManageme
 import StaffUsers from "@/pages/private/superadmin/pages/StaffUsers";
 import AcademicGownTypes from "@/pages/private/superadmin/pages/AcademicGownTypes";
 import Employees from "@/pages/private/superadmin/pages/Employees";
+import CreateSuperAdmin from "@/pages/private/superadmin/pages/CreateSuperAdmin";
 export const superAdminRoutes = [
   {
     path: "/superadmin/dashboard/:id",
@@ -79,4 +80,8 @@ export const superAdminRoutes = [
     path: "/superadmin/students/users",
     element: <StudentUser />,
   },
+  {
+    path: "/create-super-admin",
+    element: <CreateSuperAdmin />,
+  }
 ];
