@@ -33,9 +33,21 @@ const formSchema = z.object({
     .nonnegative("Amount cannot be negative"),
 });
 
-export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidationStateChange = () => {} }) {
+export function ReceiptForm({ 
+  order, 
+  onSubmit, 
+  isSubmitting = false, 
+  onValidationStateChange = () => {},
+  existingReceipt = null,
+  isEditing = false
+}) {
   const [isValidating, setIsValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState(null); // null | 'valid' | 'invalid'
+  // Track validated values to prevent re-validation
+  const [validatedValues, setValidatedValues] = useState({
+    orNumber: existingReceipt?.orNumber || "",
+    imageData: existingReceipt?.image?.data || null
+  });
 
   // Notify parent component of validation state changes
   useEffect(() => {
@@ -57,7 +69,12 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
         0
       ) || 0;
 
-    return Math.max(0, totalOrderAmount - totalPaidAmount);
+    // If editing, add back the existing receipt amount to available balance
+    const adjustedPaidAmount = isEditing && existingReceipt
+      ? totalPaidAmount - existingReceipt.amount
+      : totalPaidAmount;
+
+    return Math.max(0, totalOrderAmount - adjustedPaidAmount);
   };
 
   const remainingBalance = calculateRemainingBalance();
@@ -65,11 +82,13 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: "Full Payment",
-      orNumber: "",
-      datePaid: new Date().toISOString().split("T")[0],
-      amount: remainingBalance,
-      image: null,
+      type: existingReceipt?.type || "Full Payment",
+      orNumber: existingReceipt?.orNumber || "",
+      datePaid: existingReceipt?.datePaid 
+        ? new Date(existingReceipt.datePaid).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
+      amount: existingReceipt?.amount || remainingBalance,
+      image: existingReceipt?.image || null,
     },
   });
 
@@ -79,25 +98,35 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
   const receiptImage = form.watch("image");
   const orNumber = form.watch("orNumber");
 
+  // Set amount to remaining balance for Full Payment (unless editing)
   useEffect(() => {
-    if (paymentType === "Full Payment") {
+    if (paymentType === "Full Payment" && !isEditing) {
       form.setValue("amount", remainingBalance);
     }
-  }, [paymentType, remainingBalance, form]);
+  }, [paymentType, remainingBalance, form, isEditing]);
 
-  // Validate receipt when both image and OR number are provided
+  // Improved validation logic - fix validation loop for both add and edit modes
   useEffect(() => {
     const validateReceiptData = async () => {
-      // Skip validation if already validated successfully or if the image or OR number hasn't changed
+      // Skip if we've already validated these exact values
+      if (orNumber === validatedValues.orNumber && 
+          receiptImage?.data === validatedValues.imageData) {
+        return;
+      }
+
+      // Skip validation if already successfully validated
       if (validationStatus === 'valid') {
         return;
       }
 
+      // Only proceed if we have both image and OR number, and not currently validating
       if (receiptImage?.data && orNumber && orNumber.trim() !== '' && !isValidating) {
         setIsValidating(true);
         setValidationStatus(null);
+        
         try {
           const result = await validateReceipt(receiptImage.data, orNumber);
+          
           if (!result.isValid) {
             form.setError("orNumber", {
               type: "manual",
@@ -109,6 +138,12 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
             form.clearErrors("orNumber");
             toast.success("Receipt validated successfully!");
             setValidationStatus('valid');
+            
+            // Save the validated values to prevent revalidation
+            setValidatedValues({
+              orNumber: orNumber,
+              imageData: receiptImage.data
+            });
           }
         } catch (error) {
           console.error("Receipt validation error:", error);
@@ -123,12 +158,17 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
     validateReceiptData();
   }, [receiptImage?.data, orNumber, form, isValidating, validationStatus]);
 
-  // Reset validation status when OR number or image changes
+  // Reset validation status when values change from their validated state
   useEffect(() => {
-    if (validationStatus) {
+    if (!validationStatus) return;
+    
+    const hasOrNumberChanged = orNumber !== validatedValues.orNumber;
+    const hasImageChanged = receiptImage?.data !== validatedValues.imageData;
+    
+    if (hasOrNumberChanged || hasImageChanged) {
       setValidationStatus(null);
     }
-  }, [orNumber, receiptImage?.data]);
+  }, [orNumber, receiptImage?.data, validationStatus, validatedValues]);
 
   const paymentTypes = [
     { value: "Partial Payment", label: "Partial Payment" },
@@ -136,8 +176,12 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
   ];
 
   const handleFormSubmit = async (data) => {
-    // Only validate if not already validated successfully
-    if (receiptImage?.data && orNumber && validationStatus !== 'valid') {
+    // Skip validation if we've already validated these exact values
+    const skipValidation = orNumber === validatedValues.orNumber && 
+                          receiptImage?.data === validatedValues.imageData;
+
+    // Only validate if not already validated successfully and not skipping validation
+    if (!skipValidation && receiptImage?.data && orNumber && validationStatus !== 'valid') {
       setIsValidating(true);
       try {
         const result = await validateReceipt(receiptImage.data, orNumber);
@@ -147,6 +191,11 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
           return;
         }
         setValidationStatus('valid');
+        // Save the validated values
+        setValidatedValues({
+          orNumber: orNumber,
+          imageData: receiptImage.data
+        });
       } catch (error) {
         console.error("Receipt validation error:", error);
         toast.error("Failed to validate receipt. Please ensure the image is clear and try again.");
@@ -171,10 +220,15 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
           {remainingBalance > 0 && (
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm font-medium text-muted-foreground">
-                Remaining Balance:
+                {isEditing ? "Available Balance:" : "Remaining Balance:"}
               </p>
               <p className="text-lg font-semibold text-primary">
                 ₱{remainingBalance.toFixed(2)}
+                {isEditing && existingReceipt && (
+                  <span className="text-sm text-muted-foreground ml-2">
+                    (includes current receipt amount of ₱{existingReceipt.amount.toFixed(2)})
+                  </span>
+                )}
               </p>
             </div>
           )}
@@ -218,11 +272,11 @@ export function ReceiptForm({ order, onSubmit, isSubmitting = false, onValidatio
               placeholder="Enter amount"
               icon={Receipt}
               required
-              disabled={isSubmitting || isValidating || paymentType === "Full Payment"}
+              disabled={isSubmitting || isValidating || (paymentType === "Full Payment" && !isEditing)}
               description={
-                paymentType === "Full Payment"
+                paymentType === "Full Payment" && !isEditing
                   ? "Amount is set to remaining balance for full payment"
-                  : `Remaining balance: ₱${remainingBalance.toFixed(2)}`
+                  : `Available balance: ₱${remainingBalance.toFixed(2)}`
               }
             />
 

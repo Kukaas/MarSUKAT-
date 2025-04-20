@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Shirt,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,12 @@ function OrderContent({ order, onOrderUpdate }) {
   const [isAddReceiptDialogOpen, setIsAddReceiptDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidatingReceipt, setIsValidatingReceipt] = useState(false);
+  // Add new state for editing receipt
+  const [editingReceipt, setEditingReceipt] = useState(null);
+  const [isEditReceiptDialogOpen, setIsEditReceiptDialogOpen] = useState(false);
+  // Add state for current image being viewed
+  const [currentImageUrl, setCurrentImageUrl] = useState(null);
+  const [currentImageTitle, setCurrentImageTitle] = useState("");
 
   // Toggle section
   const toggleSection = (sectionId) => {
@@ -170,6 +177,24 @@ function OrderContent({ order, onOrderUpdate }) {
   // Add handler for receipt validation state change
   const handleValidationStateChange = (validating) => {
     setIsValidatingReceipt(validating);
+  };
+
+  // Add handler for receipt edit submission
+  const handleEditReceipt = async (data) => {
+    try {
+      setIsSubmitting(true);
+      await orderAPI.updateReceipt(order._id, editingReceipt._id, data.receipt);
+      toast.success("Receipt updated successfully");
+      setIsEditReceiptDialogOpen(false);
+      setEditingReceipt(null);
+      // Notify parent component to refresh order data
+      if (onOrderUpdate) onOrderUpdate();
+    } catch (error) {
+      console.error("Error updating receipt:", error);
+      toast.error(error.response?.data?.message || "Failed to update receipt");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderReceiptSection = (receipts) => {
@@ -210,6 +235,23 @@ function OrderContent({ order, onOrderUpdate }) {
                     </p>
                     <p className="font-medium">{receipt.orNumber}</p>
                   </div>
+                  
+                  {/* Only show edit button for unverified receipts that are NOT Down Payment */}
+                  {!receipt.isVerified && receipt.type !== "Down Payment" && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-8 px-2 text-muted-foreground hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingReceipt(receipt);
+                        setIsEditReceiptDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
+                      Edit
+                    </Button>
+                  )}
                 </div>
 
                 <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
@@ -259,7 +301,12 @@ function OrderContent({ order, onOrderUpdate }) {
                     </p>
                     <div
                       className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border cursor-pointer group"
-                      onClick={() => setImageViewerOpen(true)}
+                      onClick={() => {
+                        setImageViewerOpen(true);
+                        // Update the image URL to the current receipt being viewed
+                        setCurrentImageUrl(receipt.image.data);
+                        setCurrentImageTitle(`Receipt ${receipt.orNumber}`);
+                      }}
                     >
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <ZoomIn className="h-8 w-8 text-white" />
@@ -773,15 +820,62 @@ function OrderContent({ order, onOrderUpdate }) {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Add Edit Receipt Dialog */}
+        <AlertDialog open={isEditReceiptDialogOpen}>
+          <AlertDialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[90vh] flex flex-col gap-0">
+            <AlertDialogHeader className="flex-none">
+              <AlertDialogTitle>Edit Receipt</AlertDialogTitle>
+              <AlertDialogDescription>
+                Update the receipt information
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="px-5 py-4">
+                  <ReceiptForm
+                    order={order}
+                    existingReceipt={editingReceipt}
+                    onSubmit={handleEditReceipt}
+                    isSubmitting={isSubmitting}
+                    onValidationStateChange={handleValidationStateChange}
+                    isEditing={true}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+            <AlertDialogFooter className="flex-none border-t pt-4">
+              <AlertDialogCancel
+                onClick={() =>
+                  !isSubmitting && setIsEditReceiptDialogOpen(false)
+                }
+                disabled={isSubmitting}
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                type="submit"
+                form="receiptForm"
+                disabled={isSubmitting || isValidatingReceipt}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                    Updating...
+                  </>
+                ) : (
+                  "Update Receipt"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Update Image Viewer to use currentImageUrl */}
         <ImageViewer
           isOpen={imageViewerOpen}
           onClose={() => setImageViewerOpen(false)}
-          imageUrl={order?.receipts?.length > 0
-            ? order.receipts[order.receipts.length - 1]?.image?.data
-            : null}
-          title={`Receipt ${order?.receipts?.length > 0
-            ? order.receipts[order.receipts.length - 1]?.orNumber
-            : ""}`}
+          imageUrl={currentImageUrl}
+          title={currentImageTitle}
         />
       </div>
     </ScrollArea>

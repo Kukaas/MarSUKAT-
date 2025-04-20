@@ -12,6 +12,7 @@ import {
   addOrderItemsAndMeasure,
   verifyReceipt,
   addReceipt,
+  updateReceipt,
   archiveStudentOrder,
   getArchivedStudentOrders,
   updateOrderItems,
@@ -61,5 +62,7 @@ router.put(
 );
 router.put("/:id/verify-receipt", authenticateUser, isJobOrder, verifyReceipt);
 router.put("/:id/add-receipt", authenticateUser, isStudent, addReceipt);
+// Add new route for updating receipts
+router.put("/:id/update-receipt/:receiptId", authenticateUser, isStudent, updateReceipt);
 
 export default router;

@@ -33,4 +33,13 @@ export const orderAPI = {
     );
     return response.data;
   },
+  
+  // Add new method for updating receipts
+  updateReceipt: async (orderId, receiptId, receiptData) => {
+    const response = await api.put(
+      `/student-orders/${orderId}/update-receipt/${receiptId}`,
+      { receipt: receiptData }
+    );
+    return response.data;
+  },
 };

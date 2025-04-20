@@ -840,3 +840,96 @@ export const updateOrderItems = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+// @desc    Update existing receipt
+// @route   PUT /api/student-orders/:id/update-receipt/:receiptId
+// @access  Private/Student
+export const updateReceipt = async (req, res) => {
+  try {
+    const { receipt } = req.body;
+    const { id: orderId, receiptId } = req.params;
+
+    // Validate receipt data
+    if (!receipt || !receipt.orNumber || !receipt.image) {
+      return res.status(400).json({
+        message: "Receipt OR number and image are required",
+      });
+    }
+
+    const order = await StudentOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Find the receipt to update
+    const existingReceipt = order.receipts.id(receiptId);
+    if (!existingReceipt) {
+      return res.status(404).json({ message: "Receipt not found" });
+    }
+
+    // Prevent updating verified receipts
+    if (existingReceipt.isVerified) {
+      return res.status(400).json({ message: "Cannot update verified receipts" });
+    }
+
+    // Check if OR number already exists in another receipt
+    const duplicateReceipt = order.receipts.find(r => 
+      r._id.toString() !== receiptId && 
+      r.orNumber.trim() === receipt.orNumber.trim()
+    );
+    
+    if (duplicateReceipt) {
+      return res.status(400).json({ message: "OR Number already exists in another receipt for this order" });
+    }
+
+    // Update receipt fields
+    existingReceipt.type = receipt.type;
+    existingReceipt.orNumber = receipt.orNumber.trim();
+    existingReceipt.datePaid = receipt.datePaid;
+    existingReceipt.amount = receipt.amount;
+    
+    // Only update image if provided and different
+    if (receipt.image && receipt.image.data !== existingReceipt.image.data) {
+      existingReceipt.image = {
+        filename: receipt.image.filename,
+        contentType: receipt.image.contentType,
+        data: receipt.image.data,
+      };
+    }
+    
+    // Reset verification status since receipt was updated
+    existingReceipt.isVerified = false;
+
+    // Update order status if needed
+    if (order.status === "Rejected") {
+      order.status = "For Verification";
+      order.rejectionReason = null; // Clear rejection reason
+    }
+
+    const updatedOrder = await order.save();
+
+    // Notify job order users about updated receipt
+    const jobOrderUsers = await User.find({
+      role: "JobOrder",
+      isActive: true,
+    });
+
+    const notification = {
+      title: "Receipt Updated - Needs Verification",
+      message: `${order.name} (${order.studentNumber}) updated a receipt payment of ₱${receipt.amount} that needs verification`,
+      read: false,
+    };
+
+    const notificationPromises = jobOrderUsers.map(async (user) => {
+      user.notifications.push(notification);
+      return user.save();
+    });
+
+    await Promise.all(notificationPromises);
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error("Error updating receipt:", error);
+    res.status  (400).json({ message: error.message });
+  }
+};
