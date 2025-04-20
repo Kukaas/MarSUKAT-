@@ -91,6 +91,31 @@ const DataTable = ({
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [viewMode, setViewMode] = useState(gridView ? "grid" : "table");
+  const [mightHaveStatus, setMightHaveStatus] = useState(false);
+
+  // Extract unique statuses from data
+  const availableStatuses = React.useMemo(() => {
+    if (statusOptions && statusOptions.length > 0) return statusOptions;
+    
+    const statuses = new Set();
+    data.forEach(item => {
+      if (item.status) statuses.add(item.status);
+    });
+    return Array.from(statuses);
+  }, [data, statusOptions]);
+
+  // Check if data has any status properties
+  const hasStatusData = React.useMemo(() => {
+    if (statusOptions && statusOptions.length > 0) return true;
+    const hasStatus = data.some(item => item.status !== undefined);
+    
+    // Update mightHaveStatus state when we detect statuses
+    if (hasStatus && !mightHaveStatus) {
+      setMightHaveStatus(true);
+    }
+    
+    return hasStatus;
+  }, [data, statusOptions, mightHaveStatus]);
 
   // Generate months for dropdown
   const months = React.useMemo(() => {
@@ -297,7 +322,13 @@ const DataTable = ({
               </ToggleGroup>
             </div>
 
-            {showStatusFilter && statusOptions.length > 0 && (
+            {/* Show status filter if: 
+                1. showStatusFilter is true AND
+                2. Either:
+                   - Data has status properties
+                   - OR we're loading and might have status properties 
+            */}
+            {showStatusFilter && (hasStatusData || (isLoading && mightHaveStatus)) && (
               <Select
                 value={statusFilter}
                 onValueChange={setStatusFilter}
@@ -316,11 +347,24 @@ const DataTable = ({
                       <span>All Status</span>
                     </div>
                   </SelectItem>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
+                  {isLoading ? (
+                    <SelectItem value="loading" disabled>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading statuses...</span>
+                      </div>
                     </SelectItem>
-                  ))}
+                  ) : availableStatuses.length > 0 ? (
+                    availableStatuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      <span>No status options available</span>
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             )}
