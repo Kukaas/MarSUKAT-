@@ -16,17 +16,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
+      - name: Set up Node.js (for frontend and backend)
         uses: actions/setup-node@v3
         with:
           node-version: '16'  # Set the Node version to match your project
+
+      - name: Cache Node.js dependencies (frontend)
+        uses: actions/cache@v2
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
 
       - name: Install dependencies for frontend
         run: |
           cd frontend
           npm install --legacy-peer-deps
 
-      - name: Build React app
+      - name: Build React app (frontend)
         run: |
           cd frontend
           npm run build
@@ -40,10 +48,18 @@ jobs:
           cd frontend
           npx vercel --token $VERCEL_TOKEN --team $VERCEL_TEAM_ID --prod --confirm
 
+      - name: Cache Node.js dependencies (backend)
+        uses: actions/cache@v2
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
       - name: Install dependencies for backend
         run: |
           cd backend
-          npm install
+          npm install --legacy-peer-deps
 
       - name: Deploy backend to Vercel
         env:
