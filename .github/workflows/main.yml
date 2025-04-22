@@ -1,0 +1,55 @@
+name: CI/CD for MarSUKAT
+
+on:
+  push:
+    branches:
+      - main    # Trigger on push to the main branch
+  pull_request:
+    branches:
+      - main    # Trigger on pull requests targeting the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'  # Set the Node version to match your project
+
+      - name: Install dependencies for frontend
+        run: |
+          cd frontend
+          npm install --legacy-peer-deps
+
+      - name: Build React app
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Deploy frontend to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_NAME: ${{ secrets.VERCEL_PROJECT_NAME_FRONTEND }}  # Use a specific frontend project name
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+        run: |
+          cd frontend
+          npx vercel --token $VERCEL_TOKEN --team $VERCEL_TEAM_ID --prod --confirm
+
+      - name: Install dependencies for backend
+        run: |
+          cd backend
+          npm install
+
+      - name: Deploy backend to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_NAME: ${{ secrets.VERCEL_PROJECT_NAME_BACKEND }}  # Use a specific backend project name
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+        run: |
+          cd backend
+          npx vercel --token $VERCEL_TOKEN --team $VERCEL_TEAM_ID --prod --confirm
