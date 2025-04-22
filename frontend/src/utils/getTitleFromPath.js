@@ -63,6 +63,13 @@ const roleBasedRoutes = {
     dashboard: "Coordinator Dashboard",
     "rental-request": "Rental Request",
   },
+  // Extra mappings for breadcrumbs
+  general: {
+    "maintenance": "Maintenance",
+    "inventory": "Inventory",
+    "productions": "Productions",
+    "reports": "Reports",
+  }
 };
 
 // Helper function to remove parameter segments from path
@@ -157,4 +164,10 @@ export const getTitleFromPath = (pathname) => {
   });
 
   return title;
+};
+
+// Helper function for breadcrumbs to get just the page title without the suffix
+export const getPageTitleOnly = (pathname) => {
+  const fullTitle = getTitleFromPath(pathname);
+  return fullTitle.split(" | ")[0];
 };

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import Breadcrumbs from "../../components/custom-components/Breadcrumbs";
 import { getTitleFromPath } from "../../utils/getTitleFromPath";
 
 const PrivateLayout = ({ children }) => {
@@ -25,6 +26,7 @@ const PrivateLayout = ({ children }) => {
           <Sidebar />
         </div>
         <main className="flex-1 md:ml-64 overflow-y-auto px-6 py-8 bg-gray-50 dark:bg-muted/40 w-full">
+          <Breadcrumbs />
           {children}
         </main>
       </div>
