@@ -10,6 +10,7 @@ import { Mail, Phone, MapPin, Loader2, MessageSquare } from "lucide-react";
 import PublicLayout from "./PublicLayout";
 import FormInput from "@/components/custom-components/FormInput";
 import { Badge } from "@/components/ui/badge";
+import { contactAPI } from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -34,17 +35,25 @@ export default function Contact() {
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
-      // TODO: Implement contact form submission
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      // Submit form data to backend
+      await contactAPI.submitContactForm(data);
 
       toast.success("Message sent successfully!", {
         description: "We'll get back to you as soon as possible.",
+        position: "top-center",
+        duration: 5000,
       });
 
       form.reset();
     } catch (error) {
+      console.error("Contact form submission error:", error);
+      
+      const errorMessage = error.response?.data?.message || "Please try again later.";
+      
       toast.error("Failed to send message", {
-        description: "Please try again later.",
+        description: errorMessage,
+        position: "top-center",
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -153,7 +162,7 @@ export default function Contact() {
                     <div>
                       <h3 className="font-semibold text-lg">Visit Us</h3>
                       <p className="text-muted-foreground">
-                        123 Business Street, Manila, Philippines
+                        Panfilio M. Manguera Sr. Road, Tanza, Boac, Marinduque
                       </p>
                     </div>
                   </div>
@@ -164,7 +173,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">Call Us</h3>
-                      <p className="text-muted-foreground">+63 (2) 8123 4567</p>
+                      <p className="text-muted-foreground">+63 970 8123 4567</p>
                     </div>
                   </div>
 
@@ -175,7 +184,7 @@ export default function Contact() {
                     <div>
                       <h3 className="font-semibold text-lg">Email Us</h3>
                       <p className="text-muted-foreground">
-                        contact@marsukat.com
+                        marsu.garments@marsu.edu.ph
                       </p>
                     </div>
                   </div>

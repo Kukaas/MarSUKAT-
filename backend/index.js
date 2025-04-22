@@ -30,6 +30,7 @@ import academicGownInventoryRoutes from "./routes/academicGownInventory.routes.j
 import academicGownProductionRoutes from "./routes/academicGownProduction.routes.js";
 import employeeRoutes from "./routes/employee.routes.js";
 import accomplishmentReportRoutes from "./routes/accomplishmentReport.routes.js";
+import contactRoutes from "./routes/contact.routes.js";
 
 dotenv.config();
 
@@ -85,6 +86,7 @@ app.use("/api/v1/academic-gown-inventory", academicGownInventoryRoutes);
 app.use("/api/v1/academic-gown-productions", academicGownProductionRoutes);
 app.use("/api/v1/employees", employeeRoutes);
 app.use("/api/v1/accomplishment-reports", accomplishmentReportRoutes);
+app.use("/api/v1/contact", contactRoutes);
 
 // Developer routes - only enabled in development mode
 if (process.env.NODE_ENV === "development") {
