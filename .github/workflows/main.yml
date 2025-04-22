@@ -19,7 +19,7 @@ jobs:
       - name: Set up Node.js (for frontend and backend)
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Set the Node version to match your project
+          node-version: '18'  # Set the Node version to match your project
 
       - name: Cache Node.js dependencies (frontend)
         uses: actions/cache@v3  # Updated to v3
@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies for backend
         run: |
           cd backend
-          npm install --legacy-peer-deps
+          npm install
 
       - name: Deploy backend to Vercel
         env:
