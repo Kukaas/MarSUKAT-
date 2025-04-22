@@ -25,7 +25,7 @@ const PrivateLayout = ({ children }) => {
         <div className="hidden md:block fixed top-16 bottom-0 w-64">
           <Sidebar />
         </div>
-        <main className="flex-1 md:ml-64 overflow-y-auto px-6 py-8 bg-gray-50 dark:bg-muted/40 w-full">
+        <main className="flex-1 md:ml-64 px-6 py-8 bg-gray-50 dark:bg-muted/40 w-full">
           <Breadcrumbs />
           {children}
         </main>

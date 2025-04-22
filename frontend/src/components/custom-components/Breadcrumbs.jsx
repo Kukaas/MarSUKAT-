@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/context/AuthContext";
 import { getTitleFromPath } from "@/utils/getTitleFromPath";
-import { menuItems } from "@/config/menuItems";
 
 const Breadcrumbs = () => {
   const location = useLocation();
@@ -101,34 +100,40 @@ const Breadcrumbs = () => {
   if (breadcrumbItems.length <= 1) return null;
   
   return (
-    <Breadcrumb className="mb-6">
-      <BreadcrumbList>
-        {breadcrumbItems.map((item, index) => {
-          // Ensure string values for key, path and label
-          const itemKey = typeof item.path === 'string' ? item.path : `bread-${index}`;
-          const itemPath = typeof item.path === 'string' ? item.path : '#';
-          const itemLabel = typeof item.label === 'string' ? item.label : 'Navigation';
-          
-          return (
-            <React.Fragment key={itemKey}>
-              {index > 0 && <BreadcrumbSeparator />}
-              <BreadcrumbItem>
-                {item.isLast ? (
-                  <BreadcrumbPage>{itemLabel}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={itemPath} className="flex items-center gap-2">
-                      {item.isHome && <Home className="h-3.5 w-3.5" />}
-                      <span>{itemLabel}</span>
-                    </Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+    <div className="mb-6 overflow-x-auto scrollbar-none">
+      <Breadcrumb className="whitespace-nowrap">
+        <BreadcrumbList>
+          {breadcrumbItems.map((item, index) => {
+            // Ensure string values for key, path and label
+            const itemKey = typeof item.path === 'string' ? item.path : `bread-${index}`;
+            const itemPath = typeof item.path === 'string' ? item.path : '#';
+            const itemLabel = typeof item.label === 'string' ? item.label : 'Navigation';
+            
+            return (
+              <React.Fragment key={itemKey}>
+                {index > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {item.isLast ? (
+                    <BreadcrumbPage className="truncate max-w-[150px] sm:max-w-[200px] md:max-w-xs">
+                      {itemLabel}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link to={itemPath} className="flex items-center gap-2">
+                        {item.isHome && <Home className="h-3.5 w-3.5 flex-shrink-0" />}
+                        <span className="truncate max-w-[80px] sm:max-w-[120px] md:max-w-xs">
+                          {itemLabel}
+                        </span>
+                      </Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 };
 
