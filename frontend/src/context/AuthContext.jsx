@@ -42,12 +42,11 @@ const LoadingScreen = () => (
         {/* Logo */}
         <div className="absolute inset-0 m-auto w-16 h-16">
           <img 
-            src="/msc_logo.jpg" 
-            alt="MSC Logo" 
+            src="https://www.marsu.edu.ph/logo.png"
             className="w-full h-full object-cover rounded-full shadow-lg animate-pulse"
           />
         </div>
-      </div>
+      </div>  
 
       {/* Text and loading dots */}
       <div className="text-center space-y-3">
