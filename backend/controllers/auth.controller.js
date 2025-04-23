@@ -260,17 +260,16 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
-  try {
+export const login = async (req, res) => {  try {
     const { email, password, recaptchaToken } = req.body;
 
-    // Verify reCAPTCHA token
-    const isRecaptchaValid = await verifyRecaptcha(recaptchaToken);
-    if (!isRecaptchaValid) {
-      return res.status(400).json({ 
-        message: "reCAPTCHA verification failed. Please try again." 
-      });
-    }
+    // Verify reCAPTCHA token - temporarily disabled
+    // const isRecaptchaValid = await verifyRecaptcha(recaptchaToken);
+    // if (!isRecaptchaValid) {
+    //   return res.status(400).json({ 
+    //     message: "reCAPTCHA verification failed. Please try again." 
+    //   });
+    // }
 
     // Check for account lockout
     if (isAccountLocked(email)) {

@@ -19,13 +19,13 @@ import ReCaptcha from "@/components/custom-components/ReCaptcha";
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  recaptchaToken: z.string().optional(),
+  // recaptchaToken: z.string().optional(),
 });
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [recaptchaToken, setRecaptchaToken] = useState("");
-  const recaptchaRef = useRef(null);
+  // const [recaptchaToken, setRecaptchaToken] = useState("");
+  // const recaptchaRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -38,27 +38,27 @@ const Login = () => {
     defaultValues: {
       email: "",
       password: "",
-      recaptchaToken: "",
+      // recaptchaToken: "",
     },
   });
 
-  const handleRecaptchaChange = (token) => {
-    setRecaptchaToken(token);
-    form.setValue("recaptchaToken", token);
-  };
+  // const handleRecaptchaChange = (token) => {
+  //   setRecaptchaToken(token);
+  //   form.setValue("recaptchaToken", token);
+  // };
 
   const onSubmit = async (data) => {
     try {
-      if (!recaptchaToken) {
-        toast.error("Please complete the reCAPTCHA");
-        return;
-      }
+      // if (!recaptchaToken) {
+      //   toast.error("Please complete the reCAPTCHA");
+      //   return;
+      // }
 
       setIsLoading(true);
       const loginData = {
         email: data.email,
         password: data.password,
-        recaptchaToken: recaptchaToken
+        // recaptchaToken: recaptchaToken
       };
       const response = await authAPI.login(loginData);
 
@@ -70,8 +70,8 @@ const Login = () => {
       });
 
       form.reset();
-      setRecaptchaToken("");
-      
+      // setRecaptchaToken("");
+
       navigate(returnUrl, { replace: true });
     } catch (error) {
       const errorMessage =
@@ -97,10 +97,10 @@ const Login = () => {
       }
 
       // Only reset reCAPTCHA on error, not on success
-      if (recaptchaRef.current) {
-        recaptchaRef.current.reset();
-        setRecaptchaToken("");
-      }
+      // if (recaptchaRef.current) {
+      //   recaptchaRef.current.reset();
+      //   setRecaptchaToken("");
+      // }
     } finally {
       setIsLoading(false);
     }
@@ -162,12 +162,12 @@ const Login = () => {
                             Forgot password?
                           </Link>
                         </div>
-                        <div className="mt-4 w-full">
-                          <ReCaptcha 
+                        {/* <div className="mt-4 w-full">
+                          <ReCaptcha
                             ref={recaptchaRef}
                             onChange={handleRecaptchaChange}
                           />
-                        </div>
+                        </div> */}
 
                         <Button
                           type="submit"
