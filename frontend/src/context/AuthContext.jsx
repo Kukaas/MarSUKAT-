@@ -29,18 +29,58 @@ const PUBLIC_ROUTES = [
 // Loading component
 const LoadingScreen = () => (
   <div className="fixed inset-0 flex items-center justify-center">
-    <div className="flex flex-col items-center justify-center">
-      <div className="relative">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
+    <div className="flex flex-col items-center justify-center space-y-6">
+      {/* Logo and spinning rings */}
+      <div className="relative w-28 h-28">
+        {/* Outer ring */}
+        <div className="absolute inset-0 rounded-full border-[3px] border-primary/20 animate-[spin_3s_linear_infinite]"></div>
+        {/* Middle ring */}
+        <div className="absolute inset-[6px] rounded-full border-[3px] border-primary/40 animate-[spin_2s_linear_infinite_reverse]"></div>
+        {/* Inner ring */}
+        <div className="absolute inset-3 rounded-full border-[3px] border-primary/60 animate-[spin_4s_linear_infinite]"></div>
+        
+        {/* Logo */}
+        <div className="absolute inset-0 m-auto w-16 h-16">
+          <img 
+            src="/msc_logo.jpg" 
+            alt="MSC Logo" 
+            className="w-full h-full object-cover rounded-full shadow-lg animate-pulse"
+          />
+        </div>
       </div>
-      <div className="mt-4">
+
+      {/* Text and loading dots */}
+      <div className="text-center space-y-3">
+        <h2 className="text-xl font-semibold text-primary">Loading...</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Please wait while we fetch your data...
+          Please wait while we fetch your data
         </p>
+        {/* Animated dots */}
+        <div className="flex items-center justify-center gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full bg-primary"
+              style={{
+                animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   </div>
 );
+
+// Add keyframes for the bounce animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+`;
+document.head.appendChild(style);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -138,9 +178,9 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!user,
     updateUserInfo,
-  };
+  };  
 
-  if (loading && !isPublicRoute(location.pathname)) {
+  if (loading) {
     return <LoadingScreen />;
   }
 
