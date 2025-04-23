@@ -68,7 +68,11 @@ const RawMaterialsInventory = () => {
     error: inventoryError 
   } = useDataFetching(
     ['rawMaterialInventory'],
-    () => inventoryAPI.getAllRawMaterialInventory(),
+    async () => {
+      const data = await inventoryAPI.getAllRawMaterialInventory();
+      // Sort data by createdAt in descending order (newest first)
+      return data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
     {
       staleTime: 5 * 60 * 1000, // 5 minutes
       cacheTime: 30 * 60 * 1000, // 30 minutes
@@ -238,20 +242,6 @@ const RawMaterialsInventory = () => {
       key: "status",
       header: "Status",
       render: (value) => <StatusBadge status={value} icon={AlertCircle} />,
-    },
-    {
-      key: "createdAt",
-      header: "Created At",
-      render: (value) => (
-        <span>
-          {new Date(value).toLocaleDateString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      ),
     },
   ];
 

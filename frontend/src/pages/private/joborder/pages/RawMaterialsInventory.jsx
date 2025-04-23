@@ -109,15 +109,18 @@ export default function RawMaterialsInventory() {
     async () => {
       const data = await inventoryAPI.getAllRawMaterialInventory();
       
+      // Sort data by createdAt in descending order (newest first)
+      const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
       // Extract unique categories
-      const uniqueCategories = [...new Set(data.map(item => item.category))];
+      const uniqueCategories = [...new Set(sortedData.map(item => item.category))];
       const categories = uniqueCategories.map(category => ({
         value: category,
         label: category
       }));
       
       // Extract unique material types with their categories
-      const materials = data.map(item => ({
+      const materials = sortedData.map(item => ({
         category: item.category,
         type: item.rawMaterialType.name,
         id: `${item.category}-${item.rawMaterialType.name}`
@@ -135,7 +138,7 @@ export default function RawMaterialsInventory() {
       }));
       
       return {
-        inventory: data,
+        inventory: sortedData,
         categories,
         materialTypes
       };

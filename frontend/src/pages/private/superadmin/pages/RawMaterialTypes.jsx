@@ -57,18 +57,8 @@ export default function RawMaterialTypes() {
     ['rawMaterialTypes'],
     async () => {
       const data = await systemMaintenanceAPI.getAllRawMaterialTypes();
-      // Sort data first by category, then by name
-      return [...data].sort((a, b) => {
-        // First sort by category
-        const categoryComparison = a.category
-          .trim()
-          .localeCompare(b.category.trim(), "en", { sensitivity: "base" });
-        if (categoryComparison !== 0) return categoryComparison;
-        // If categories are equal, sort by name
-        return a.name
-          .trim()
-          .localeCompare(b.name.trim(), "en", { sensitivity: "base" });
-      });
+      // Sort data by createdAt in descending order (newest first)
+      return data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
     {
       staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes

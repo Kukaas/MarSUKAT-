@@ -73,7 +73,11 @@ const StaffUsers = () => {
     refetch: refetchStaffUsers 
   } = useDataFetching(
     ['staffUsers'],
-    () => userAPI.getAllStaffUsers(),
+    async () => {
+      const data = await userAPI.getAllStaffUsers();
+      // Sort data by createdAt in descending order (newest first)
+      return data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
     {
       staleTime: 5 * 60 * 1000, // 5 minutes
       cacheTime: 30 * 60 * 1000, // 30 minutes
@@ -518,4 +522,4 @@ const StaffUsers = () => {
   );
 };
 
-export default StaffUsers; 
+export default StaffUsers;

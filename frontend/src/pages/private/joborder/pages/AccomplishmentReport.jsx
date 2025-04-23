@@ -116,7 +116,8 @@ export const AccomplishmentReport = () => {
     ['accomplishmentReports'],
     async () => {
       const data = await accomplishmentReportAPI.getAllAccomplishmentReports();
-      return data;
+      // Sort data by dateAccomplished in descending order (newest first)
+      return data.sort((a, b) => new Date(b.dateAccomplished) - new Date(a.dateAccomplished));
     }
   );
 

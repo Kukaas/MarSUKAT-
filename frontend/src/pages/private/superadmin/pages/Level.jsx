@@ -53,7 +53,8 @@ export default function Level() {
     ['levels'],
     async () => {
       const data = await systemMaintenanceAPI.getAllLevels();
-      return data;
+      // Sort data by createdAt in descending order (newest first)
+      return data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));  
     },
     {
       staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes

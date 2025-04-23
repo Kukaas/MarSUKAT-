@@ -66,8 +66,11 @@ export default function AccomplismentReport() {
     async () => {
       const data = await accomplishmentReportAPI.getAllAccomplishmentReports();
       
+      // Sort data by dateAccomplished in descending order (newest first)
+      const sortedData = data.sort((a, b) => new Date(b.dateAccomplished) - new Date(a.dateAccomplished));
+      
       // Filter the data based on selected filters
-      return data.filter(report => {
+      return sortedData.filter(report => {
         const reportDate = new Date(report.dateAccomplished);
         const reportYear = reportDate.getFullYear();
         const reportMonth = reportDate.getMonth() + 1;

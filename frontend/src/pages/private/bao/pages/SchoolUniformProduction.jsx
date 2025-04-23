@@ -152,7 +152,6 @@ const SchoolUniformProduction = () => {
       if (timePeriod === "month") {
         statsPromise = productionAPI.getProductionStats(selectedYear, selectedMonth);
       } else {
-        // Use getProductionStats with only year parameter for yearly data
         statsPromise = productionAPI.getProductionStats(selectedYear);
       }
       
@@ -161,20 +160,24 @@ const SchoolUniformProduction = () => {
       // Filter productions based on selected time period
       let filteredProductions = productions;
       if (timePeriod === "month") {
-        // Filter by selected month
-        filteredProductions = productions.filter(production => {
-          const productionDate = new Date(production.productionDateFrom);
-          return (
-            productionDate.getFullYear() === parseInt(selectedYear) &&
-            productionDate.getMonth() + 1 === parseInt(selectedMonth)
-          );
-        });
+        // Filter by selected month and sort by date (newest first)
+        filteredProductions = productions
+          .filter(production => {
+            const productionDate = new Date(production.productionDateFrom);
+            return (
+              productionDate.getFullYear() === parseInt(selectedYear) &&
+              productionDate.getMonth() + 1 === parseInt(selectedMonth)
+            );
+          })
+          .sort((a, b) => new Date(b.productionDateFrom) - new Date(a.productionDateFrom));
       } else {
-        // Filter by selected year only
-        filteredProductions = productions.filter(production => {
-          const productionDate = new Date(production.productionDateFrom);
-          return productionDate.getFullYear() === parseInt(selectedYear);
-        });
+        // Filter by selected year only and sort by date (newest first)
+        filteredProductions = productions
+          .filter(production => {
+            const productionDate = new Date(production.productionDateFrom);
+            return productionDate.getFullYear() === parseInt(selectedYear);
+          })
+          .sort((a, b) => new Date(b.productionDateFrom) - new Date(a.productionDateFrom));
       }
       
       return { productions: filteredProductions, stats };

@@ -27,7 +27,11 @@ const SchoolUniformInventory = () => {
     error: inventoryError 
   } = useDataFetching(
     ['uniformInventory'],
-    () => inventoryAPI.getAllUniformInventory(),
+    async () => {
+      const data = await inventoryAPI.getAllUniformInventory();
+      // Sort data by createdAt in descending order (newest first)
+      return data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
     {
       staleTime: 5 * 60 * 1000, // 5 minutes
       cacheTime: 30 * 60 * 1000, // 30 minutes
