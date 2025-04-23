@@ -79,4 +79,24 @@ export const isChromeBrowser = () => {
   return false;
 };
 
+export const stopWords = ['of', 'and', 'the', 'in', 'on', 'at', 'to'];
+
+export const getDepartmentAcronym = (department) => {
+  if (!department) return '';
+  
+  // Handle Grade cases (e.g., "Grade 7" -> "G7")
+  if (department.startsWith("Grade")) {
+    return `G${department.split(" ")[1]}`;
+  }
+  
+  // For all other cases, remove stop words and take first letter of remaining words
+  const words = department
+    .split(" ")
+    .filter(word => !stopWords.includes(word.toLowerCase()));
+
+  return words
+    .map(word => word.charAt(0).toUpperCase())
+    .join("");
+};
+
 // Add more utility functions as needed

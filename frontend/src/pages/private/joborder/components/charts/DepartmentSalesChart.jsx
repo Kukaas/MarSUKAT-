@@ -1,10 +1,16 @@
 import { Building2 } from "lucide-react";
 import { CustomChart } from "@/components/custom-components/CustomChart";
+import { getDepartmentAcronym } from "@/lib/utils";
 
 export function DepartmentSalesChart({ data, loading }) {
+  const formattedData = data?.map(item => ({
+    ...item,
+    name: getDepartmentAcronym(item.name)
+  })) || [];
+
   return (
     <CustomChart
-      data={data}
+      data={formattedData}
       loading={loading}
       title="Sales by Department"
       icon={Building2}
@@ -16,4 +22,4 @@ export function DepartmentSalesChart({ data, loading }) {
       initialChartType="bar"
     />
   );
-} 
+}

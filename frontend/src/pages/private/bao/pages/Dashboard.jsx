@@ -12,6 +12,7 @@ import FilterBar from "@/components/custom-components/FilterBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getDepartmentAcronym } from "@/lib/utils";
 import {
   DollarSign,
   Shirt,
@@ -284,7 +285,7 @@ export default function Dashboard() {
                         icon={PieChartIcon}
                         loading={isLoading}
                         data={dashboardData?.sales?.departmentBreakdown?.map(item => ({
-                          name: item.name,
+                          name: getDepartmentAcronym(item.name),
                           value: item.totalSales
                         }))}
                         dataKey="value"
@@ -319,7 +320,7 @@ export default function Dashboard() {
                         icon={PieChartIcon}
                         loading={isLoading}
                         data={dashboardData?.production?.levelBreakdown?.map(item => ({
-                          name: item.name,
+                          name: getDepartmentAcronym(item.name),
                           value: item.quantity
                         }))}
                         dataKey="value"

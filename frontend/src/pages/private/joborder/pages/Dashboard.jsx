@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import CustomSelect from "@/components/custom-components/CustomSelect";
 import StatsCard from "@/components/custom-components/StatsCard";
 import { CustomChart } from "@/components/custom-components/CustomChart";
+import { getDepartmentAcronym } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomTabs, TabPanel } from "@/components/custom-components/CustomTabs";
@@ -300,7 +301,7 @@ export function Dashboard() {
                         icon={PieChartIcon}
                         loading={isLoading}
                         data={dashboardData?.sales?.departmentBreakdown?.map(item => ({
-                          name: item.name,
+                          name: getDepartmentAcronym(item.name),
                           value: item.totalSales
                         }))}
                         dataKey="value"
