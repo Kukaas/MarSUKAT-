@@ -127,10 +127,10 @@ const Header = () => {
       // Fetch notifications immediately when component mounts
       fetchNotifications();
       
-      // Then fetch notifications every 40 seconds
+      // Then fetch notifications every 3 minutes (180000 ms)
       const interval = setInterval(() => {
         fetchNotifications();
-      }, 40000);
+      }, 180000); // 3 minutes
 
       // Cleanup interval on unmount
       return () => clearInterval(interval);
