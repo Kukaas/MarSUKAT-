@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, ScatterChart, Scatter } from "recharts";
+import { BarChart, Bar, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, ScatterChart, Scatter, AreaChart, Area, CartesianGrid } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import EmptyState from "@/components/custom-components/EmptyState";
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { BarChart2, LineChart as LineChartIcon, ScatterChart as ScatterChartIcon } from "lucide-react";
+import { BarChart2, LineChart as LineChartIcon, ScatterChart as ScatterChartIcon, AreaChart as AreaChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const COLORS = {
@@ -24,6 +24,7 @@ const COLORS = {
 const chartTypes = [
   { id: "bar", label: "Bar Chart", icon: BarChart2 },
   { id: "line", label: "Line Chart", icon: LineChartIcon },
+  { id: "area", label: "Area Chart", icon: AreaChartIcon },
   { id: "scatter", label: "Scatter Chart", icon: ScatterChartIcon },
 ];
 
@@ -34,9 +35,9 @@ function ChartTypeSelector({ type, onTypeChange }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="h-8 w-8 p-0 hover:bg-accent/50 transition-colors"
         >
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -64,14 +65,14 @@ function ChartTypeSelector({ type, onTypeChange }) {
   );
 }
 
-export function CustomChart({ 
-  data, 
-  loading, 
-  title = "", 
-  icon, 
-  dataKey = "value", 
-  nameKey = "name", 
-  valuePrefix = "₱", 
+export function CustomChart({
+  data,
+  loading,
+  title = "",
+  icon,
+  dataKey = "value",
+  nameKey = "name",
+  valuePrefix = "₱",
   valueLabel = "Value",
   nameLabel = "Name",
   height = 400,
@@ -154,9 +155,16 @@ export function CustomChart({
     };
 
     switch (chartType) {
-      case "line":
+      case "area":
         return (
-          <LineChart {...commonProps}>
+          <AreaChart {...commonProps}>
+            <defs>
+              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={COLORS.gradient.start} stopOpacity={0.8}/>
+                <stop offset="95%" stopColor={COLORS.gradient.start} stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.2} />
             <XAxis
               dataKey={nameKey}
               stroke={COLORS.axis}
@@ -165,6 +173,18 @@ export function CustomChart({
               axisLine={false}
               tick={{ fill: COLORS.axis }}
               hide={hideXAxisText}
+              tickMargin={8}
+              minTickGap={32}
+              tickFormatter={(value) => {
+                if (typeof value === 'string' && value.includes('-')) {
+                  const date = new Date(value);
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+                }
+                return value;
+              }}
             />
             <YAxis
               stroke={COLORS.axis}
@@ -175,7 +195,52 @@ export function CustomChart({
               tick={{ fill: COLORS.axis }}
               width={50}
             />
-            <Tooltip content={customTooltip} />
+            <Tooltip content={customTooltip} cursor={false} />
+            <Area
+              type="natural"
+              dataKey={dataKey}
+              fill="url(#areaGradient)"
+              stroke={COLORS.gradient.start}
+              strokeWidth={2}
+            />
+          </AreaChart>
+        );
+
+      case "line":
+        return (
+          <LineChart {...commonProps}>
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.2} />
+            <XAxis
+              dataKey={nameKey}
+              stroke={COLORS.axis}
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: COLORS.axis }}
+              hide={hideXAxisText}
+              tickMargin={8}
+              minTickGap={32}
+              tickFormatter={(value) => {
+                if (typeof value === 'string' && value.includes('-')) {
+                  const date = new Date(value);
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+                }
+                return value;
+              }}
+            />
+            <YAxis
+              stroke={COLORS.axis}
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => `${valuePrefix}${value}`}
+              tick={{ fill: COLORS.axis }}
+              width={50}
+            />
+            <Tooltip content={customTooltip} cursor={false} />
             <Line
               type="monotone"
               dataKey={dataKey}
@@ -196,6 +261,7 @@ export function CustomChart({
       case "scatter":
         return (
           <ScatterChart {...commonProps}>
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.2} />
             <XAxis
               dataKey={nameKey}
               stroke={COLORS.axis}
@@ -204,6 +270,18 @@ export function CustomChart({
               axisLine={false}
               tick={{ fill: COLORS.axis }}
               hide={hideXAxisText}
+              tickMargin={8}
+              minTickGap={32}
+              tickFormatter={(value) => {
+                if (typeof value === 'string' && value.includes('-')) {
+                  const date = new Date(value);
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+                }
+                return value;
+              }}
             />
             <YAxis
               stroke={COLORS.axis}
@@ -214,7 +292,7 @@ export function CustomChart({
               tick={{ fill: COLORS.axis }}
               width={50}
             />
-            <Tooltip content={customTooltip} />
+            <Tooltip content={customTooltip} cursor={false} />
             <Scatter
               dataKey={dataKey}
               fill="url(#scatterGradient)"
@@ -232,6 +310,7 @@ export function CustomChart({
       default:
         return (
           <BarChart {...commonProps}>
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.2} />
             <XAxis
               dataKey={nameKey}
               stroke={COLORS.axis}
@@ -240,6 +319,18 @@ export function CustomChart({
               axisLine={false}
               tick={{ fill: COLORS.axis }}
               hide={hideXAxisText}
+              tickMargin={8}
+              minTickGap={32}
+              tickFormatter={(value) => {
+                if (typeof value === 'string' && value.includes('-')) {
+                  const date = new Date(value);
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+                }
+                return value;
+              }}
             />
             <YAxis
               stroke={COLORS.axis}
@@ -250,7 +341,7 @@ export function CustomChart({
               tick={{ fill: COLORS.axis }}
               width={50}
             />
-            <Tooltip content={customTooltip} />
+            <Tooltip content={customTooltip} cursor={false} />
             <Bar
               dataKey={dataKey}
               fill="url(#barGradient)"
@@ -285,4 +376,4 @@ export function CustomChart({
       </CardContent>
     </Card>
   );
-} 
+}

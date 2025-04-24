@@ -43,7 +43,7 @@ import CustomSelect from "@/components/custom-components/CustomSelect";
 import { format } from "date-fns";
 import { productionAPI } from "../api/productionApi";
 import StatsCard from "@/components/custom-components/StatsCard";
-import MaterialUsageOverviewChart from "../components/charts/MaterialUsageOverviewChart"; 
+import MaterialUsageOverviewChart from "../components/charts/MaterialUsageOverviewChart";
 import { MaterialForecastChart } from "../components/charts/MaterialForecastChart";
 import { MaterialUsageTable } from "../components/tables/MaterialUsageTable";
 import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
@@ -51,7 +51,7 @@ import { useDataFetching, useDataMutation } from "@/hooks/useDataFetching";
 const MONTHS = [
   "January",
   "February",
-  "March", 
+  "March",
   "April",
   "May",
   "June",
@@ -108,35 +108,35 @@ export default function RawMaterialsInventory() {
     ['rawMaterialInventory'],
     async () => {
       const data = await inventoryAPI.getAllRawMaterialInventory();
-      
+
       // Sort data by createdAt in descending order (newest first)
       const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
+
       // Extract unique categories
       const uniqueCategories = [...new Set(sortedData.map(item => item.category))];
       const categories = uniqueCategories.map(category => ({
         value: category,
         label: category
       }));
-      
+
       // Extract unique material types with their categories
       const materials = sortedData.map(item => ({
         category: item.category,
         type: item.rawMaterialType.name,
         id: `${item.category}-${item.rawMaterialType.name}`
       }));
-      
-      const uniqueMaterials = materials.filter((material, index, self) => 
+
+      const uniqueMaterials = materials.filter((material, index, self) =>
         index === self.findIndex(m => m.id === material.id)
       );
-      
+
       const materialTypes = uniqueMaterials.map(material => ({
         value: material.id,
         label: `${material.category} - ${material.type}`,
         category: material.category,
         type: material.type
       }));
-      
+
       return {
         inventory: sortedData,
         categories,
@@ -217,7 +217,7 @@ export default function RawMaterialsInventory() {
     ['materialUsageStats', selectedYear, selectedMonth, selectedCategory, selectedType],
     async () => {
       const stats = await productionAPI.getRawMaterialsUsageStats(
-        selectedYear, 
+        selectedYear,
         selectedMonth,
         selectedCategory === "all" ? "" : selectedCategory,
         selectedType === "all" ? "" : selectedType
@@ -269,7 +269,7 @@ export default function RawMaterialsInventory() {
 
   const getLowStockCount = () => {
     if (!usageStats || !usageStats.currentInventory) return 0;
-    return usageStats.currentInventory.filter(material => 
+    return usageStats.currentInventory.filter(material =>
       material.status === "Low Stock" || material.status === "Out of Stock"
     ).length;
   };
@@ -278,13 +278,13 @@ export default function RawMaterialsInventory() {
     if (!usageStats || !usageStats.yearlyData || usageStats.yearlyData.length === 0) {
       return { type: "None", quantity: 0, unit: "" };
     }
-    
+
     const yearData = usageStats.yearlyData.find(y => y.year === parseInt(selectedYear));
     if (!yearData || !yearData.materials || yearData.materials.length === 0) {
       return { type: "None", quantity: 0, unit: "" };
     }
-    
-    return yearData.materials.reduce((prev, current) => 
+
+    return yearData.materials.reduce((prev, current) =>
       (prev.quantity > current.quantity) ? prev : current
     );
   };
@@ -533,7 +533,7 @@ export default function RawMaterialsInventory() {
                     placeholder="All Types"
                     options={[
                       { value: "all", label: "All Types" },
-                      ...materialTypes.filter(material => 
+                      ...materialTypes.filter(material =>
                         selectedCategory === "all" || material.category === selectedCategory
                       )
                     ]}
@@ -544,21 +544,21 @@ export default function RawMaterialsInventory() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard 
+                <StatsCard
                   title="Total Materials Used"
                   value={calculateTotalUsage().toFixed(2)}
                   icon={<Package className="h-4 w-4 text-muted-foreground" />}
                   description="Units used this period"
                   isLoading={isUsageLoading}
                 />
-                <StatsCard 
+                <StatsCard
                   title="Materials Tracked"
                   value={getMaterialsCount()}
                   icon={<Package className="h-4 w-4 text-muted-foreground" />}
                   description="Distinct materials in use"
                   isLoading={isUsageLoading}
                 />
-                <StatsCard 
+                <StatsCard
                   title="Low Stock Materials"
                   value={getLowStockCount()}
                   icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
@@ -569,14 +569,14 @@ export default function RawMaterialsInventory() {
               </div>
 
               <div className="grid grid-cols-1 gap-8">
-                <MaterialUsageOverviewChart 
-                  data={usageStats} 
-                  loading={isUsageLoading} 
+                <MaterialUsageOverviewChart
+                  data={usageStats}
+                  loading={isUsageLoading}
                   selectedMaterial={selectedMaterial}
                 />
 
-                <MaterialForecastChart data={usageReport} loading={isReportLoading} />
-                
+                {/* <MaterialForecastChart data={usageReport} loading={isReportLoading} /> */}
+
                 <MaterialUsageTable data={usageReport} loading={isReportLoading} />
               </div>
             </div>

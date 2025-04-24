@@ -41,7 +41,7 @@ const RawMaterialsInventory = () => {
       const month = parseInt(selectedMonth) - 1; // JavaScript months are 0-indexed
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0); // Last day of month
-      
+
       setStartDate(firstDay);
       setEndDate(lastDay);
     } else {
@@ -49,7 +49,7 @@ const RawMaterialsInventory = () => {
       const year = parseInt(selectedYear);
       const firstDay = new Date(year, 0, 1); // January 1
       const lastDay = new Date(year, 11, 31); // December 31
-      
+
       setStartDate(firstDay);
       setEndDate(lastDay);
     }
@@ -62,10 +62,10 @@ const RawMaterialsInventory = () => {
   ];
 
   // Fetch inventory data with React Query
-  const { 
-    data: inventoryData, 
+  const {
+    data: inventoryData,
     isLoading,
-    error: inventoryError 
+    error: inventoryError
   } = useDataFetching(
     ['rawMaterialInventory'],
     async () => {
@@ -83,10 +83,10 @@ const RawMaterialsInventory = () => {
   );
 
   // Fetch yearly data for the overview chart - always fetch this
-  const { 
-    data: overviewStats, 
+  const {
+    data: overviewStats,
     isLoading: isOverviewLoading,
-    error: overviewError 
+    error: overviewError
   } = useDataFetching(
     ['materialOverviewStats', selectedYear],
     async () => {
@@ -97,13 +97,13 @@ const RawMaterialsInventory = () => {
         return yearlyData;
       } catch (error) {
         console.warn("Yearly API not available, falling back to monthly data aggregation", error);
-        
+
         // Fallback: Fetch all months separately and combine them
         const monthlyDataPromises = [];
         for (let month = 1; month <= 12; month++) {
           monthlyDataPromises.push(
             productionAPI.getRawMaterialsUsageStats(
-              selectedYear, 
+              selectedYear,
               month.toString(),
               "", // No category filter
               ""  // No type filter
@@ -113,17 +113,17 @@ const RawMaterialsInventory = () => {
             })
           );
         }
-        
+
         // Wait for all month requests to complete
         const monthlyResults = await Promise.all(monthlyDataPromises);
         console.log("Monthly results collected:", monthlyResults);
-        
+
         // Combine all monthly data into one yearly overview
         const combinedData = {
           totalUsage: 0,
           monthlyData: []
         };
-        
+
         // Process each month's data
         monthlyResults.forEach((monthData, index) => {
           if (monthData && monthData.monthlyData && monthData.monthlyData.length > 0) {
@@ -132,7 +132,7 @@ const RawMaterialsInventory = () => {
               ...combinedData.monthlyData,
               ...monthData.monthlyData
             ];
-            
+
             // Update total usage if available
             if (monthData.totalUsage) {
               combinedData.totalUsage += monthData.totalUsage;
@@ -145,7 +145,7 @@ const RawMaterialsInventory = () => {
             });
           }
         });
-        
+
         console.log("Combined yearly data from monthly data:", combinedData);
         return combinedData;
       }
@@ -162,8 +162,8 @@ const RawMaterialsInventory = () => {
   );
 
   // Fetch usage report with React Query - this should respond to filter changes
-  const { 
-    data: usageReport, 
+  const {
+    data: usageReport,
     isLoading: isReportLoading,
     error: reportError,
     refetch: refetchUsageReport
@@ -268,7 +268,7 @@ const RawMaterialsInventory = () => {
     <div>
       <label className="text-xs font-medium mb-1 block">Time Period</label>
       <div className="flex gap-1 mb-2">
-        <Button 
+        <Button
           size="sm"
           variant={timePeriod === "month" ? "default" : "outline"}
           className="flex-1 h-8 text-xs"
@@ -276,7 +276,7 @@ const RawMaterialsInventory = () => {
         >
           Monthly
         </Button>
-        <Button 
+        <Button
           size="sm"
           variant={timePeriod === "year" ? "default" : "outline"}
           className="flex-1 h-8 text-xs"
@@ -287,13 +287,13 @@ const RawMaterialsInventory = () => {
       </div>
     </div>
   );
-  
+
   // Check if custom filters are active
   const isCustomFilterActive = () => {
     const currentYear = new Date().getFullYear().toString();
     const currentMonth = (new Date().getMonth() + 1).toString();
-    return selectedYear !== currentYear || 
-           (timePeriod === "month" && selectedMonth !== currentMonth) || 
+    return selectedYear !== currentYear ||
+           (timePeriod === "month" && selectedMonth !== currentMonth) ||
            timePeriod !== "month";
   };
 
@@ -354,18 +354,18 @@ const RawMaterialsInventory = () => {
               {/* Material usage overview chart - always shows yearly data */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Annual Material Usage Overview</h3>
-                <MaterialUsageOverviewChart 
-                  data={overviewStats} 
-                  loading={isOverviewLoading} 
+                <MaterialUsageOverviewChart
+                  data={overviewStats}
+                  loading={isOverviewLoading}
                 />
               </div>
-              
+
               {/* Divider */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-2">Filtered Material Reports</h3>
-                
+                {/* <h3 className="text-lg font-semibold mb-2">Filtered Material Reports</h3> */}
+
                 {/* Filter bar for the filtered charts */}
-                <FilterBar
+                {/* <FilterBar
                   selectedYear={selectedYear}
                   selectedMonth={selectedMonth}
                   onYearChange={setSelectedYear}
@@ -378,10 +378,10 @@ const RawMaterialsInventory = () => {
                   resetButtonText="Reset All"
                   onResetFilters={handleResetFilters}
                   periodTypeSelector={periodTypeSelector}
-                />
+                /> */}
 
                 <div className="mt-6 space-y-6">
-                  <MaterialForecastChart data={usageReport} loading={isReportLoading} />
+                  {/* <MaterialForecastChart data={usageReport} loading={isReportLoading} /> */}
                   <MaterialUsageTable data={usageReport} loading={isReportLoading} />
                 </div>
               </div>
