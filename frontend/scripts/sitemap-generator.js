@@ -1,3 +1,4 @@
+// filepath: c:\Users\Chester\Documents\Chester\MarSUKAT-\frontend\scripts\sitemap-generator.js
 import pkg from 'sitemap';
 const { SitemapStream, streamToPromise } = pkg;
 import fs from 'fs';
@@ -9,54 +10,12 @@ import { Readable } from 'stream';
 const routes = {
   public: [
     "/",
-    "/create-super-admin",
-    "/verification-success",
-    "/verification-error",
-    "/api/v1/auth/verify/:userId/:uniqueString",
     "/login",
     "/signup",
     "/forgot-password",
-    "/verify-otp/:userId",
     "/about",
     "/contact-us",
     "/faq"
-  ],
-  student: [
-    "/student/dashboard",
-    "/student/orders",
-    "/student/schedules"
-  ],
-  superAdmin: [
-    "/superadmin/dashboard",
-    "/superadmin/create-job-order",
-    "/superadmin/maintenance/levels",
-    "/superadmin/maintenance/departments",
-    "/superadmin/maintenance/department-levels",
-    "/superadmin/maintenance/units",
-    "/superadmin/maintenance/categories",
-    "/superadmin/maintenance/sizes",
-    "/superadmin/maintenance/prices",
-    "/superadmin/maintenance/raw-material-types",
-    "/superadmin/maintenance/product-types"
-  ],
-  jobOrder: [
-    "/job-order/dashboard",
-    "/job-order/student-orders",
-    "/job-order/commercial-orders",
-    "/job-order/rentals",
-    "/job-order/schedules",
-    "/job-order/uniform-production",
-    "/job-order/academic-gowns-production",
-    "/job-order/commercial-job-production",
-    "/job-order/other-productions"
-  ],
-  bao: [
-    "/bao/dashboard",
-    "/bao/productions",
-    "/bao/inventory",
-    "/bao/reports",
-    "/bao/sales",
-    "/bao/accomplishments"
   ]
 };
 
@@ -71,7 +30,7 @@ const cleanPath = (path) => {
 
 const generateSitemap = async () => {
   const baseUrl = 'https://marsukat.vercel.app';
-  
+
   // Get all unique paths
   const paths = Object.values(routes)
     .flat()
@@ -101,4 +60,4 @@ const generateSitemap = async () => {
   console.log(`Sitemap generated at ${outputPath}`);
 };
 
-generateSitemap().catch(console.error); 
+generateSitemap().catch(console.error);
