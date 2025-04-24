@@ -23,7 +23,8 @@ const PUBLIC_ROUTES = [
   "/verify-otp/:userId",
   "/about",
   "/contact-us",
-  "/faq"
+  "/faq",
+  "*"
 ];
 
 // Loading component
@@ -38,15 +39,15 @@ const LoadingScreen = () => (
         <div className="absolute inset-[6px] rounded-full border-[3px] border-primary/40 animate-[spin_2s_linear_infinite_reverse]"></div>
         {/* Inner ring */}
         <div className="absolute inset-3 rounded-full border-[3px] border-primary/60 animate-[spin_4s_linear_infinite]"></div>
-        
+
         {/* Logo */}
         <div className="absolute inset-0 m-auto w-16 h-16">
-          <img 
+          <img
             src="https://www.marsu.edu.ph/logo.png"
             className="w-full h-full object-cover rounded-full shadow-lg animate-pulse"
           />
         </div>
-      </div>  
+      </div>
 
       {/* Text and loading dots */}
       <div className="text-center space-y-3">
@@ -177,7 +178,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!user,
     updateUserInfo,
-  };  
+  };
 
   if (loading) {
     return <LoadingScreen />;
