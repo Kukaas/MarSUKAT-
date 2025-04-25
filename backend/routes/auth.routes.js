@@ -6,6 +6,7 @@ import {
   logout,
   getMe,
   changePassword,
+  resendVerification,
 } from "../controllers/auth.controller.js";
 import {
   authenticateUser,
@@ -16,6 +17,7 @@ const router = express.Router();
 // Public routes
 router.post("/signup", signup);
 router.post("/login", login);
+router.post("/resend-verification", resendVerification);
 
 // Verification routes
 router.get("/verify/:userId/:uniqueString", verifyEmail);

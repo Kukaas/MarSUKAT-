@@ -3,6 +3,7 @@ import Login from "../pages/public/Login";
 import SignUp from "../pages/public/SignUp";
 import VerificationSuccess from "../pages/public/VerificationSuccess";
 import VerificationError from "../pages/public/VerificationError";
+import ResendVerification from "../pages/public/ResendVerification";
 import RequestOtp from "../pages/public/RequestOtp";
 import VerifyOtp from "../pages/public/VerifyOtp";
 import About from "../pages/public/About";
@@ -27,6 +28,19 @@ export const publicRoutes = [
   {
     path: "/verification-error",
     element: <VerificationError />,
+    skipAuthCheck: true,
+  },
+  {
+    path: "/resend-verification",
+    element: (
+      <>
+        <Helmet>
+          <title>{getTitleFromPath("/resend-verification")}</title>
+          <meta name="description" content="Resend email verification for your MarSUKAT account - Marinduque State University's comprehensive system" />
+        </Helmet>
+        <ResendVerification />
+      </>
+    ),
     skipAuthCheck: true,
   },
   {

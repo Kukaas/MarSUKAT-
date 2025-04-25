@@ -4,8 +4,8 @@ import Cookies from "js-cookie";
 // Determine which API URL to use based on the current hostname
 const getApiUrl = () => {
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  return isLocalhost ? 
-    import.meta.env.VITE_API_URL : 
+  return isLocalhost ?
+    import.meta.env.VITE_API_URL :
     import.meta.env.VITE_API_URL_NETWORK;
 };
 
@@ -53,7 +53,7 @@ export const devAPI = {
       return [];
     }
   },
-  
+
   switchUser: async (email) => {
     try {
       const response = await api.post("/dev/switch-user", { email });
@@ -156,6 +156,16 @@ export const authAPI = {
   signup: async (userData) => {
     try {
       const response = await api.post("/auth/signup", userData);
+      return response.data;
+    } catch (error) {
+      console.error(error)
+      throw error;
+    }
+  },
+
+  resendVerification: async (email) => {
+    try {
+      const response = await api.post("/auth/resend-verification", { email });
       return response.data;
     } catch (error) {
       console.error(error)

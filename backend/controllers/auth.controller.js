@@ -220,11 +220,12 @@ export const verifyEmail = async (req, res) => {
 
     // Check if verification record has expired
     if (verificationRecord.expireAt < Date.now()) {
-      // Remove the expired verification record and unverified user
+      // Just remove the expired verification record, keep the user
       await UserVerification.deleteOne({ userId });
-      await User.deleteOne({ _id: userId });
 
-      return res.redirect(`${frontendUrl}/verification-error?type=expired`);
+      return res.redirect(`${frontendUrl}/verification-error?type=expired&email=${encodeURIComponent(
+        (await User.findById(userId))?.email || ""
+      )}`);
     }
 
     // Compare the unique string
@@ -266,8 +267,8 @@ export const login = async (req, res) => {  try {
     // Verify reCAPTCHA token - temporarily disabled
     // const isRecaptchaValid = await verifyRecaptcha(recaptchaToken);
     // if (!isRecaptchaValid) {
-    //   return res.status(400).json({ 
-    //     message: "reCAPTCHA verification failed. Please try again." 
+    //   return res.status(400).json({
+    //     message: "reCAPTCHA verification failed. Please try again."
     //   });
     // }
 
@@ -432,6 +433,68 @@ export const changePassword = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Failed to change password",
+    });
+  }
+};
+
+export const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+        errors: ["Email is required"],
+      });
+    }
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "No account exists with this email address",
+        errors: ["User not found"],
+      });
+    }
+
+    // If the user is already verified
+    if (user.verified) {
+      return res.status(400).json({
+        message: "This account is already verified. Please login.",
+        errors: ["Account already verified"],
+      });
+    }
+
+    // Delete any existing verification records for this user
+    await UserVerification.deleteOne({ userId: user._id });
+
+    // Create a new verification record
+    const uniqueString = uuidv4();
+    const salt = await bcrypt.genSalt(10);
+    const hashedUniqueString = await bcrypt.hash(uniqueString, salt);
+
+    const newVerification = new UserVerification({
+      userId: user._id,
+      uniqueString: hashedUniqueString,
+      createdAt: Date.now(),
+      expireAt: Date.now() + 21600000, // Expires in 6 hours
+    });
+
+    await newVerification.save();
+
+    // Send the verification email
+    await sendVerificationEmail(user, uniqueString);
+
+    res.status(200).json({
+      message: "Verification email sent successfully. Please check your inbox.",
+      userId: user._id,
+    });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    res.status(500).json({
+      message: "Failed to resend verification email. Please try again later.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

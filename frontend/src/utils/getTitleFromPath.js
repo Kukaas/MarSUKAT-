@@ -7,13 +7,13 @@ const routeTitles = {
   "/about": "About",
   "/contact-us": "Contact Us",
   "/faq": "FAQ",
-
   // Auth routes
   "/login": "Login",
   "/signup": "Sign Up",
   "/create-super-admin": "Create Super Admin",
   "/verification-success": "Verification Success",
   "/verification-error": "Verification Error",
+  "/resend-verification": "Resend Verification Email",
   "/forgot-password": "Forgot Password",
   "/verify-otp": "Verify OTP",
 };
