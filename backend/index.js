@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes.js";
 import superAdminRoutes from "./routes/superadmin.routes.js";
 import levelRoutes from "./routes/level.routes.js";
@@ -54,6 +55,23 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Headers']
   })
 );
+
+// Rate limiting middleware to prevent abuse of the API
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: 'Too many requests, please try again later.'
+});
+
+// Apply rate limiter only for POST and PUT requests
+app.use('/api/v1', (req, res, next) => {
+  if (req.method === 'POST' || req.method === 'PUT') {
+    limiter(req, res, next);
+  } else {
+    next();
+  }
+});
+
 // Increase payload size limit to 10MB
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
