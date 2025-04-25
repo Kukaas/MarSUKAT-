@@ -47,9 +47,9 @@ export default function Contact() {
       form.reset();
     } catch (error) {
       console.error("Contact form submission error:", error);
-      
+
       const errorMessage = error.response?.data?.message || "Please try again later.";
-      
+
       toast.error("Failed to send message", {
         description: errorMessage,
         position: "top-center",
@@ -61,32 +61,35 @@ export default function Contact() {
   };
 
   return (
-    <PublicLayout>
-      <div className="container mx-auto px-4 py-16 lg:py-24">
-        <div className="text-center mb-12">
+    <PublicLayout>      <div className="container mx-auto px-4 py-10 sm:py-16 lg:py-24">
+        <div className="text-center mb-8 sm:mb-12 animate-fade-in">
           <Badge
-            className="mb-4 bg-background hover:bg-muted transition-colors animate-fade-in"
+            className="mb-3 sm:mb-4 bg-background hover:bg-muted transition-colors"
             variant="secondary"
           >
             📞 Get in Touch
           </Badge>
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground via-muted-foreground to-foreground bg-clip-text text-transparent mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-muted-foreground to-foreground bg-clip-text text-transparent mb-3 sm:mb-4">
             Contact Us
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Have questions about our services? We're here to help. Reach out to
             us through any of the following channels.
           </p>
         </div>
-
-        <div className="grid lg:grid-cols-2 gap-8 mt-12">
-          {/* Contact Form - Now first on mobile */}
-          <Card className="group hover:shadow-xl transition-all border-border bg-card order-1 lg:order-2">
-            <CardContent className="p-8">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8 max-w-5xl mx-auto">
+          {/* Contact Form - Now first on mobile */}          <Card className="group hover:shadow-xl transition-all border-border bg-card order-1 lg:order-2">
+            <CardContent className="p-4 sm:p-6 md:p-8">
+              <div className="text-center mb-4 sm:mb-6 lg:hidden animate-fade-in">
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">Send a Message</h3>
+                <p className="text-sm text-muted-foreground">
+                  Fill out the form below and we'll get back to you soon.
+                </p>
+              </div>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
+                  className="space-y-4 sm:space-y-6"
                 >
                   <FormInput
                     form={form}
@@ -111,7 +114,6 @@ export default function Contact() {
                     placeholder="Enter your phone number"
                     icon={Phone}
                   />
-
                   <div className="space-y-2">
                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                       Message
@@ -126,11 +128,9 @@ export default function Contact() {
                         {form.formState.errors.message.message}
                       </p>
                     )}
-                  </div>
-
-                  <Button
+                  </div>                  <Button
                     type="submit"
-                    className="w-full h-11 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    className="w-full h-11 shadow-lg hover:shadow-xl transition-all hover:scale-105 text-sm sm:text-base"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -148,61 +148,55 @@ export default function Contact() {
                 </form>
               </Form>
             </CardContent>
-          </Card>
-
-          {/* Contact Information - Now second on mobile */}
-          <div className="space-y-6 order-2 lg:order-1">
+          </Card>          {/* Contact Information - Now second on mobile */}
+          <div className="space-y-4 sm:space-y-6 order-2 lg:order-1">
             <Card className="group hover:shadow-xl transition-all border-border bg-card">
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-background">
-                      <MapPin className="w-6 h-6 text-foreground" />
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-5 sm:space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="p-2 sm:p-3 rounded-lg bg-background w-fit">
+                      <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">Visit Us</h3>
-                      <p className="text-muted-foreground">
+                      <h3 className="font-semibold text-base sm:text-lg">Visit Us</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">
                         Panfilio M. Manguera Sr. Road, Tanza, Boac, Marinduque
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-background">
-                      <Phone className="w-6 h-6 text-foreground" />
+                  </div>                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="p-2 sm:p-3 rounded-lg bg-background w-fit">
+                      <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">Call Us</h3>
-                      <p className="text-muted-foreground">+63 970 8123 4567</p>
+                      <h3 className="font-semibold text-base sm:text-lg">Call Us</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">+63 970 8123 4567</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-background">
-                      <Mail className="w-6 h-6 text-foreground" />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="p-2 sm:p-3 rounded-lg bg-background w-fit">
+                      <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">Email Us</h3>
-                      <p className="text-muted-foreground">
+                      <h3 className="font-semibold text-base sm:text-lg">Email Us</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">
                         marsu.garments@marsu.edu.ph
                       </p>
                     </div>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-
-            <Card className="group hover:shadow-xl transition-all border-border bg-card">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-lg mb-3">Business Hours</h3>
-                <div className="space-y-2 text-muted-foreground">
+            </Card>            <Card className="group hover:shadow-xl transition-all border-border bg-card">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3">Business Hours</h3>
+                <div className="space-y-1 sm:space-y-2 text-sm sm:text-base text-muted-foreground">
                   <p>Monday - Thursday:</p>
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-4 sm:pl-5 space-y-1">
                     <li>Office Hours: 7:30 AM - 4:30 PM</li>
                     <li>Measurement: 7:30 AM - 11:30 AM</li>
                     <li>Claiming: 2:30 PM - 4:30 PM</li>
                   </ul>
-                  <p className="mt-3">Friday: No Transactions</p>
+                  <p className="mt-2 sm:mt-3">Friday: No Transactions</p>
                   <p>Saturday - Sunday: Closed</p>
                 </div>
               </CardContent>
