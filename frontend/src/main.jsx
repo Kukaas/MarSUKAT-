@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "sonner";
 import { BrowserRouter } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById("root")).render(
         <AuthProvider>
           <App />
           <Toaster position="top-center" closeButton richColors />
+          <Analytics />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
